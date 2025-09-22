@@ -38,8 +38,8 @@ export default function ThreeScene() {
     scene.add(dirLight);
 
     // Controls
-    const controls = new PointerLockControls(camera, renderer.domElement);
-    scene.add(controls.getObject());
+    //const controls = new PointerLockControls(camera, renderer.domElement);
+    //scene.add(controls.getObject());
 
     // Movement variables
     const move = { forward: false, backward: false, left: false, right: false };
@@ -112,11 +112,11 @@ export default function ThreeScene() {
       }
     };
 
-    const handleClick = () => controls.lock();
+    //const handleClick = () => controls.lock();
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("click", handleClick);
+    //window.addEventListener("click", handleClick);
 
     // Clock
     const clock = new THREE.Clock();
@@ -139,18 +139,21 @@ export default function ThreeScene() {
       if (move.left || move.right) velocity.x -= direction.x * moveSpeed * delta;
 
       moveVector.set(velocity.x * delta, 0, velocity.z * delta);
-      controls.moveRight(-moveVector.x);
-      controls.moveForward(-moveVector.z);
+      //controls.moveRight(-moveVector.x);
+      //controls.moveForward(-moveVector.z);
 
       // Trigger zone
+      /*
       if (triggerBox) {
-        const nowInside = triggerBox.containsPoint(controls.getObject().position);
+        //const nowInside = triggerBox.containsPoint(controls.getObject().position);
         if (nowInside !== isInside) {
           isInside = nowInside;
           if (roofGroup) roofGroup.visible = !isInside;
           if (interiorGroup) interiorGroup.visible = isInside;
         }
       }
+
+       */
 
       renderer.render(scene, camera);
       metrics.end();
@@ -169,7 +172,7 @@ export default function ThreeScene() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("click", handleClick);
+      //window.removeEventListener("click", handleClick);
       window.removeEventListener("resize", handleResize);
       mount.removeChild(renderer.domElement);
     };
