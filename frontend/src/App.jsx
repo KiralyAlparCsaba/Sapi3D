@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "./App.css";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
-import ThreeScene from "./ThreeScene";
+import ThreeScene from "./components/three/ThreeScene";
 
 export default function App() {
   const [role, setRole] = useState(null); // null = nincs login, "user" vagy "admin"
