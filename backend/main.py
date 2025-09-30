@@ -15,7 +15,7 @@ app.add_middleware(
 #serve the GLB model
 @app.get("/model")
 async def get_model():
-    return FileResponse("backend/models/sapi3Dasynctrigger.glb", media_type="model/gltf-binary")
+    return FileResponse("backend/models/sapi3D_V1.2.glb", media_type="model/gltf-binary")
 
 from fastapi.staticfiles import StaticFiles
 app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="frontend")
