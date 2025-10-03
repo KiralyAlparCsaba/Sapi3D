@@ -7,8 +7,8 @@ import Metrics from "./Metrics";
 import PlayerMovement from "./PlayerMovement";
 
 export default function Building({ controlsRef, onInsideChange }) {
-  // Load GLTF building model
-  const gltf = useGLTF("http://localhost:8000/model");
+  // Load GLTF building model from API proxy
+  const gltf = useGLTF("/api/model");
   const roofRef = useRef();
   const interiorRef = useRef();
   const triggerBoxRef = useRef();

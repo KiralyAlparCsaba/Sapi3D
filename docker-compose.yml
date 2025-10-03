@@ -16,19 +16,17 @@ services:
       timeout: 10s
       retries: 3
 
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: sapi3d-frontend
-  #   ports:
-  #     - "3000:80"
-  #   depends_on:
-  #     - sapi3d-backend
-  #   networks:
-  #     - sapi3d-network
-  #   environment:
-  #     - REACT_APP_API_URL=http://localhost:8000
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sapi3d-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - sapi3d-network
 
 networks:
   sapi3d-network:

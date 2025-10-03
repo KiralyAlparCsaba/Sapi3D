@@ -3,12 +3,16 @@
 A modern 3D building visualization application with interactive first-person exploration, built with FastAPI and React.
 
 ## Quick Start
+
 ```bash
 ./start.sh
 ```
-This script will clean up containers, build, run, and allow you to stop them with any key press.
+This script will clean up containers, build both frontend and backend, run them, and allow you to stop them with any key press.
 
-Then open your browser to `http://localhost:3000`
+Then open your browser to:
+- **Frontend**: `http://localhost:3000`
+- **Backend API**: `http://localhost:8000/docs`
+
 
 ## Features
 
