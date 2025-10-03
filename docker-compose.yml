@@ -1,0 +1,38 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sapi3d-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/static:/app/static
+    networks:
+      - sapi3d-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: sapi3d-frontend
+  #   ports:
+  #     - "3000:80"
+  #   depends_on:
+  #     - sapi3d-backend
+  #   networks:
+  #     - sapi3d-network
+  #   environment:
+  #     - REACT_APP_API_URL=http://localhost:8000
+
+networks:
+  sapi3d-network:
+    driver: bridge
+
+volumes:
+  models-data:
