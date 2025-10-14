@@ -3,8 +3,8 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
-from app.core.config import settings
-from app.schemas.model import ModelInfo
+from core.config import settings
+from schemas.model import ModelInfo
 
 router = APIRouter()
 

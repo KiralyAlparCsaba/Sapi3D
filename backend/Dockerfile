@@ -17,12 +17,13 @@ COPY pyproject.toml .
 # Install Python dependencies using UV
 RUN uv pip install --system -r pyproject.toml
 
-# Copy application code
-COPY app/ ./app/
+# Copy application code (flatten structure)
+COPY app/ ./
+COPY tests/ ./tests/
 COPY static/ ./static/
 
 # Expose port
 EXPOSE 8000
 
 # Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

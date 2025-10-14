@@ -1,12 +1,34 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
-from app.api.routers import health, model
-from app.core.config import settings
-from app.core.logging import logger
+from api.routers import health, model
+from core.config import settings
+from core.logging import logger
+from core.database import init_db, close_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for startup and shutdown events.
+    """
+    # Startup
+    logger.info("Initializing database...")
+    await init_db()
+    logger.info("Database initialized successfully")
+    
+    yield
+    
+    # Shutdown
+    logger.info("Closing database connections...")
+    await close_db()
+    logger.info("Database connections closed")
+
 
 # Initialize FastAPI app with enhanced OpenAPI/Swagger config
 app = FastAPI(
+    lifespan=lifespan,
     title=settings.api_title,
     version=settings.api_version,
     description=settings.api_description,
