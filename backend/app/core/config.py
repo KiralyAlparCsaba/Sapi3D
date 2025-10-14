@@ -14,6 +14,13 @@ class Settings(BaseSettings):
     models_directory: str = "static/models"
     default_model_filename: str = "sapi3D_V1.2.glb"
     
+    # Database Settings
+    database_url: str = "postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d"
+    database_echo: bool = False          # SQL query logging
+    database_pool_size: int = 5          # Connection pool size
+    database_max_overflow: int = 10      # Extra connections beyond pool
+
+    
     # CORS Settings
     cors_origins: List[str] = ["*"]
     cors_methods: List[str] = ["*"]

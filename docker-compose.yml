@@ -1,4 +1,23 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: sapi3d-db
+    environment:
+      POSTGRES_USER: sapi3d
+      POSTGRES_PASSWORD: sapi3d_password
+      POSTGRES_DB: sapi3d
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - sapi3d-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sapi3d"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
@@ -8,6 +27,11 @@ services:
       - "8000:8000"
     volumes:
       - ./backend/static:/app/static
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - sapi3d-network
     healthcheck:
@@ -34,3 +58,4 @@ networks:
 
 volumes:
   models-data:
+  postgres-data:

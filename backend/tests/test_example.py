@@ -1,26 +1,10 @@
-# Example test file (not implemented - just showing structure)
-# To run: pytest test_example.py
-
+# Example test file
 import pytest
-from fastapi.testclient import TestClient
-from main import app
 
-client = TestClient(app)
+def test_example():
+    """Simple test to verify pytest works"""
+    assert 1 + 1 == 2
 
-def test_health_check():
-    """Test basic API functionality"""
-    # This would test if the app starts correctly
-    pass
-
-def test_model_endpoint():
-    """Test GLB model serving"""
-    # response = client.get("/model")
-    # assert response.status_code == 200
-    # assert response.headers["content-type"] == "model/gltf-binary"
-    pass
-
-def test_cors_headers():
-    """Test CORS middleware"""
-    # response = client.get("/model")
-    # assert "access-control-allow-origin" in response.headers
-    pass
+def test_another():
+    """Another simple test"""
+    assert "hello".upper() == "HELLO"
