@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "three": "^0.179.1"
+    "three": "^0.179.1",
+    "three-mesh-bvh": "^0.9.1"
   }
 }

@@ -1,13 +1,18 @@
-// src/hooks/PlayerMovement.js
 import { useRef, useEffect } from "react";
 import * as THREE from "three";
 
-export default function PlayerMovement(controlsRef, moveSpeed = 10.0) {
+export default function PlayerMovement(controlsRef, scene, moveSpeed = 10.0) {
   const move = useRef({ forward: false, backward: false, left: false, right: false });
   const velocity = useRef(new THREE.Vector3());
   const direction = new THREE.Vector3();
+  const raycaster = useRef(new THREE.Raycaster());
 
-  // Keyboard handling
+  const playerHeight = 1.2;
+  const collisionDistance = 0.5;
+  const gravity = -30;
+  const onGround = useRef(false);
+
+  // --- Keyboard handling ---
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (["KeyW", "ArrowUp"].includes(e.code)) move.current.forward = true;
@@ -15,29 +20,39 @@ export default function PlayerMovement(controlsRef, moveSpeed = 10.0) {
       if (["KeyA", "ArrowLeft"].includes(e.code)) move.current.left = true;
       if (["KeyD", "ArrowRight"].includes(e.code)) move.current.right = true;
     };
+
     const handleKeyUp = (e) => {
       if (["KeyW", "ArrowUp"].includes(e.code)) move.current.forward = false;
       if (["KeyS", "ArrowDown"].includes(e.code)) move.current.backward = false;
       if (["KeyA", "ArrowLeft"].includes(e.code)) move.current.left = false;
       if (["KeyD", "ArrowRight"].includes(e.code)) move.current.right = false;
     };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
 
-  // Update function to call inside useFrame
+  // --- Update function (call in useFrame) ---
   const updateMovement = (delta) => {
+    if (!controlsRef.current || !scene) return;
+
+    const camera = controlsRef.current.getObject();
+
+    // Smooth damping for velocity
     velocity.current.x -= velocity.current.x * 5.0 * delta;
     velocity.current.z -= velocity.current.z * 5.0 * delta;
 
+    // Movement direction
     direction.z = Number(move.current.forward) - Number(move.current.backward);
     direction.x = Number(move.current.right) - Number(move.current.left);
     direction.normalize();
 
+    // Apply acceleration
     if (move.current.forward || move.current.backward)
       velocity.current.z -= direction.z * moveSpeed * delta;
     if (move.current.left || move.current.right)
@@ -49,9 +64,47 @@ export default function PlayerMovement(controlsRef, moveSpeed = 10.0) {
       velocity.current.z * delta
     );
 
-    if (controlsRef.current) {
+    // --- Collision Detection ---
+    const moveDir = moveVector.clone().normalize();
+    raycaster.current.set(camera.position, moveDir);
+
+    // Collect collidable meshes
+    const collidableObjects = [];
+    scene.traverse((child) => {
+      if (child.isMesh && !["Roof", "TriggerZone"].includes(child.name)) {
+        collidableObjects.push(child);
+      }
+    });
+
+    const intersections = raycaster.current.intersectObjects(collidableObjects, true);
+    const blocking = intersections.find((i) => i.distance < collisionDistance);
+
+    if (!blocking) {
       controlsRef.current.moveRight(-moveVector.x);
       controlsRef.current.moveForward(-moveVector.z);
+    }
+
+    // --- Gravity & Floor Detection ---
+    const downRay = new THREE.Raycaster(
+  camera.position.clone().add(new THREE.Vector3(0, 0.2, 0)),
+  new THREE.Vector3(0, -1, 0),
+  0,
+  playerHeight + 1.0 // hosszabb, hogy biztosan elérje a padlót
+);
+
+    const floorHits = downRay.intersectObjects(collidableObjects, true);
+
+    if (floorHits.length > 0) {
+      const floor = floorHits[0];
+      if (floor.distance < playerHeight + 0.2) {
+        onGround.current = true;
+        velocity.current.y = 0;
+        camera.position.y = floor.point.y + playerHeight;
+      }
+    } else {
+      onGround.current = false;
+      velocity.current.y += gravity * delta;
+      camera.position.y += velocity.current.y * delta;
     }
   };
 
