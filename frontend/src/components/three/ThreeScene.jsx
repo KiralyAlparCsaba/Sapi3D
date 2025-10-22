@@ -1,22 +1,44 @@
-import { useRef, useState, Suspense } from "react";
+import { useRef, useState, Suspense, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { PointerLockControls } from "@react-three/drei";
 import UsePlayerMovement from "./PlayerMovement";
 import Building from "./Building";
+import * as THREE from "three";
 
 function SceneContent({ controlsRef }) {
+  const collisionRef = useRef(null);
   const [collisionScene, setCollisionScene] = useState(null);
 
-  const player = UsePlayerMovement(controlsRef, collisionScene, 10.0);
+  useEffect(() => {
+    if (collisionScene) collisionRef.current = collisionScene;
+  }, [collisionScene]);
+
+  const player = UsePlayerMovement(controlsRef, collisionRef, 10.0);
 
   useFrame((_, delta) => {
-    if (collisionScene) player.updateMovement(delta);
+    if (collisionRef.current) player.updateMovement(delta);
   });
 
   return (
     <Suspense fallback={null}>
       <Building
-        onWorldReady={(mesh) => setCollisionScene(mesh)}
+        onWorldReady={(mesh) => {
+          setCollisionScene(mesh);
+
+          if (controlsRef.current) {
+            const camera = controlsRef.current.getObject();
+
+            // Csak a Y koordinátát állítjuk a föld felett
+            const rayOrigin = camera.position.clone();
+            rayOrigin.y = 10; // magasról lefelé
+            const ray = new THREE.Raycaster(rayOrigin, new THREE.Vector3(0, -1, 0));
+            const hits = ray.intersectObjects(mesh.children, true);
+
+            if (hits.length > 0) {
+              camera.position.y = hits[0].point.y + 1.2; // playerHeight
+            }
+          }
+        }}
         onInsideChange={(inside) => console.log("Inside:", inside)}
       />
     </Suspense>
@@ -28,7 +50,7 @@ export default function ThreeScene() {
 
   return (
     <Canvas
-      camera={{ position: [0, 2.0, 3], fov: 75 }}
+      camera={{ position: [0, 2.0, 3], fov: 75 }} // eredeti spawn
       style={{ width: "100vw", height: "100vh" }}
     >
       <ambientLight intensity={0.6} />

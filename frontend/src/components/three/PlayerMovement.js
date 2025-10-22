@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 import * as THREE from "three";
 
-export default function PlayerMovement(controlsRef, scene, moveSpeed = 10.0) {
+export default function PlayerMovement(controlsRef, sceneRef, moveSpeed = 10.0) {
   const move = useRef({ forward: false, backward: false, left: false, right: false });
   const velocity = useRef(new THREE.Vector3());
   const direction = new THREE.Vector3();
@@ -11,6 +11,8 @@ export default function PlayerMovement(controlsRef, scene, moveSpeed = 10.0) {
   const collisionDistance = 0.5;
   const gravity = -30;
   const onGround = useRef(false);
+
+  const MAX_STEP_HEIGHT = 0.5; // max height player can "step" up
 
   // --- Keyboard handling ---
   useEffect(() => {
@@ -39,6 +41,7 @@ export default function PlayerMovement(controlsRef, scene, moveSpeed = 10.0) {
 
   // --- Update function (call in useFrame) ---
   const updateMovement = (delta) => {
+    const scene = sceneRef.current;
     if (!controlsRef.current || !scene) return;
 
     const camera = controlsRef.current.getObject();
@@ -68,7 +71,6 @@ export default function PlayerMovement(controlsRef, scene, moveSpeed = 10.0) {
     const moveDir = moveVector.clone().normalize();
     raycaster.current.set(camera.position, moveDir);
 
-    // Collect collidable meshes
     const collidableObjects = [];
     scene.traverse((child) => {
       if (child.isMesh && !["Roof", "TriggerZone"].includes(child.name)) {
@@ -84,24 +86,31 @@ export default function PlayerMovement(controlsRef, scene, moveSpeed = 10.0) {
       controlsRef.current.moveForward(-moveVector.z);
     }
 
-    // --- Gravity & Floor Detection ---
+    // --- Gravity & Floor Detection with Max Step Height ---
     const downRay = new THREE.Raycaster(
-  camera.position.clone().add(new THREE.Vector3(0, 0.2, 0)),
-  new THREE.Vector3(0, -1, 0),
-  0,
-  playerHeight + 1.0 // hosszabb, hogy biztosan elérje a padlót
-);
+      camera.position.clone().add(new THREE.Vector3(0, 0.2, 0)),
+      new THREE.Vector3(0, -1, 0),
+      0,
+      playerHeight + MAX_STEP_HEIGHT + 1.0
+    );
 
     const floorHits = downRay.intersectObjects(collidableObjects, true);
+    const currentFloorY = camera.position.y - playerHeight;
 
-    if (floorHits.length > 0) {
-      const floor = floorHits[0];
-      if (floor.distance < playerHeight + 0.2) {
-        onGround.current = true;
-        velocity.current.y = 0;
-        camera.position.y = floor.point.y + playerHeight;
-      }
+    // Filter hits within step height
+    const validHits = floorHits.filter(hit => (hit.point.y - currentFloorY) <= MAX_STEP_HEIGHT);
+
+    if (validHits.length > 0) {
+      // Pick the closest valid hit
+      const floor = validHits.reduce((closest, hit) => {
+        return hit.point.y > closest.point.y ? hit : closest;
+      }, validHits[0]);
+
+      onGround.current = true;
+      velocity.current.y = 0;
+      camera.position.y = floor.point.y + playerHeight;
     } else {
+      // No valid floor → falling
       onGround.current = false;
       velocity.current.y += gravity * delta;
       camera.position.y += velocity.current.y * delta;
