@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories.user_repository import UserRepository, RoleRepository
 from core.security import hash_password, verify_password
-from schemas import UserCreate, UserUpdate, UserResponse, UserLogin
+from schemas.user import UserCreate, UserUpdate, UserResponse, UserLogin
 from core.logging import logger
 
 class UserService:
@@ -14,7 +14,6 @@ class UserService:
         self.user_repo = UserRepository(db)
         self.role_repo = RoleRepository(db)
 
-    # ---- CREATE ----
     async def create_user(self, user_data: UserCreate) -> UserResponse:
         if await self.user_repo.get_by_username(user_data.username):
             raise HTTPException(status_code=400, detail="Username already exists")
@@ -39,7 +38,6 @@ class UserService:
         logger.info(f"Created user: {user.username}")
         return UserResponse.model_validate(user)
 
-    # ---- READ ----
     async def get_user_by_id(self, user_id: int) -> UserResponse:
         user = await self.user_repo.get_by_id(user_id)
         if not user:
@@ -50,7 +48,6 @@ class UserService:
         users = await self.user_repo.get_all(skip=skip, limit=limit)
         return [UserResponse.model_validate(u) for u in users]
 
-    # ---- UPDATE ----
     async def update_user(self, user_id: int, data: UserUpdate) -> UserResponse:
         user = await self.user_repo.get_by_id(user_id)
         if not user:
@@ -62,7 +59,6 @@ class UserService:
         logger.info(f"Updated user ID {user_id}")
         return UserResponse.model_validate(updated_user)
 
-    # ---- DELETE ----
     async def delete_user(self, user_id: int) -> bool:
         deleted = await self.user_repo.delete(user_id)
         if not deleted:
@@ -72,7 +68,6 @@ class UserService:
         logger.info(f"Deleted user ID {user_id}")
         return True
 
-    # ---- LOGIN ----
     async def login_user(self, login_data: UserLogin) -> UserResponse:
         user = await self.user_repo.get_by_username(login_data.username)
         if not user or not verify_password(login_data.password, user.pasw_hash):
