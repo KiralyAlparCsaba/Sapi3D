@@ -15,8 +15,12 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     logger.info("Initializing database...")
-    await init_db()
-    logger.info("Database initialized successfully")
+    try:
+        await init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {type(e).__name__}: {e}", exc_info=True)
+        raise
     
     yield
     
@@ -53,7 +57,7 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router, tags=["health"])
 app.include_router(model.router, tags=["model"])
-app.include_router(user_router.router, tags=["users"])  # 👈 hozzáadva
+app.include_router(user_router.router, tags=["users"])
 
 # Log application startup
 logger.info(f"Starting {settings.api_title} v{settings.api_version}")
