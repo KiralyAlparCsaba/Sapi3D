@@ -43,9 +43,11 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db() -> None:
     """
-    Initialize database tables.
+    Initialize database tables and seed initial data.
     Should be called on application startup.
     """
+    from core.logging import logger
+    
     # Import all models to ensure they are registered with Base
     from models.user import User, Role
     from models.session import Session, Device
@@ -53,8 +55,55 @@ async def init_db() -> None:
     from models.location import Location, Event, InfoPanel
     from models.metrics import PerfMetrics
     
+    logger.info("Creating database tables...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables created successfully")
+    
+    # Seed initial roles if they don't exist
+    logger.info("About to call _seed_roles()...")
+    await _seed_roles()
+    logger.info("_seed_roles() completed")
+
+
+async def _seed_roles() -> None:
+    """Seed initial roles into the database."""
+    from core.logging import logger
+    
+    logger.info("Starting role seeding process...")
+    
+    try:
+        from models.user import Role
+        from sqlalchemy import select
+        
+        logger.info("Imports successful, creating session...")
+        
+        async with AsyncSessionLocal() as session:
+            logger.info("Session created, checking for existing roles...")
+            
+            # Check if roles already exist
+            result = await session.execute(select(Role))
+            existing_roles = result.scalars().all()
+            
+            logger.info(f"Found {len(existing_roles)} existing roles")
+            
+            if not existing_roles:
+                logger.info("No roles found, creating default roles...")
+                # Create default roles
+                roles = [
+                    Role(role_id=1, role_name="user"),
+                    Role(role_id=2, role_name="admin"),
+                ]
+                session.add_all(roles)
+                logger.info("Roles added to session, committing...")
+                await session.commit()
+                logger.info("✅ Successfully seeded initial roles: user (1), admin (2)")
+            else:
+                logger.info(f"✅ Roles already exist ({len(existing_roles)} roles found), skipping seed")
+    except Exception as e:
+        logger.error(f"❌ Failed to seed roles: {type(e).__name__}: {e}", exc_info=True)
+        # Don't raise - we want the app to start even if seeding fails
+        # The error will be logged and visible
 
 
 async def close_db() -> None:

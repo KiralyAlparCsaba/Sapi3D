@@ -15,7 +15,7 @@ ENV PATH="/root/.local/bin:$PATH"
 COPY pyproject.toml .
 
 # Install Python dependencies using UV
-RUN uv pip install --system -r pyproject.toml
+RUN uv pip install --system -r pyproject.toml 
 
 # Copy application code (flatten structure)
 COPY app/ ./
