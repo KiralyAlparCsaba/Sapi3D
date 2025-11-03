@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     
     # Logging
     log_level: str = "INFO"
+
+    jwt_secret: str
+    jwt_algorithm: str
+    jwt_expire_minutes: int
+
+    class Config:
+        env_file = ".env"
     
     @property
     def model_file_path(self) -> str:

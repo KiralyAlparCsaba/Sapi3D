@@ -8,7 +8,7 @@ from services.user_service import UserService
 
 router = APIRouter(
     prefix="/users",
-    tags=["Users"],
+    tags=["users"],
     responses={404: {"description": "Not found"}},
 )
 
@@ -31,6 +31,24 @@ async def get_all_users(skip: int = 0, limit: int = 100, db: AsyncSession = Depe
     """
     service = UserService(db)
     return await service.get_all_users(skip, limit)
+
+# ---- GET USER BY EMAIL ----
+@router.get("/by-email/{email}", response_model=UserResponse)
+async def get_user_by_email(email: str, db: AsyncSession = Depends(get_db)):
+    """
+    Get a user by their email address.
+    """
+    service = UserService(db)
+    return await service.get_by_email(email)
+
+# ---- GET USER BY USERNAME ----
+@router.get("/by-username/{username}", response_model=UserResponse)
+async def get_user_by_username(username: str, db: AsyncSession = Depends(get_db)):
+    """
+    Get a user by their username.
+    """
+    service = UserService(db)
+    return await service.get_by_username(username)
 
 
 # ---- GET USER BY ID ----
@@ -64,11 +82,3 @@ async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
     return None
 
 
-# ---- LOGIN ----
-@router.post("/login", response_model=UserResponse)
-async def login_user(login_data: UserLogin, db: AsyncSession = Depends(get_db)):
-    """
-    Authenticate user by username and password.
-    """
-    service = UserService(db)
-    return await service.login_user(login_data)
