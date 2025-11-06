@@ -42,12 +42,18 @@ def decode_access_token(token: str) -> dict:
     """Decode and validate a JWT access token."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
+        return {
+            "sub": payload.get("sub"),
+            "username": payload.get("username"),
+            "role_id": payload.get("role_id"), 
+            "exp": payload.get("exp"),
+        }
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token"
         )
+
 
 
 # --- CURRENT USER DEPENDENCY (using HTTP Bearer) ---
@@ -57,10 +63,6 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Extract and validate the current user from the Authorization header.
-    Expected format: 'Authorization: Bearer <token>'
-    """
     token = credentials.credentials
     payload = decode_access_token(token)
     username = payload.get("username")
