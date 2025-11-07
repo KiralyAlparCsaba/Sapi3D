@@ -3,8 +3,26 @@ import "./App.css";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import ThreeScene from "./components/three/ThreeScene";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Login from "./components/Login";
+import Register from "./components/Register";
 
 export default function App() {
+  return (
+    <Router>
+      <Routes>
+        {/* Főoldal – a mostani 3D modell UI */}
+        <Route path="/" element={<MainApp />} />
+
+        {/* Login és Register oldalak */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
+    </Router>
+  );
+}
+
+function MainApp() {
   const [role, setRole] = useState(null); // null = nincs login, "user" vagy "admin"
   const [activeMenu, setActiveMenu] = useState("home");
 
