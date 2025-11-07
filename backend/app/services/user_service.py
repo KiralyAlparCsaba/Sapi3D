@@ -18,18 +18,18 @@ class UserService:
     # -----------------------
     async def create_user(self, user_data: UserCreate) -> UserResponse:
         """Create a new user with hashed password and assigned role."""
-        # Ellenőrzések
+        
         if await self.user_repo.get_by_username(user_data.username):
             raise HTTPException(status_code=400, detail="Username already exists")
         if await self.user_repo.get_by_email(user_data.email):
             raise HTTPException(status_code=400, detail="Email already exists")
 
-        # Role keresése
+        
         role = await self.role_repo.get_by_id(user_data.role_id)
         if not role:
             role = await self.role_repo.get_by_name("user")
 
-        # User létrehozása
+       
         hashed_pw = hash_password(user_data.password)
         user = await self.user_repo.create(
             username=user_data.username,
