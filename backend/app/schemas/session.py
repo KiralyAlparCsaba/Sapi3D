@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -34,7 +34,7 @@ class SessionCreate(SessionBase):
     """Schema for creating a Session."""
     user_id: int
     device_id: Optional[int] = None
-    started_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime = Field(default_factory=datetime.now(timezone.utc))
 
 
 class SessionUpdate(BaseModel):

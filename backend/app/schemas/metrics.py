@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -16,7 +16,7 @@ class PerfMetricsBase(BaseModel):
 
 class PerfMetricsCreate(PerfMetricsBase):
     """Schema for creating PerfMetrics."""
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=datetime.now(timezone.utc))
 
 
 class PerfMetricsResponse(PerfMetricsBase):

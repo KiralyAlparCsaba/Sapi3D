@@ -1,7 +1,8 @@
+
 from typing import Optional, List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
+from datetime import datetime,timezone
 
 from models.session import Session, Device
 from repositories.base import BaseRepository
@@ -78,7 +79,7 @@ class SessionRepository(BaseRepository[Session]):
             Updated Session instance or None if not found
         """
         if ended_at is None:
-            ended_at = datetime.utcnow()
+            ended_at = datetime.now(timezone.utc)
         
         return await self.update(session_id, ended_at=ended_at)
 
