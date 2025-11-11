@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from api.routers import health, model, user_router  # 👈 új import
+from api.routers import health, model, user_router, auth_router 
 from core.config import settings
 from core.logging import logger
 from core.database import init_db, close_db
@@ -39,7 +39,7 @@ app = FastAPI(
     openapi_tags=[
         {"name": "health", "description": "Health check and system status endpoints"},
         {"name": "model", "description": "3D model file serving and metadata endpoints"},
-        {"name": "users", "description": "User management and authentication"},  # 👈 új tag
+        {"name": "users", "description": "User management and authentication"},
     ],
     docs_url="/docs",  # Swagger UI
     redoc_url="/redoc",  # ReDoc alternative documentation
@@ -58,6 +58,7 @@ app.add_middleware(
 app.include_router(health.router, tags=["health"])
 app.include_router(model.router, tags=["model"])
 app.include_router(user_router.router, tags=["users"])
+app.include_router(auth_router.router, tags=["Auth"])
 
 # Log application startup
 logger.info(f"Starting {settings.api_title} v{settings.api_version}")
