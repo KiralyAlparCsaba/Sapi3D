@@ -1,55 +1,75 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import ThreeScene from "./components/three/ThreeScene";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
+import LandingPage from "./components/LandingPage";
+import { jwtDecode } from "jwt-decode";
+
 
 export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Főoldal – a mostani 3D modell UI */}
-        <Route path="/" element={<MainApp />} />
-
-        {/* Login és Register oldalak */}
+     
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+       
+        <Route path="/app" element={<MainApp />} />
       </Routes>
     </Router>
   );
 }
 
 function MainApp() {
-  const [role, setRole] = useState(null); // null = nincs login, "user" vagy "admin"
+  const [role, setRole] = useState(null);
   const [activeMenu, setActiveMenu] = useState("home");
+  const navigate = useNavigate();
 
-  // Kilépés
+ 
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const decoded = jwtDecode(token);
+      const now = Date.now() / 1000;
+
+      if (decoded.exp && decoded.exp < now) {
+        console.warn("Token lejart!");
+        sessionStorage.removeItem("token");
+        navigate("/login");
+      } else {
+        
+        if (decoded.role_id) {
+          setRole(decoded.role_id === 2 ? "admin" : "user");
+        } else {
+          setRole("user");
+        }
+      }
+    } catch (err) {
+      console.error("JWT decode hiba:", err);
+      sessionStorage.removeItem("token");
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  
   const handleLogout = () => {
+    sessionStorage.removeItem("token");
     setRole(null);
     setActiveMenu("home");
+    navigate("/login");
   };
 
-  // Belépés
-  if (!role) {
-    return (
-      <div className="login-screen">
-        <h1>Login</h1>
-        <div>
-          <button className="btn user-btn" onClick={() => setRole("user")}>
-            Login as User
-          </button>
-          <button className="btn admin-btn" onClick={() => setRole("admin")}>
-            Login as Admin
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Minimal UI a 3D modell oldalhoz
   if (activeMenu === "model") {
     return (
       <div className="model-container">
@@ -61,7 +81,6 @@ function MainApp() {
     );
   }
 
-  // Menü elemek
   const menuItems = [
     { key: "home", label: "Főoldal" },
     { key: "model", label: "3D Modell" },
@@ -71,7 +90,7 @@ function MainApp() {
     menuItems.push({ key: "admin", label: "Admin" });
   }
 
-  // Oldal fő tartalom
+  
   const renderMainContent = () => {
     switch (activeMenu) {
       case "home":

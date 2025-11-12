@@ -23,8 +23,8 @@ function Login() {
       });
 
     
-      localStorage.setItem("token", res.data.access_token);
-      navigate("/");
+      sessionStorage.setItem("token", res.data.access_token);
+      navigate("/app");
     } catch (err) {
       console.error("Login error:", err);
       setError("Hibás felhasználónév vagy jelszó!");
