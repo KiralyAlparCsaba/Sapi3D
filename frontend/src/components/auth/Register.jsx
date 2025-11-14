@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../services/api";
-import "./Register.css";
+import api from "../../services/api";
+import "../../styles/Register.css";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -23,6 +23,19 @@ export default function Register() {
     setError("");
     setSuccess("");
 
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError("Az email formátuma érvénytelen (pl. valami@domain.hu)");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("A jelszónak legalább 8 karakter hosszúnak kell lennie!");
+      return;
+    }
+
+  
     if (formData.password !== formData.confirmPassword) {
       setError("A jelszavak nem egyeznek!");
       return;
@@ -71,7 +84,7 @@ export default function Register() {
           <input
             type="password"
             name="password"
-            placeholder="Jelszó"
+            placeholder="Jelszó (min. 8 karakter)"
             onChange={handleChange}
             required
           />

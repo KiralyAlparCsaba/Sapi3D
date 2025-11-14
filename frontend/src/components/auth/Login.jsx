@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import api from "../services/api";
-import "./Login.css";
+import api from "../../services/api";
+import "../../styles/Login.css";
 
 function Login() {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -23,8 +23,8 @@ function Login() {
       });
 
     
-      localStorage.setItem("token", res.data.access_token);
-      navigate("/");
+      sessionStorage.setItem("token", res.data.access_token);
+      navigate("/app");
     } catch (err) {
       console.error("Login error:", err);
       setError("Hibás felhasználónév vagy jelszó!");
