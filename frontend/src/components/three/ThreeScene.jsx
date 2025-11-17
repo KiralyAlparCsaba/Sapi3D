@@ -5,6 +5,7 @@ import UsePlayerMovement from "./PlayerMovement";
 import Building from "./Building";
 import * as THREE from "three";
 
+
 function SceneContent({ controlsRef }) {
   const collisionRef = useRef(null);
   const [collisionScene, setCollisionScene] = useState(null);
@@ -28,14 +29,13 @@ function SceneContent({ controlsRef }) {
           if (controlsRef.current) {
             const camera = controlsRef.current.getObject();
 
-            // Csak a Y koordinátát állítjuk a föld felett
             const rayOrigin = camera.position.clone();
-            rayOrigin.y = 10; // magasról lefelé
+            rayOrigin.y = 10;
             const ray = new THREE.Raycaster(rayOrigin, new THREE.Vector3(0, -1, 0));
             const hits = ray.intersectObjects(mesh.children, true);
 
             if (hits.length > 0) {
-              camera.position.y = hits[0].point.y + 1.2; // playerHeight
+              camera.position.y = hits[0].point.y + 1.2;
             }
           }
         }}
@@ -45,20 +45,42 @@ function SceneContent({ controlsRef }) {
   );
 }
 
+
 export default function ThreeScene() {
   const controlsRef = useRef();
 
   return (
-    <Canvas
-      camera={{ position: [0, 2.0, 3], fov: 75 }} // eredeti spawn
-      style={{ width: "100vw", height: "100vh" }}
-    >
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
+    <>
+      
+      <button
+        onClick={() => (window.location.href = "/app")}
+        className="back-btn"
+        style={{
+          position: "absolute",
+          top: "20px",
+          right: "20px",
+          padding: "10px 20px",
+          background: "white",
+          borderRadius: "8px",
+          border: "none",
+          cursor: "pointer",
+          zIndex: 999,
+        }}
+      >
+        ← Vissza a főoldalra
+      </button>
 
-      <SceneContent controlsRef={controlsRef} />
+      
+      <Canvas
+        camera={{ position: [0, 2.0, 3], fov: 75 }}
+        style={{ width: "100vw", height: "100vh" }}
+      >
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
 
-      <PointerLockControls ref={controlsRef} />
-    </Canvas>
+        <SceneContent controlsRef={controlsRef} />
+        <PointerLockControls ref={controlsRef} />
+      </Canvas>
+    </>
   );
 }

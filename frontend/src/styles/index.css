@@ -51,3 +51,24 @@ p {
   flex-direction: column;
   height: 100%;
 }
+
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --navbar-bg: #d2eed2;
+  --capsule-bg: #b2dbb2;
+  --shadow-color: rgba(0, 120, 0, 0.15);
+}
+
+[data-theme="dark"] {
+  --bg-color: #031a03;
+  --text-color: #ffffff;
+  --navbar-bg: #031a03;
+  --capsule-bg: #0a3c0a;
+  --shadow-color: rgba(0, 255, 0, 0.12);
+}
+
+body {
+  background: var(--bg-color);
+  color: var(--text-color);
+}
