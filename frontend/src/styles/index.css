@@ -63,8 +63,8 @@ p {
 [data-theme="dark"] {
   --bg-color: #031a03;
   --text-color: #ffffff;
-  --navbar-bg: #031a03;
-  --capsule-bg: #0a3c0a;
+  --navbar-bg: #052e05;
+  --capsule-bg: #155015;
   --shadow-color: rgba(0, 255, 0, 0.12);
 }
 
