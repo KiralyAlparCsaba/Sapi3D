@@ -1,6 +1,7 @@
 from typing import List, Optional
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
 
 from models.metrics import PerfMetrics
 from repositories.base import BaseRepository
@@ -15,13 +16,7 @@ class MetricsRepository(BaseRepository[PerfMetrics]):
 
     async def get_by_session_id(self, session_id: int) -> List[PerfMetrics]:
         """
-        Get all performance metrics for a specific session.
-
-        Args:
-            session_id: Session ID to filter metrics by
-
-        Returns:
-            List of PerfMetrics instances
+        Get all performance metrics for a specific session, ordered by time.
         """
         result = await self.db.execute(
             select(PerfMetrics)
@@ -42,33 +37,49 @@ class MetricsRepository(BaseRepository[PerfMetrics]):
         )
         return result.scalar_one_or_none()
 
+    # ────────────────────────────────────────────────
+    # NEW WEIGHTED SUMMARY SYSTEM
+    # ────────────────────────────────────────────────
     async def get_summary_for_session(self, session_id: int) -> Optional[PerfMetricsSummary]:
         """
-        Compute average, min, max, and total samples for a session’s metrics.
+        Compute WEIGHTED average metrics based on time between samples.
+        This avoids FPS spikes from distorting averages.
         """
-        result = await self.db.execute(
-            select(
-                func.avg(PerfMetrics.fps).label("avg_fps"),
-                func.avg(PerfMetrics.memory_mb).label("avg_memory_mb"),
-                func.avg(PerfMetrics.latency_ms).label("avg_latency_ms"),
-                func.avg(PerfMetrics.cpu_gpu_usage).label("avg_cpu_gpu_usage"),
-                func.min(PerfMetrics.fps).label("min_fps"),
-                func.max(PerfMetrics.fps).label("max_fps"),
-                func.count(PerfMetrics.metrics_id).label("total_samples")
-            ).where(PerfMetrics.session_id == session_id)
-        )
+        metrics = await self.get_by_session_id(session_id)
+        if len(metrics) < 2:
+            return None
 
-        row = result.one_or_none()
-        if not row:
+        total_time = 0.0
+        weighted_fps = 0.0
+        weighted_mem = 0.0
+        weighted_latency = 0.0
+        weighted_cpu_gpu = 0.0
+
+        # Compute weighted values based on duration between samples
+        for i in range(1, len(metrics)):
+            prev: PerfMetrics = metrics[i - 1]
+            curr: PerfMetrics = metrics[i]
+
+            dt = (curr.timestamp - prev.timestamp).total_seconds()
+            if dt <= 0:
+                continue
+
+            total_time += dt
+            weighted_fps += prev.fps * dt
+            weighted_mem += prev.memory_mb * dt
+            weighted_latency += prev.latency_ms * dt
+            weighted_cpu_gpu += prev.cpu_gpu_usage * dt
+
+        if total_time == 0:
             return None
 
         return PerfMetricsSummary(
             session_id=session_id,
-            avg_fps=row.avg_fps or 0,
-            avg_memory_mb=row.avg_memory_mb or 0,
-            avg_latency_ms=row.avg_latency_ms or 0,
-            avg_cpu_gpu_usage=row.avg_cpu_gpu_usage or 0,
-            min_fps=row.min_fps or 0,
-            max_fps=row.max_fps or 0,
-            total_samples=row.total_samples or 0,
+            avg_fps=weighted_fps / total_time,
+            avg_memory_mb=weighted_mem / total_time,
+            avg_latency_ms=weighted_latency / total_time,
+            avg_cpu_gpu_usage=weighted_cpu_gpu / total_time,
+            min_fps=min(m.fps for m in metrics),
+            max_fps=max(m.fps for m in metrics),
+            total_samples=len(metrics)
         )

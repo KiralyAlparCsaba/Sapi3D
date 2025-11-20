@@ -34,7 +34,8 @@ class SessionCreate(SessionBase):
     """Schema for creating a Session."""
     user_id: int
     device_id: Optional[int] = None
-    started_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 
 
 class SessionUpdate(BaseModel):
