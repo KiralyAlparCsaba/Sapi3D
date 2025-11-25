@@ -5,7 +5,7 @@ import UsePlayerMovement from "./PlayerMovement";
 import Building from "./Building";
 import * as THREE from "three";
 
-function SceneContent({ controlsRef }) {
+function SceneContent({ controlsRef, sessionId }) {
   const collisionRef = useRef(null);
   const [collisionScene, setCollisionScene] = useState(null);
 
@@ -22,20 +22,20 @@ function SceneContent({ controlsRef }) {
   return (
     <Suspense fallback={null}>
       <Building
+        sessionId={sessionId}            // ← 🎯 FIX: pass sessionId into Building
         onWorldReady={(mesh) => {
           setCollisionScene(mesh);
 
           if (controlsRef.current) {
             const camera = controlsRef.current.getObject();
 
-            // Csak a Y koordinátát állítjuk a föld felett
             const rayOrigin = camera.position.clone();
-            rayOrigin.y = 10; // magasról lefelé
+            rayOrigin.y = 10;
             const ray = new THREE.Raycaster(rayOrigin, new THREE.Vector3(0, -1, 0));
             const hits = ray.intersectObjects(mesh.children, true);
 
             if (hits.length > 0) {
-              camera.position.y = hits[0].point.y + 1.2; // playerHeight
+              camera.position.y = hits[0].point.y + 1.2;
             }
           }
         }}
@@ -48,15 +48,20 @@ function SceneContent({ controlsRef }) {
 export default function ThreeScene() {
   const controlsRef = useRef();
 
+  // ⭐ Load session ID from localStorage
+  const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
+
+  console.log("Loaded sessionId:", sessionId);
+
   return (
     <Canvas
-      camera={{ position: [0, 2.0, 3], fov: 75 }} // eredeti spawn
+      camera={{ position: [0, 2.0, 3], fov: 75 }}
       style={{ width: "100vw", height: "100vh" }}
     >
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
 
-      <SceneContent controlsRef={controlsRef} />
+      <SceneContent controlsRef={controlsRef} sessionId={sessionId} />
 
       <PointerLockControls ref={controlsRef} />
     </Canvas>
