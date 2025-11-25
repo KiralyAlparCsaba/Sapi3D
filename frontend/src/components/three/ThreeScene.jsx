@@ -49,7 +49,7 @@ export default function ThreeScene() {
   const controlsRef = useRef();
 
   // ⭐ Load session ID from localStorage
-  const sessionId = parseInt(localStorage.getItem("session_id"), 10);
+  const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
 
   console.log("Loaded sessionId:", sessionId);
 
