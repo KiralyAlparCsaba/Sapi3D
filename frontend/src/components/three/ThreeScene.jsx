@@ -5,8 +5,7 @@ import UsePlayerMovement from "./PlayerMovement";
 import Building from "./Building";
 import * as THREE from "three";
 
-
-function SceneContent({ controlsRef }) {
+function SceneContent({ controlsRef, sessionId }) {
   const collisionRef = useRef(null);
   const [collisionScene, setCollisionScene] = useState(null);
 
@@ -23,6 +22,7 @@ function SceneContent({ controlsRef }) {
   return (
     <Suspense fallback={null}>
       <Building
+        sessionId={sessionId}
         onWorldReady={(mesh) => {
           setCollisionScene(mesh);
 
@@ -45,13 +45,14 @@ function SceneContent({ controlsRef }) {
   );
 }
 
-
 export default function ThreeScene() {
   const controlsRef = useRef();
 
+  const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
+  console.log("Loaded sessionId:", sessionId);
+
   return (
     <>
-      
       <button
         onClick={() => (window.location.href = "/app")}
         className="back-btn"
@@ -70,7 +71,6 @@ export default function ThreeScene() {
         ← Vissza a főoldalra
       </button>
 
-      
       <Canvas
         camera={{ position: [0, 2.0, 3], fov: 75 }}
         style={{ width: "100vw", height: "100vh" }}
@@ -78,7 +78,9 @@ export default function ThreeScene() {
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
 
-        <SceneContent controlsRef={controlsRef} />
+        {/* ✔ main branch update: include sessionId */}
+        <SceneContent controlsRef={controlsRef} sessionId={sessionId} />
+
         <PointerLockControls ref={controlsRef} />
       </Canvas>
     </>
