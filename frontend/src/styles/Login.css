@@ -1,11 +1,9 @@
-/* ============ LOGIN PAGE STYLE ============ */
-
 .login-container {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background: #0f1115; /* sötét háttér */
+  background: #0f1115; 
   color: #ffffff;
   font-family: "Inter", Arial, sans-serif;
 }
@@ -65,11 +63,11 @@
   font-size: 14px;
 }
 
-.login-card a {
+.login-form a {
   color: #00b37e;
   text-decoration: none;
 }
 
-.login-card a:hover {
+.login-form a:hover {
   text-decoration: underline;
 }

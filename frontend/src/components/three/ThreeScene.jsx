@@ -22,7 +22,7 @@ function SceneContent({ controlsRef, sessionId }) {
   return (
     <Suspense fallback={null}>
       <Building
-        sessionId={sessionId}            // ← 🎯 FIX: pass sessionId into Building
+        sessionId={sessionId}
         onWorldReady={(mesh) => {
           setCollisionScene(mesh);
 
@@ -48,22 +48,41 @@ function SceneContent({ controlsRef, sessionId }) {
 export default function ThreeScene() {
   const controlsRef = useRef();
 
-  // ⭐ Load session ID from localStorage
   const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
-
   console.log("Loaded sessionId:", sessionId);
 
   return (
-    <Canvas
-      camera={{ position: [0, 2.0, 3], fov: 75 }}
-      style={{ width: "100vw", height: "100vh" }}
-    >
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
+    <>
+      <button
+        onClick={() => (window.location.href = "/app")}
+        className="back-btn"
+        style={{
+          position: "absolute",
+          top: "20px",
+          right: "20px",
+          padding: "10px 20px",
+          background: "white",
+          borderRadius: "8px",
+          border: "none",
+          cursor: "pointer",
+          zIndex: 999,
+        }}
+      >
+        ← Vissza a főoldalra
+      </button>
 
-      <SceneContent controlsRef={controlsRef} sessionId={sessionId} />
+      <Canvas
+        camera={{ position: [0, 2.0, 3], fov: 75 }}
+        style={{ width: "100vw", height: "100vh" }}
+      >
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
 
-      <PointerLockControls ref={controlsRef} />
-    </Canvas>
+        {/* ✔ main branch update: include sessionId */}
+        <SceneContent controlsRef={controlsRef} sessionId={sessionId} />
+
+        <PointerLockControls ref={controlsRef} />
+      </Canvas>
+    </>
   );
 }
