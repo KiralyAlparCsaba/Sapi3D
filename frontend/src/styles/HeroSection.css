@@ -2,22 +2,17 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-top: 40px;
+  margin-top: 100px;
+  margin-bottom: 100px;
 }
 
 .hero-inner {
   position: relative;
   width: 90%;
   max-width: 1400px;
-
-  border-radius: 25px;
+  border-radius: 30px;
   overflow: hidden;
-  .hero-inner {
-  box-shadow: 0 0 60px 20px var(--capsule-bg);
-
-}
-
-
+  box-shadow: 0 0 100px 0px var(--capsule-bg);
 }
 
 .hero-image {
@@ -39,32 +34,24 @@
 .hero-text-right {
   position: absolute;
   top: 400px;
-  right: 70px;
+  right: 60px;
   color: white;
-  font-size: 26px;
-  font-weight: 600;
+  font-size: 30px;
+  font-weight: 700;
   text-align: right;
   text-shadow: 0 3px 10px rgba(0,0,0,0.6);
 }
-
 
 .hero-button {
   position: absolute;
   right: 60px;
   bottom: 40px;
-
   background: var(--capsule-bg);
-  color: white;
-
   padding: 18px 40px;
   border-radius: 40px;
-
   font-size: 20px;
   font-weight: 700;
-
-  text-decoration: none;
-
-  transition: 0.2s ease;
+  transition: 0.5s ease;
 }
 
 .hero-button:hover {
