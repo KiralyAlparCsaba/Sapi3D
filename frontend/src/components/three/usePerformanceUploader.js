@@ -1,5 +1,5 @@
 import { weightedAverage } from "./weightedAverage";
-import { measureLatency } from "./latency";
+import { measureLatency } from "./Latency";
 import axios from "axios";
 import { useEffect } from "react";
 
