@@ -67,9 +67,13 @@ export default function PlayerMovement(controlsRef, sceneRef, moveSpeed = 10.0) 
     // collect meshes
     const collidableObjects = [];
     scene.traverse((child) => {
-      if (child.isMesh && !["Roof", "TriggerZone"].includes(child.name))
-        collidableObjects.push(child);
-    });
+  // Check if it starts with "TriggerZone" (Handles "TriggerZone A", "TriggerZone B", etc.)
+  const isTrigger = child.name.startsWith("TriggerZone");
+
+  if (child.isMesh && child.name !== "Roof" && !isTrigger) {
+    collidableObjects.push(child);
+  }
+  });
 
     // ---- capsule wall collision ----
     const offsets = [
