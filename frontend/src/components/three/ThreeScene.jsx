@@ -1,22 +1,37 @@
 import { useRef, useState, Suspense, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { PointerLockControls } from "@react-three/drei";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import UsePlayerMovement from "./PlayerMovement";
+import { createMobileJoystick } from "./MobileJoystick";
 import Building from "./Building";
 import * as THREE from "three";
+import MobilePointerLockControls from "./MobilePointerLockControls";
 
-function SceneContent({ controlsRef, sessionId }) {
+// SCENE CONTENT
+function SceneContent({ controlsRef, sessionId, isMobile }) {
   const collisionRef = useRef(null);
-  const [collisionScene, setCollisionScene] = useState(null);
+  const { camera } = useThree();
 
+  // Mobile controls init
   useEffect(() => {
-    if (collisionScene) collisionRef.current = collisionScene;
-  }, [collisionScene]);
+    if (isMobile) {
+      controlsRef.current = new MobilePointerLockControls(camera);
+      camera.position.set(0, 1.7, 3);
+    }
+  }, [isMobile, camera]);
 
-  const player = UsePlayerMovement(controlsRef, collisionRef, 10.0);
+  const player = UsePlayerMovement(
+  controlsRef,
+  collisionRef,
+  isMobile ? 7.0 : 10.0
+);
+
 
   useFrame((_, delta) => {
     if (collisionRef.current) player.updateMovement(delta);
+
+    if (controlsRef.current?.update) {
+      controlsRef.current.update(delta);
+    }
   });
 
   return (
@@ -24,22 +39,19 @@ function SceneContent({ controlsRef, sessionId }) {
       <Building
         sessionId={sessionId}
         onWorldReady={(mesh) => {
-          setCollisionScene(mesh);
+          collisionRef.current = mesh;
 
-          if (controlsRef.current) {
-            const camera = controlsRef.current.getObject();
+          const cam = controlsRef.current.getObject();
+          const rayOrigin = cam.position.clone();
+          rayOrigin.y = 10;
 
-            const rayOrigin = camera.position.clone();
-            rayOrigin.y = 10;
-            const ray = new THREE.Raycaster(rayOrigin, new THREE.Vector3(0, -1, 0));
-            const hits = ray.intersectObjects(mesh.children, true);
+          const ray = new THREE.Raycaster(rayOrigin, new THREE.Vector3(0, -1, 0));
+          const hits = ray.intersectObjects(mesh.children, true);
 
-            if (hits.length > 0) {
-              camera.position.y = hits[0].point.y + 1.2;
-            }
+          if (hits.length > 0) {
+            cam.position.y = hits[0].point.y + 1.2;
           }
         }}
-        onInsideChange={(inside) => console.log("Inside:", inside)}
       />
     </Suspense>
   );
@@ -47,9 +59,28 @@ function SceneContent({ controlsRef, sessionId }) {
 
 export default function ThreeScene() {
   const controlsRef = useRef();
+  const [PointerLock, setPointerLock] = useState(null);
+
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+
+  useEffect(() => {
+    if (!isMobile) {
+      
+      import("@react-three/drei").then((mod) => {
+        setPointerLock(() => mod.PointerLockControls);
+      });
+    } else {
+      
+      const cleanup = createMobileJoystick(
+        (x, y) => (window.joystickMove = { x, y }),
+        (lx, ly) => (window.joystickLook = { lx, ly })
+      );
+      return cleanup;
+    }
+  }, []);
 
   const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
-  console.log("Loaded sessionId:", sessionId);
 
   return (
     <>
@@ -72,16 +103,22 @@ export default function ThreeScene() {
       </button>
 
       <Canvas
-        camera={{ position: [0, 2.0, 3], fov: 75 }}
+        camera={{ position: [0, 1.7, 3], fov: 75 }}
         style={{ width: "100vw", height: "100vh" }}
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
 
-        {/* ✔ main branch update: include sessionId */}
-        <SceneContent controlsRef={controlsRef} sessionId={sessionId} />
+        <SceneContent
+          controlsRef={controlsRef}
+          sessionId={sessionId}
+          isMobile={isMobile}
+        />
 
-        <PointerLockControls ref={controlsRef} />
+        {/* Desktop only */}
+        {!isMobile && PointerLock && (
+          <PointerLock ref={controlsRef} />
+        )}
       </Canvas>
     </>
   );
