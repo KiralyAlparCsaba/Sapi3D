@@ -6,7 +6,16 @@ export default function HeroSection() {
   return (
     <div className="hero-container">
       <div className="hero-inner">
-        <img src="/campus-render.jpg" alt="Campus render" className="hero-image" />
+
+        {/* VIDEO replaces IMAGE */}
+        <video
+          src="/campus-video.mp4"
+          className="hero-image"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
 
         <div className="hero-text-left">
           <h1>
@@ -23,6 +32,17 @@ export default function HeroSection() {
         <Link to="/app?view=model" className="hero-button">
           Indítsd el a 3D modellt
         </Link>
+
+        {/* MOBILE hero overlay */}
+        <div className="hero-mobile-overlay">
+          <h1>Üdvözlünk a Sapientia<br />campus oldalán</h1>
+          <h2>Fedezd fel a campust egy interaktív<br />3D modellen keresztül</h2>
+
+          <Link to="/app?view=model" className="hero-mobile-button">
+            Indítsd el a 3D modellt
+          </Link>
+        </div>
+
       </div>
     </div>
   );
