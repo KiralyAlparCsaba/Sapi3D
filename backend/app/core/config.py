@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     
     # Model Settings
     models_directory: str = "static/models"
-    default_model_filename: str = "sapi3D_V1.2.glb"
+    default_model_filename: str = "sapi3D_V1.3.glb"
     
     # Database Settings
     database_url: str = "postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d"

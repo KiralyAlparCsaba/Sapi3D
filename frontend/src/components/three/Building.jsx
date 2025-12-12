@@ -12,39 +12,38 @@ export default function Building({ onInsideChange, onWorldReady, sessionId }) {
 
   const roofRef = useRef();
   const interiorRef = useRef();
-  const triggerBoxRef = useRef();
+  const triggerBoxes = useRef([]);  // <--- multiple boxes
   const isInsideRef = useRef(false);
 
   const { camera, gl } = useThree();
 
-  // Store weighted average FPS
   const avgFps = useRef(60);
-
-  // Metrics overlay (Three.js Stats)
   const metricsRef = useRef();
   if (!metricsRef.current) metricsRef.current = new Metrics(gl);
 
-  // Tell the global collector which session this belongs to
   useEffect(() => {
-    if (sessionId) {
-      metricsCollector.setSession(sessionId);
-    }
+    if (sessionId) metricsCollector.setSession(sessionId);
   }, [sessionId]);
 
-  // Attach/remove FPS panel to the DOM
   useEffect(() => {
     metricsRef.current.attach();
     return () => metricsRef.current.detach();
   }, []);
 
-  // Load model + find objects
+  //
+  // Load model + gather trigger boxes
+  //
   useEffect(() => {
+    triggerBoxes.current = [];  // reset
+
     gltf.scene.traverse((child) => {
       if (child.name === "Roof") roofRef.current = child;
       if (child.name === "Interior") interiorRef.current = child;
 
-      if (child.name === "TriggerZone") {
-        triggerBoxRef.current = new THREE.Box3().setFromObject(child);
+      // Collect all TriggerZone_* meshes
+      if (child.name.startsWith("TriggerZone")) {
+        const box = new THREE.Box3().setFromObject(child);
+        triggerBoxes.current.push(box);
         child.visible = false;
       }
     });
@@ -52,30 +51,43 @@ export default function Building({ onInsideChange, onWorldReady, sessionId }) {
     if (onWorldReady) onWorldReady(gltf.scene);
   }, [gltf.scene, onWorldReady]);
 
-  // MAIN FRAME LOOP — runs every animation frame
+
+  //
+  // MAIN LOOP
+  //
   useFrame(async (_, delta) => {
     const metrics = metricsRef.current;
     metrics.begin();
 
     //
-    // 1. Detect entering/exiting the building interior
+    // 1. Check camera inside ANY of the trigger boxes
     //
-    if (triggerBoxRef.current && roofRef.current && interiorRef.current) {
-      const inside = triggerBoxRef.current.containsPoint(camera.position);
+    if (
+      roofRef.current &&
+      interiorRef.current &&
+      triggerBoxes.current.length > 0
+    ) {
+      let inside = false;
+
+      for (const box of triggerBoxes.current) {
+        if (box.containsPoint(camera.position)) {
+          inside = true;
+          break;
+        }
+      }
 
       if (inside !== isInsideRef.current) {
         isInsideRef.current = inside;
+
         roofRef.current.visible = !inside;
         interiorRef.current.visible = inside;
+
         onInsideChange?.(inside);
       }
     }
 
-
-
-
     //
-    // 2. FPS calculation (weighted)
+    // 2. FPS
     //
     const fps = 1 / delta;
     avgFps.current = avgFps.current * 0.9 + fps * 0.1;
@@ -86,7 +98,7 @@ export default function Building({ onInsideChange, onWorldReady, sessionId }) {
     const latency = await measureLatency();
 
     //
-    // 4. Memory usage (if supported)
+    // 4. Memory
     //
     let memoryMB = 0;
     if (performance?.memory) {
@@ -94,27 +106,17 @@ export default function Building({ onInsideChange, onWorldReady, sessionId }) {
     }
 
     //
-    // 5. Push this sample to GLOBAL collector
+    // 5. Store metrics
     //
-
-    console.log("Sample recorded:", {
-      fps,
-      memoryMB,
-      latency
-    });
-
-    console.log("Current sessionId:", metricsCollector.sessionId);
-
-
     metricsCollector.addSample({
       fps,
       memory_mb: memoryMB,
       latency_ms: latency,
-      timestamp: performance.now()
+      timestamp: performance.now(),
     });
 
     //
-    // 6. Dynamic resolution scaling (optional)
+    // 6. Dynamic resolution scaling
     //
     const ratio = gl.getPixelRatio();
     const deviceRatio = window.devicePixelRatio;
