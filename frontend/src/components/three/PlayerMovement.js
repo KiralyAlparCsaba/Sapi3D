@@ -83,7 +83,7 @@ export default function PlayerMovement(controlsRef, sceneRef, moveSpeed = 10.0) 
   const isTrigger = child.name.startsWith("TriggerZone");
 
   if (child.isMesh && child.name !== "Roof" && !isTrigger) {
-    collidableObjects.push(child);
+    collidable.push(child);
   }
   });
 
