@@ -29,7 +29,7 @@ export default function HeroSection() {
           </h2>
         </div>
 
-        <Link to="/app?view=model" className="hero-button">
+        <Link to="/app/model" className="hero-button">
           Indítsd el a 3D modellt
         </Link>
 
@@ -38,7 +38,7 @@ export default function HeroSection() {
           <h1>Üdvözlünk a Sapientia<br />campus oldalán</h1>
           <h2>Fedezd fel a campust egy interaktív<br />3D modellen keresztül</h2>
 
-          <Link to="/app?view=model" className="hero-mobile-button">
+          <Link to="/app/model" className="hero-mobile-button">
             Indítsd el a 3D modellt
           </Link>
         </div>

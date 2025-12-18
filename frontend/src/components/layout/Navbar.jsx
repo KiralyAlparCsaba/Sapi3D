@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "../../styles/Navbar.css";
 import { jwtDecode } from "jwt-decode";
 
-export default function Navbar({ theme, setTheme, warning }) {
+export default function Navbar({ theme, setTheme}) {
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -14,7 +14,7 @@ export default function Navbar({ theme, setTheme, warning }) {
   if (token) {
     try {
       const decoded = jwtDecode(token);
-      username = decoded.username || "Felhasználó";
+      username = decoded.username || "Logged in user";
       isAdmin = decoded.role_id === 2;
     } catch (err) {
       console.error("JWT decode error:", err);
@@ -32,7 +32,7 @@ export default function Navbar({ theme, setTheme, warning }) {
 
   return (
     <>
-      {warning && <div className="nav-warning">{warning}</div>}
+      
 
       <nav className="navbar">
 
@@ -54,7 +54,7 @@ export default function Navbar({ theme, setTheme, warning }) {
         <div className="nav-center desktop-only">
           <div className="nav-menu">
             <Link to="/app" className="nav-link">Főoldal</Link>
-            <Link to="/app?view=model" className="nav-link">Modell</Link>
+            <Link to="/app/model" className="nav-link">Modell</Link>
             <Link to="/app/events" className="nav-link">Események</Link>
             <Link to="/app/locations" className="nav-link">Helyszínek</Link>
             <Link to="/app/contact" className="nav-link">Kapcsolat</Link>
@@ -98,7 +98,7 @@ export default function Navbar({ theme, setTheme, warning }) {
 
         <div className="drawer-menu">
           <Link to="/app" onClick={() => setDrawerOpen(false)}>Főoldal</Link>
-          <Link to="/app?view=model" onClick={() => setDrawerOpen(false)}>Modell</Link>
+          <Link to="/app/model" onClick={() => setDrawerOpen(false)}>Modell</Link>
           <Link to="/app/events" onClick={() => setDrawerOpen(false)}>Események</Link>
           <Link to="/app/locations" onClick={() => setDrawerOpen(false)}>Helyszínek</Link>
           <Link to="/app/contact" onClick={() => setDrawerOpen(false)}>Kapcsolat</Link>
