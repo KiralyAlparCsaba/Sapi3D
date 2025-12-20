@@ -29,12 +29,10 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
 
-    jwt_secret: str
-    jwt_algorithm: str
-    jwt_expire_minutes: int
-
-    class Config:
-        env_file = ".env"
+    # JWT Settings - automatically maps to environment variables
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
     
     @property
     def model_file_path(self) -> str:
