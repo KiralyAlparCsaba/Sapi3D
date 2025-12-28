@@ -6,6 +6,7 @@ from api.routers import health, model, user_router, auth_router,session_router
 from core.config import settings
 from core.logging import logger
 from core.database import init_db, close_db
+from api.routers.device_router import router as device_router
 
 
 @asynccontextmanager
@@ -60,6 +61,7 @@ app.include_router(model.router, tags=["model"])
 app.include_router(user_router.router, tags=["users"])
 app.include_router(auth_router.router, tags=["Auth"])
 app.include_router(session_router.router, tags=["Sessions"])
+app.include_router(device_router)
 
 # Log application startup
 logger.info(f"Starting {settings.api_title} v{settings.api_version}")
