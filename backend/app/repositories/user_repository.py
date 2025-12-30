@@ -1,6 +1,9 @@
 from typing import Optional
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete
+
+
+
 
 from models.user import User, Role
 from repositories.base import BaseRepository
@@ -56,6 +59,30 @@ class UserRepository(BaseRepository[User]):
             select(User).where(User.user_id == user_id)
         )
         return result.scalar_one_or_none()
+    
+
+    async def update(self, user_id: int, **kwargs) -> Optional[User]:
+        """
+        Override BaseRepository.update() for user_id.
+        """
+        await self.db.execute(
+            update(User).where(User.user_id == user_id).values(**kwargs)
+        )
+        await self.db.flush()
+        return await self.get_by_id(user_id)
+    
+    
+
+    async def delete(self, user_id: int) -> bool:
+        """
+        Override BaseRepository.delete() for user_id.
+        """
+        result = await self.db.execute(
+            delete(User).where(User.user_id == user_id)
+        )
+        await self.db.flush()
+        return result.rowcount > 0
+
 
 
 class RoleRepository(BaseRepository[Role]):
