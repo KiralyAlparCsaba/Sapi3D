@@ -1,3 +1,6 @@
+# Docker Compose Production Configuration
+# Use: docker compose -f docker-compose.prod.yml up
+
 services:
   db:
     image: postgres:16-alpine
@@ -57,5 +60,4 @@ networks:
     driver: bridge
 
 volumes:
-  models-data:
   postgres-data:
