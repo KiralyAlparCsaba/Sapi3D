@@ -2,113 +2,172 @@
 
 ## Docker Commands
 
-### Start/Stop
+### Start Development Environment
 ```bash
-./start.sh                    # Start all services (recommended)
-docker compose down           # Stop all services
-docker compose down -v        # Stop and remove volumes
+./run_dev.sh
 ```
 
-### Rebuild (IMPORTANT!)
+### Start Production Environment
+```bash
+./run_prod.sh
+```
+
+### Stop Development Environment
+```bash
+./stop_dev.sh
+```
+
+### Stop Production Environment
+```bash
+./stop_prod.sh
+```
+
+### Rebuild After Code Changes
 ```bash
 docker compose down && docker compose up --build -d
 ```
-**Always rebuild after code changes!**
 
 ### View Logs
 ```bash
+# All services
+./logs_dev.sh
+
+# Specific service
 docker logs sapi3d-backend -f
 docker logs sapi3d-frontend -f
 docker logs sapi3d-db -f
 ```
 
-### Execute Commands in Container
+### Access Database
 ```bash
-docker exec -it sapi3d-backend bash
-docker exec -it sapi3d-frontend sh
 docker exec -it sapi3d-db psql -U sapi3d -d sapi3d
+```
+
+### Restart Specific Service
+```bash
+docker restart sapi3d-backend
+docker restart sapi3d-frontend
 ```
 
 ## Development Workflows
 
-### Adding a New Feature
-→ Step-by-step guide: `docs/development-guide.md#adding-a-new-feature`
+### Adding a New API Endpoint
 
-**Pattern**: Model → Schema → Repository → Service → Router
+1. **Create/Edit Router** (`backend/app/api/routers/`)
+2. **Create/Edit Service** (`backend/app/services/`)
+3. **Create/Edit Repository** (`backend/app/repositories/`)
+4. **Register Router** in `backend/app/main.py`
+5. **Rebuild & Test**:
+   ```bash
+   docker compose down && docker compose up --build -d
+   ```
+6. **Test in Swagger**: http://localhost:8000/docs
 
-1. Create Model (`backend/app/models/`)
-2. Create Schema (`backend/app/schemas/`)
-3. Create Repository (`backend/app/repositories/`)
-4. Create Service (`backend/app/services/`)
-5. Create Router (`backend/app/api/routers/`)
-6. Register Router in `backend/app/main.py`
+### Adding a New Database Table
 
-### Testing
+1. **Create Model** (`backend/app/models/`)
+2. **Create Schema** (`backend/app/schemas/`)
+3. **Create Repository** (`backend/app/repositories/`)
+4. **Rebuild Backend**:
+   ```bash
+   docker compose down && docker compose up --build -d
+   ```
+5. **Verify Table**: 
+   ```bash
+   docker exec -it sapi3d-db psql -U sapi3d -d sapi3d -c "\dt"
+   ```
 
+### Adding a New React Component
+
+1. **Create Component** (`frontend/src/components/`)
+2. **Import in Parent** (e.g., `App.jsx`)
+3. **Rebuild Frontend**:
+   ```bash
+   docker compose down && docker compose up --build -d
+   ```
+4. **Test**: http://localhost:3000
+
+## Testing
+
+### Run Backend Tests
 ```bash
-# Run backend tests
-cd backend && ./run_test.sh
-
-# Test API interactively
-# Open: http://localhost:8000/docs
+cd backend
+./run_test.sh
 ```
 
-→ Testing guide: `docs/development-guide.md#testing`
-
-### Database Operations
-
-```bash
-# Connect to database
-docker exec -it sapi3d-db psql -U sapi3d -d sapi3d
-
-# Common queries
-\dt              # List tables
-\d users         # Describe users table
-SELECT * FROM users;
-```
-
-→ Database usage: `DATABASE_IMPLEMENTATION.md#usage-example`
+### Manual API Testing
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+- **Curl Examples**: See `backend-curls.md`
 
 ## Debugging
 
-### Check Service Status
+### Check Container Status
 ```bash
-# Health check
-curl http://localhost:8000/health
-
-# Check if frontend is running
-curl http://localhost:3000
+docker ps
 ```
 
-### View Container Logs
+### Check Container Logs
 ```bash
-docker logs sapi3d-backend -f
-docker logs sapi3d-frontend -f
-docker logs sapi3d-db -f
+docker logs sapi3d-backend --tail 100
+docker logs sapi3d-frontend --tail 100
+docker logs sapi3d-db --tail 100
 ```
 
-### Access Container Shell
+### Access Backend Container Shell
 ```bash
 docker exec -it sapi3d-backend bash
+```
+
+### Access Frontend Container Shell
+```bash
 docker exec -it sapi3d-frontend sh
 ```
 
-→ Debugging guide: `docs/development-guide.md#debugging`
-→ Common issues: `docs/development-guide.md#common-issues`
+### Check Database Connection
+```bash
+docker exec -it sapi3d-db psql -U sapi3d -d sapi3d -c "SELECT version();"
+```
 
-## Quick References
+### View Database Tables
+```bash
+docker exec -it sapi3d-db psql -U sapi3d -d sapi3d -c "\dt"
+```
 
-### API Testing
-- Interactive docs: http://localhost:8000/docs
-- Curl examples: `backend-curls.md`
-- API reference: `docs/api-reference.md`
+## Common Issues
 
-### Understanding Code
-- Feature mapping: `docs/features.md`
-- Architecture: `docs/architecture.md`
-- File structure: `.clinerules/file_locations.md`
+### Port Already in Use
+```bash
+# Find process using port
+sudo lsof -i :8000
+sudo lsof -i :3000
 
-### Deployment
-- Scripts documentation: `SCRIPTS_README.md`
-- Development mode: `./run_dev.sh`
-- Production mode: `./run_prod.sh`
+# Kill process
+kill -9 <PID>
+```
+
+### Docker Build Cache Issues
+```bash
+# Clean rebuild
+docker compose down
+docker system prune -a
+docker compose up --build -d
+```
+
+### Database Connection Issues
+```bash
+# Check database is running
+docker ps | grep sapi3d-db
+
+# Check database logs
+docker logs sapi3d-db
+
+# Restart database
+docker restart sapi3d-db
+```
+
+## Detailed Documentation
+
+→ Complete workflows: `docs/development-guide.md`
+→ API testing: `docs/api-reference.md#testing-the-api`
+→ Troubleshooting: `docs/development-guide.md#troubleshooting`

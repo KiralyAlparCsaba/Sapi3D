@@ -54,11 +54,15 @@
 - Achievement system
 - Location features
 
-→ Full roadmap: `docs/features.md#feature-roadmap`
-
 ## Key URLs
 
 - **Frontend**: http://localhost:3000
 - **Backend API Docs**: http://localhost:8000/docs (Swagger UI)
 - **ReDoc**: http://localhost:8000/redoc
 - **Health Check**: http://localhost:8000/health
+
+## Detailed Documentation
+
+→ Full architecture: `docs/architecture.md`
+→ Feature roadmap: `docs/features.md`
+→ Development guide: `docs/development-guide.md`

@@ -31,7 +31,7 @@
 ## Testing the API
 
 ### Using Swagger UI (Recommended)
-1. Start application: `./start.sh`
+1. Start application: `./run_dev.sh`
 2. Open: http://localhost:8000/docs
 3. Click "Try it out" on any endpoint
 4. Fill parameters and click "Execute"

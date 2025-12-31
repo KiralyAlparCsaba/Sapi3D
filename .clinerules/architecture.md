@@ -3,77 +3,112 @@
 ## Layered Architecture Pattern
 
 ```
-API Layer (FastAPI Routes)
-    ↓
-Service Layer (Business Logic)
-    ↓
-Repository Layer (Data Access)
-    ↓
-Database Layer (SQLAlchemy ORM)
-    ↓
-PostgreSQL Database
+┌─────────────────────────────────────┐
+│   API Layer (Routers)               │  ← HTTP Request/Response
+│   backend/app/api/routers/          │  ← Pydantic validation
+└─────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│   Service Layer                     │  ← Business logic
+│   backend/app/services/             │  ← Authentication
+└─────────────────────────────────────┘  ← Achievements
+              ↓
+┌─────────────────────────────────────┐
+│   Repository Layer                  │  ← CRUD operations
+│   backend/app/repositories/         │  ← Custom queries
+└─────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│   Database Layer (Models)           │  ← SQLAlchemy ORM
+│   backend/app/models/               │  ← Table definitions
+└─────────────────────────────────────┘
 ```
 
 ## Layer Responsibilities
 
 ### API Layer (`backend/app/api/routers/`)
-- HTTP request/response handling
-- Input validation (Pydantic schemas)
-- Dependency injection
-- Route definitions
+- Handle HTTP request/response
+- Use Pydantic schemas for validation
+- Inject dependencies (database session)
+- **NO business logic here**
 
 ### Service Layer (`backend/app/services/`)
-- Business logic
-- Authentication & authorization
-- Achievement calculations
-- Business rules enforcement
+- Implement business logic
+- Handle authentication/authorization
+- Calculate achievements
+- Enforce business rules
+- **NO direct database access** (use repositories)
 
 ### Repository Layer (`backend/app/repositories/`)
-- CRUD operations
-- Custom queries
-- Database abstraction
-- Data access logic
+- CRUD operations only
+- Custom database queries
+- Extend `BaseRepository` for common operations
+- **NO business logic here**
 
 ### Database Layer (`backend/app/models/`)
 - SQLAlchemy ORM models
-- Table definitions
-- Relationships
-- Async session management
+- Define table structure
+- Define relationships
+- **NO business logic here**
 
 ## Key Design Decisions
 
-### 1. Async/Await Throughout
-- All database operations use async/await
-- FastAPI async endpoints
-- SQLAlchemy async sessions
-- Better performance for I/O operations
+### Async/Await Throughout
+All database operations use async/await for better performance:
+```python
+async def get_user(user_id: int, db: AsyncSession):
+    repo = UserRepository(db)
+    user = await repo.get_by_id(user_id)
+    return user
+```
 
-### 2. Repository Pattern
-- Separates data access from business logic
-- Reusable CRUD operations in `repositories/base.py`
-- Easy to test and mock
+### SQLAlchemy 2.0 Modern Syntax
+Using type hints and modern patterns:
+```python
+from sqlalchemy.orm import Mapped, mapped_column
 
-### 3. Pydantic Validation
-- Type-safe request/response handling
-- Automatic API documentation
-- Runtime validation
-- Schemas in `backend/app/schemas/`
+class User(Base):
+    user_id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str]
+```
 
-### 4. Docker-First Development
-- Consistent environments
-- Easy setup for new developers
-- Production-like development
-- Hot reload in dev mode
+### Dependency Injection
+FastAPI's dependency injection for database sessions:
+```python
+from fastapi import Depends
+from core.database import get_db
 
-### 5. Connection Pooling
-- 5 persistent connections
-- 10 overflow connections
-- Automatic connection recycling
-- See: `backend/app/core/database.py`
+async def endpoint(db: AsyncSession = Depends(get_db)):
+    # Use db here
+```
 
-## Architecture Documentation
+## Frontend Architecture
 
-→ Detailed architecture diagrams: `docs/architecture.md`
-→ Layered architecture details: `docs/architecture.md#backend-layered-architecture`
-→ Data flow examples: `docs/architecture.md#data-flow-examples`
+### React Component Structure
+```
+frontend/src/
+├── components/
+│   ├── Navbar.jsx          ← Top navigation
+│   ├── Sidebar.jsx         ← Side menu
+│   ├── Login.jsx           ← Authentication
+│   ├── Register.jsx        ← User registration
+│   └── three/
+│       ├── ThreeScene.jsx  ← Main 3D scene
+│       ├── Building.jsx    ← 3D model loader
+│       ├── PlayerMovement.js ← First-person controls
+│       └── Metrics.js      ← Performance tracking
+└── services/
+    └── api.js              ← API client
+```
+
+### Three.js Integration
+- First-person camera controls
+- GLB model loading
+- Collision detection
+- Performance metrics
+
+## Detailed Documentation
+
+→ Complete architecture diagrams: `docs/architecture.md`
+→ Design decisions: `docs/architecture.md#design-decisions`
 → Directory structure: `docs/architecture.md#directory-structure`

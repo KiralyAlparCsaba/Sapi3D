@@ -2,60 +2,80 @@
 
 ## Connection Details
 
-- **URL**: `postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d`
-- **Driver**: asyncpg (async PostgreSQL driver)
-- **ORM**: SQLAlchemy 2.0 with async support
-- **Connection Pool**: 5 base + 10 overflow connections
-
-## Database Tables (11 Total)
-
-1. **users** - User accounts & profiles
-2. **roles** - User roles/permissions (user, admin)
-3. **sessions** - User session tracking
-4. **devices** - Device information
-5. **achievements** - Achievement definitions
-6. **user_achievements** - Unlocked achievements
-7. **achv_progress** - Achievement progress tracking
-8. **locations** - Physical locations in building
-9. **events** - Location-based events
-10. **info_panels** - Information panels
-11. **perf_metrics** - Performance metrics per session
-
-## Key Relationships
-
-```
-User ←→ Role (many-to-one)
-User ←→ Sessions (one-to-many)
-User ←→ UserAchievements (one-to-many)
-User ←→ AchvProgress (one-to-many)
-
-Session ←→ Device (many-to-one)
-Session ←→ PerfMetrics (one-to-many)
-
-Achievement ←→ UserAchievements (one-to-many)
-Achievement ←→ AchvProgress (one-to-many)
-
-Location ←→ Events (one-to-many)
-```
-
-## Quick Commands
-
-### Connect to Database
+### Docker Connection (from host)
 ```bash
 docker exec -it sapi3d-db psql -U sapi3d -d sapi3d
 ```
 
-### Common Queries
-```sql
-\dt              # List all tables
-\d users         # Describe users table
-SELECT * FROM users;
+### Application Connection
+```
+postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d
 ```
 
-## Documentation Pointers
+### Credentials
+- **User**: `sapi3d`
+- **Password**: `sapi3d_password`
+- **Database**: `sapi3d`
+- **Port**: `5432`
 
-→ Complete database schema: `DATABASE_IMPLEMENTATION.md`
+## Database Tables (11 Total)
+
+### Core Tables
+1. **users** - User accounts and profiles
+2. **roles** - User roles (admin, user, guest)
+3. **user_roles** - Many-to-many relationship
+
+### Session & Activity
+4. **sessions** - User session tracking
+5. **devices** - Device information per session
+6. **locations** - User location tracking in 3D space
+
+### Gamification
+7. **achievements** - Achievement definitions
+8. **user_achievements** - User achievement progress
+
+### Performance
+9. **metrics** - Performance metrics per session
+10. **metric_snapshots** - Time-series metric data
+
+### System
+11. **system_logs** - Application logging
+
+## Key Relationships
+
+```
+users ←→ user_roles ←→ roles
+users → sessions → devices
+users → sessions → locations
+users → sessions → metrics → metric_snapshots
+users ←→ user_achievements ←→ achievements
+```
+
+## Quick Commands
+
+### Access Database
+```bash
+docker exec -it sapi3d-db psql -U sapi3d -d sapi3d
+```
+
+### List Tables
+```sql
+\dt
+```
+
+### View Table Structure
+```sql
+\d users
+\d sessions
+```
+
+### Check Connections
+```sql
+SELECT * FROM pg_stat_activity WHERE datname = 'sapi3d';
+```
+
+## Detailed Documentation
+
+→ Complete schema: `DATABASE_IMPLEMENTATION.md`
 → ERD diagram: `docs/architecture.md#database-schema`
-→ Usage examples: `DATABASE_IMPLEMENTATION.md#usage-example`
-→ All models: `backend/app/models/`
-→ All schemas: `backend/app/schemas/`
+→ Model definitions: `backend/app/models/`
