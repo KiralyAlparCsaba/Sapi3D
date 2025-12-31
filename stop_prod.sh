@@ -12,11 +12,11 @@ echo "=========================================="
 echo ""
 
 echo "🛑 Stopping production containers..."
-docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.base.yml -f docker-compose.prod.yml down
 
 echo ""
 echo "✅ Production containers stopped successfully!"
 echo ""
 echo "💡 To remove volumes as well, run:"
-echo "   docker compose -f docker-compose.prod.yml down -v"
+echo "   docker compose -f docker-compose.base.yml -f docker-compose.prod.yml down -v"
 echo ""

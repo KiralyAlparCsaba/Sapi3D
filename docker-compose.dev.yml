@@ -1,54 +1,25 @@
-# Docker Compose Development Configuration
-# Use: docker compose -f docker-compose.dev.yml up
+# Docker Compose Development Overrides
+# This file contains ONLY development-specific configuration
+# Must be used together with docker-compose.base.yml
+#
+# Usage: docker compose -f docker-compose.base.yml -f docker-compose.dev.yml up
 
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: sapi3d-db
-    environment:
-      POSTGRES_USER: sapi3d
-      POSTGRES_PASSWORD: sapi3d_password
-      POSTGRES_DB: sapi3d
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - sapi3d-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sapi3d"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
+  # Backend Development Overrides
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: sapi3d-backend
-    ports:
-      - "8000:8000"
     volumes:
       # Mount source code for hot reload
       - ./backend/app:/app
       - ./backend/static:/app/static
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d
-      - RELOAD=true
+    env_file:
+      - .env
     # Override CMD to enable hot reload
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - sapi3d-network
 
+  # Frontend Development Overrides
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      target: build  # Use only the build stage
-    container_name: sapi3d-frontend
+      target: build  # Use only the build stage (not production nginx)
     ports:
       - "3000:5173"  # Vite dev server port
     volumes:
@@ -61,14 +32,3 @@ services:
       - VITE_API_URL=http://localhost:8000
     # Override CMD to run Vite dev server
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
-    depends_on:
-      - backend
-    networks:
-      - sapi3d-network
-
-networks:
-  sapi3d-network:
-    driver: bridge
-
-volumes:
-  postgres-data:

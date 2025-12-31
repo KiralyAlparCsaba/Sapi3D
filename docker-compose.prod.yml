@@ -1,65 +1,25 @@
-# Docker Compose Production Configuration
-# Use: docker compose -f docker-compose.prod.yml up
+# Docker Compose Production Overrides
+# This file contains ONLY production-specific configuration
+# Must be used together with docker-compose.base.yml
+#
+# Usage: docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up
 
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: sapi3d-db
-    environment:
-      POSTGRES_USER: sapi3d
-      POSTGRES_PASSWORD: sapi3d_password
-      POSTGRES_DB: sapi3d
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - sapi3d-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sapi3d"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
+  # Backend Production Overrides
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: sapi3d-backend
-    ports:
-      - "8000:8000"
     volumes:
+      # Only mount static files (no source code)
       - ./backend/static:/app/static
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - sapi3d-network
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
       interval: 30s
       timeout: 10s
       retries: 3
-    env_file:
-      - ./backend/.env
 
+  # Frontend Production Overrides
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: sapi3d-frontend
+    # Uses full Dockerfile (multi-stage build with Nginx)
     ports:
-      - "3000:80"
-    depends_on:
-      - backend
-    networks:
-      - sapi3d-network
-
-networks:
-  sapi3d-network:
-    driver: bridge
-
-volumes:
-  postgres-data:
+      - "3000:80"  # Nginx production server

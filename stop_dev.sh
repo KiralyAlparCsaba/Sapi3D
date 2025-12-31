@@ -12,11 +12,11 @@ echo "=========================================="
 echo ""
 
 echo "🛑 Stopping development containers..."
-docker compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.base.yml -f docker-compose.dev.yml down
 
 echo ""
 echo "✅ Development containers stopped successfully!"
 echo ""
 echo "💡 To remove volumes as well, run:"
-echo "   docker compose -f docker-compose.dev.yml down -v"
+echo "   docker compose -f docker-compose.base.yml -f docker-compose.dev.yml down -v"
 echo ""
