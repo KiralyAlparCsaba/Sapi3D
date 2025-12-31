@@ -1,0 +1,34 @@
+# Docker Compose Development Overrides
+# This file contains ONLY development-specific configuration
+# Must be used together with docker-compose.base.yml
+#
+# Usage: docker compose -f docker-compose.base.yml -f docker-compose.dev.yml up
+
+services:
+  # Backend Development Overrides
+  backend:
+    volumes:
+      # Mount source code for hot reload
+      - ./backend/app:/app
+      - ./backend/static:/app/static
+    env_file:
+      - .env
+    # Override CMD to enable hot reload
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # Frontend Development Overrides
+  frontend:
+    build:
+      target: build  # Use only the build stage (not production nginx)
+    ports:
+      - "3000:5173"  # Vite dev server port
+    volumes:
+      # Mount source code for hot reload
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.js:/app/vite.config.js
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    # Override CMD to run Vite dev server
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

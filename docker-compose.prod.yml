@@ -1,0 +1,25 @@
+# Docker Compose Production Overrides
+# This file contains ONLY production-specific configuration
+# Must be used together with docker-compose.base.yml
+#
+# Usage: docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up
+
+services:
+  # Backend Production Overrides
+  backend:
+    volumes:
+      # Only mount static files (no source code)
+      - ./backend/static:/app/static
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Production Overrides
+  frontend:
+    # Uses full Dockerfile (multi-stage build with Nginx)
+    ports:
+      - "3000:80"  # Nginx production server

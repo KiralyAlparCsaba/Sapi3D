@@ -21,6 +21,9 @@ yarn-error.log*
 .env.*.local
 .env.prod
 
+# Keep example files tracked
+!.env.*.example
+
 # OS generated files
 .DS_Store
 Thumbs.db

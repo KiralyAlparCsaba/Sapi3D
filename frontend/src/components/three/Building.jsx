@@ -7,9 +7,10 @@ import Metrics from "./Metrics";
 import { metricsCollector } from "./metricsCollector";
 import { measureLatency } from "./Latency";
 
-export default function Building({ onInsideChange, onWorldReady, sessionId }) {
-  const gltf = useGLTF("/api/model");
-
+export default function Building({ controlsRef, onInsideChange }) {
+  // Load GLTF building model from backend API
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const gltf = useGLTF(`${API_URL}/model`);
   const roofRef = useRef();
   const interiorRef = useRef();
   const triggerBoxes = useRef([]);  // <--- multiple boxes

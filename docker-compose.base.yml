@@ -1,4 +1,18 @@
+# Docker Compose Base Configuration
+# This file contains common configuration shared between dev and prod environments
+# 
+# Usage:
+#   Development: docker compose -f docker-compose.base.yml -f docker-compose.dev.yml up
+#   Production:  docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up
+#
+# Guidelines:
+#   - DO modify: ports, image versions, resource limits
+#   - DO NOT modify: service names, network names (breaks overrides)
+#   - Environment-specific config goes in dev/prod override files
+
 services:
+  # Database Service
+  # This is identical across all environments
   db:
     image: postgres:16-alpine
     container_name: sapi3d-db
@@ -18,6 +32,8 @@ services:
       timeout: 5s
       retries: 5
 
+  # Backend Service (Base Configuration)
+  # Override in dev/prod for environment-specific settings
   backend:
     build:
       context: ./backend
@@ -25,39 +41,31 @@ services:
     container_name: sapi3d-backend
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend/static:/app/static
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d
     depends_on:
       db:
         condition: service_healthy
     networks:
       - sapi3d-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    env_file:
-      - ./backend/.env
 
+  # Frontend Service (Base Configuration)
+  # Override in dev/prod for different build targets and commands
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: sapi3d-frontend
-    ports:
-      - "3000:80"
     depends_on:
       - backend
     networks:
       - sapi3d-network
 
+# Network Configuration
+# Shared across all environments
 networks:
   sapi3d-network:
     driver: bridge
 
+# Volume Configuration
+# Shared across all environments
 volumes:
-  models-data:
   postgres-data:
