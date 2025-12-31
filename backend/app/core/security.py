@@ -25,9 +25,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 # --- JWT TOKEN MANAGEMENT ---
-SECRET_KEY = settings.jwt_secret
-ALGORITHM = settings.jwt_algorithm
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.jwt_expire_minutes
+SECRET_KEY = settings.JWT_SECRET_KEY
+ALGORITHM = settings.JWT_ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:

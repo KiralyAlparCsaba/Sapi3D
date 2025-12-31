@@ -1,104 +1,99 @@
-import React, { useState } from "react";
-import "./App.css";
-import Navbar from "./components/Navbar";
-import Sidebar from "./components/Sidebar";
-import ThreeScene from "./components/three/ThreeScene";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Login from "./components/Login";
-import Register from "./components/Register";
+
+import Login from "./components/auth/Login";
+import Register from "./components/auth/Register";
+import LandingPage from "./components/auth/LandingPage";
+
+import ProtectedLayout from "./components/layout/ProtectedLayout";
+import ModelLayout from "./components/layout/ModelLayout";
+import AdminLayout from "./components/layout/AdminLayout";
+
+
+import HomePage from "./pages/HomePage";
+import EventsPage from "./pages/EventsPage";
+import LocationsPage from "./pages/LocationsPage";
+import ContactPage from "./pages/ContactPage";
+import AdminPage from "./pages/AdminPage";
+import ModelPage from "./pages/ModelPage";
+
+import { metricsCollector } from "./components/three/metricsCollector";
+import { weightedAverage } from "./components/three/weightedAverage";
 
 export default function App() {
-  return (
-    <Router>
-      <Routes>
-        {/* Főoldal – a mostani 3D modell UI */}
-        <Route path="/" element={<MainApp />} />
+  useEffect(() => {
+    function flushMetricsAndEndSession() {
+      const sessionId =
+        metricsCollector.sessionId || sessionStorage.getItem("session_id");
 
-        {/* Login és Register oldalak */}
+      if (!sessionId) return;
+
+      const samples = metricsCollector.getSamples?.() || [];
+
+      if (samples.length >= 2) {
+        const avgFps = weightedAverage(samples, "fps");
+        const avgMem = weightedAverage(samples, "memory_mb");
+        const avgLat = weightedAverage(samples, "latency_ms");
+
+        const payload = {
+          session_id: Number(sessionId),
+          fps: Math.round(avgFps),
+          memory_mb: Math.round(avgMem),
+          latency_ms: Math.round(avgLat),
+          timestamp: new Date().toISOString(),
+          cpu_gpu_usage: 0,
+        };
+
+        navigator.sendBeacon(
+          `/api/sessions/${sessionId}/metrics`,
+          new Blob([JSON.stringify(payload)], { type: "application/json" })
+        );
+      }
+
+      const endPayload = {
+        ended_at: new Date().toISOString(),
+      };
+
+      navigator.sendBeacon(
+        `/api/sessions/${sessionId}`,
+        new Blob([JSON.stringify(endPayload)], { type: "application/json" })
+      );
+
+      metricsCollector.clear();
+      sessionStorage.removeItem("session_id");
+    }
+
+    window.addEventListener("pagehide", flushMetricsAndEndSession);
+    return () =>
+      window.removeEventListener("pagehide", flushMetricsAndEndSession);
+  }, []);
+
+  return (
+    
+    <Router>
+      
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        <Route path="/app/model" element={<ModelLayout />}>
+          <Route index element={<ModelPage />} />
+        </Route>
+
+        <Route path="/app" element={<ProtectedLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="events" element={<EventsPage />} />
+          <Route path="locations" element={<LocationsPage />} />
+          <Route path="contact" element={<ContactPage />} />
+          
+          <Route element={<AdminLayout />}>
+            <Route path="admin" element={<AdminPage />} />
+          </Route>
+        </Route>
+        
       </Routes>
     </Router>
-  );
-}
-
-function MainApp() {
-  const [role, setRole] = useState(null); // null = nincs login, "user" vagy "admin"
-  const [activeMenu, setActiveMenu] = useState("home");
-
-  // Kilépés
-  const handleLogout = () => {
-    setRole(null);
-    setActiveMenu("home");
-  };
-
-  // Belépés
-  if (!role) {
-    return (
-      <div className="login-screen">
-        <h1>Login</h1>
-        <div>
-          <button className="btn user-btn" onClick={() => setRole("user")}>
-            Login as User
-          </button>
-          <button className="btn admin-btn" onClick={() => setRole("admin")}>
-            Login as Admin
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Minimal UI a 3D modell oldalhoz
-  if (activeMenu === "model") {
-    return (
-      <div className="model-container">
-        <ThreeScene />
-        <button className="back-btn" onClick={() => setActiveMenu("home")}>
-          ← Vissza
-        </button>
-      </div>
-    );
-  }
-
-  // Menü elemek
-  const menuItems = [
-    { key: "home", label: "Főoldal" },
-    { key: "model", label: "3D Modell" },
-    { key: "about", label: "Információk" },
-  ];
-  if (role === "admin") {
-    menuItems.push({ key: "admin", label: "Admin" });
-  }
-
-  // Oldal fő tartalom
-  const renderMainContent = () => {
-    switch (activeMenu) {
-      case "home":
-        return <p>Ez a főoldal tartalma.</p>;
-      case "about":
-        return <p>Itt lesznek az információk.</p>;
-      case "admin":
-        return role === "admin" ? (
-          <p>Itt lesz az admin oldal (pl. statisztikák, grafikonok).</p>
-        ) : null;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="app-container">
-      <Navbar />
-      <div className="content">
-        <main className="main-content">{renderMainContent()}</main>
-        <Sidebar
-          menuItems={menuItems}
-          activeMenu={activeMenu}
-          setActiveMenu={setActiveMenu}
-          handleLogout={handleLogout}
-        />
-      </div>
-    </div>
+    
   );
 }

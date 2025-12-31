@@ -10,6 +10,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "three": "^0.179.1"
+    "jwt-decode": "^4.0.0",
+    "react-toastify": "^11.0.5",
+    "three": "^0.179.1",
+    "three-mesh-bvh": "^0.9.1"
   }
 }

@@ -1,0 +1,73 @@
+/* -------- Alap reset -------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Linkek */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Gombok */
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  outline: none;
+  transition: background-color 0.2s ease;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Reszponzív tipográfia */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: bold;
+  line-height: 1.2;
+  margin-bottom: 0.5em;
+}
+
+p {
+  line-height: 1.5;
+  margin-bottom: 1em;
+}
+
+/* Konténer struktúra */
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --navbar-bg: #d2eed2;
+  --capsule-bg: #9fd19f;
+  --shadow-color: rgba(0, 120, 0, 0.15);
+}
+
+[data-theme="dark"] {
+  --bg-color: #031a03;
+  --text-color: #ffffff;
+  --navbar-bg: #052e05;
+  --capsule-bg: #155015;
+  --shadow-color: rgba(0, 255, 0, 0.12);
+}
+
+body {
+  background: var(--navbar-bg);
+  color: var(--text-color);
+}
+
