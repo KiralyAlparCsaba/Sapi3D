@@ -63,5 +63,7 @@ app.include_router(auth_router.router, tags=["Auth"])
 app.include_router(session_router.router, tags=["Sessions"])
 app.include_router(device_router)
 
+
+
 # Log application startup
 logger.info(f"Starting {settings.api_title} v{settings.api_version}")
