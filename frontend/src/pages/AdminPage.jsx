@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../services/api";
- // ⬅️ igazítsd a saját elérési utadra (pl. "../../api")
+ 
 
 function fmtDate(value) {
   if (!value) return "-";
@@ -42,7 +42,7 @@ export default function AdminPage() {
   // ───────── METRICS (SUMMARY + RAW) ─────────
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [summaryInfo, setSummaryInfo] = useState(""); // 404 -> "nincs elég minta"
+  const [summaryInfo, setSummaryInfo] = useState(""); 
   const [summaryError, setSummaryError] = useState("");
 
   const [showRaw, setShowRaw] = useState(false);
@@ -62,7 +62,7 @@ export default function AdminPage() {
   );
 
   const canPrevUsers = page > 1;
-  const canNextUsers = users.length === limit; // total nincs -> heur.
+  const canNextUsers = users.length === limit; 
 
   // ───────── LOADERS ─────────
   const resetSessionAndMetrics = () => {
@@ -193,7 +193,6 @@ export default function AdminPage() {
   // ───────── EFFECTS ─────────
   useEffect(() => {
     loadUsersPage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [limit, page]);
   console.log("ADMINPAGE LOADED - NEW VERSION");
 
@@ -475,7 +474,8 @@ const cardStyle = {
   border: "1px solid #ddd",
   borderRadius: 10,
   padding: 12,
-  background: "white",
+  background: "var(--bg-color)",
+  color: "var(--text-color)",
 };
 
 const thStyle = {
