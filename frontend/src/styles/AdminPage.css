@@ -1,0 +1,355 @@
+.admin-page {
+  padding: 20px;
+}
+
+.admin-page__title {
+  margin-top: 0;
+}
+
+.admin-page__grid {
+  display: grid;
+  grid-template-columns: 360px 1fr 420px;
+  gap: 16px;
+}
+
+.admin-card {
+  border: 1px solid #cfe2d3;
+  border-radius: 10px;
+  padding: 12px;
+  background: #eef9f1;
+  color: var(--text-color);
+  min-width: 0;
+}
+
+.admin-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-card__title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.admin-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-limit-label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.admin-search-input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+}
+
+.admin-status {
+  margin-top: 10px;
+}
+
+.admin-muted {
+  opacity: 0.75;
+}
+
+.admin-error {
+  color: crimson;
+}
+
+.admin-list {
+  margin-top: 10px;
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid #d5e8d9;
+  background: #f4fcf6;
+}
+
+.admin-user-item {
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.admin-user-item.is-selected {
+  background: #f3f6ff;
+}
+
+.admin-user-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-user-role {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.admin-user-email {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.admin-user-id {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.admin-empty {
+  padding: 10px;
+  opacity: 0.7;
+}
+
+.admin-table-wrap {
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.admin-table-wrap--small {
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid #d5e8d9;
+  background: #f4fcf6;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th {
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  padding: 8px 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.admin-table td {
+  border-bottom: 1px solid #eee;
+  padding: 8px 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.admin-table tbody tr {
+  cursor: pointer;
+}
+
+.admin-table tbody tr.is-selected {
+  background: #f3f6ff;
+}
+
+.admin-table--small th,
+.admin-table--small td {
+  font-size: 12px;
+  padding: 6px;
+}
+
+.admin-detail-box {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #d5e8d9;
+  background: #f3fbf5;
+}
+
+.admin-metrics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.admin-metrics-title {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+}
+
+.admin-metrics-meta {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #d8dfda;
+  background: #f7faf8;
+  color: #1f2d21;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-metrics-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.admin-metric-card {
+  border: 1px solid #cfe2d3;
+  background: linear-gradient(180deg, #f7fdf8 0%, #eff9f1 100%);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 10px rgba(39, 89, 52, 0.08);
+}
+
+.admin-metric-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #dcecdf;
+}
+
+.admin-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.admin-metric-stat {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d7eadb;
+  background: #f2fbf4;
+}
+
+.admin-metric-label {
+  font-size: 10px;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  color: #44614b;
+  font-weight: 700;
+}
+
+.admin-metric-value {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  color: #173821;
+}
+
+.admin-metric-value--time {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+}
+
+[data-theme="dark"] .admin-page {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .admin-card {
+  background: #0b230f;
+  border-color: #2f4a34;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .admin-list,
+[data-theme="dark"] .admin-table-wrap--small,
+[data-theme="dark"] .admin-detail-box {
+  background: #0f2a14;
+  border-color: #2f4a34;
+}
+
+[data-theme="dark"] .admin-user-item {
+  border-bottom-color: #29442e;
+}
+
+[data-theme="dark"] .admin-user-item.is-selected,
+[data-theme="dark"] .admin-table tbody tr.is-selected {
+  background: #1f3f27;
+}
+
+[data-theme="dark"] .admin-table th,
+[data-theme="dark"] .admin-table td {
+  border-bottom-color: #29442e;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .admin-user-role,
+[data-theme="dark"] .admin-user-email,
+[data-theme="dark"] .admin-user-id,
+[data-theme="dark"] .admin-muted {
+  color: #d7e8db;
+  opacity: 1;
+}
+
+[data-theme="dark"] .admin-search-input,
+[data-theme="dark"] .admin-limit-label select {
+  background: #16301c;
+  color: #ffffff;
+  border: 1px solid #35533a;
+}
+
+[data-theme="dark"] .admin-page button {
+  background: #1d3d24;
+  color: #ffffff;
+  border: 1px solid #35533a;
+}
+
+[data-theme="dark"] .admin-page button:hover:not(:disabled) {
+  background: #285430;
+}
+
+[data-theme="dark"] .admin-error {
+  color: #ff9f9f;
+}
+
+[data-theme="dark"] .admin-pill {
+  background: #16301c;
+  border-color: #35533a;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .admin-metric-card {
+  border-color: #2f4a34;
+  background: #0f2a14;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .admin-metric-row {
+  border-bottom-color: #29442e;
+}
+
+[data-theme="dark"] .admin-metric-stat {
+  border-color: #29442e;
+  background: #14341b;
+}
+
+[data-theme="dark"] .admin-metric-label {
+  color: #b8d4bf;
+}
+
+[data-theme="dark"] .admin-metric-value {
+  color: #ffffff;
+}
+
+@media (max-width: 1300px) {
+  .admin-page__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-metric-grid {
+    grid-template-columns: 1fr;
+  }
+}

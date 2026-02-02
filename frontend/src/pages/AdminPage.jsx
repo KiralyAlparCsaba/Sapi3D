@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../services/api";
+import "../styles/AdminPage.css";
  
 
 function fmtDate(value) {
@@ -10,6 +11,10 @@ function fmtDate(value) {
 }
 
 export default function AdminPage() {
+  const usersRequestRef = useRef(0);
+  const sessionsRequestRef = useRef(0);
+  const rawRequestRef = useRef(0);
+
   // ───────── USERS ─────────
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -39,13 +44,7 @@ export default function AdminPage() {
 
   const [selectedSessionId, setSelectedSessionId] = useState(null);
 
-  // ───────── METRICS (SUMMARY + RAW) ─────────
-  const [summary, setSummary] = useState(null);
-  const [summaryLoading, setSummaryLoading] = useState(false);
-  const [summaryInfo, setSummaryInfo] = useState(""); 
-  const [summaryError, setSummaryError] = useState("");
-
-  const [showRaw, setShowRaw] = useState(false);
+  // ───────── METRICS (RAW) ─────────
   const [rawMetrics, setRawMetrics] = useState(null);
   const [rawLoading, setRawLoading] = useState(false);
   const [rawError, setRawError] = useState("");
@@ -66,36 +65,41 @@ export default function AdminPage() {
 
   // ───────── LOADERS ─────────
   const resetSessionAndMetrics = () => {
+    rawRequestRef.current += 1;
     setSessions([]);
     setSelectedSessionId(null);
-    setSummary(null);
-    setSummaryInfo("");
-    setSummaryError("");
-    setShowRaw(false);
     setRawMetrics(null);
+    setRawLoading(false);
     setRawError("");
   };
 
   const loadUsersPage = async () => {
+    const requestId = ++usersRequestRef.current;
     setUsersLoading(true);
     setUsersError("");
     try {
       const res = await api.get(`/users/?skip=${skip}&limit=${limit}`);
+      if (usersRequestRef.current !== requestId) return;
       setUsers(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
+      if (usersRequestRef.current !== requestId) return;
       const msg = e?.response?.data?.detail || e?.message || "Nem sikerült betölteni a felhasználókat.";
       setUsersError(msg);
       setUsers([]);
     } finally {
+      if (usersRequestRef.current !== requestId) return;
       setUsersLoading(false);
     }
   };
 
   const loadAllUsers = async () => {
+    const requestId = ++usersRequestRef.current;
     setUsersLoading(true);
     setUsersError("");
     setSearch("");
     setSelectedUserId(null);
+    sessionsRequestRef.current += 1;
+    setSessionsLoading(false);
     resetSessionAndMetrics();
 
     const all = [];
@@ -104,6 +108,7 @@ export default function AdminPage() {
     try {
       while (true) {
         const res = await api.get(`/users/?skip=${localSkip}&limit=${limit}`);
+        if (usersRequestRef.current !== requestId) return;
         const batch = Array.isArray(res.data) ? res.data : [];
         if (batch.length === 0) break;
 
@@ -112,80 +117,59 @@ export default function AdminPage() {
         if (batch.length < limit) break;
         localSkip += limit;
       }
+      if (usersRequestRef.current !== requestId) return;
       setUsers(all);
-      setPage(1);
     } catch (e) {
+      if (usersRequestRef.current !== requestId) return;
       const msg = e?.response?.data?.detail || e?.message || "Nem sikerült betölteni az összes felhasználót.";
       setUsersError(msg);
       setUsers(all);
     } finally {
+      if (usersRequestRef.current !== requestId) return;
       setUsersLoading(false);
     }
   };
 
   const loadSessionsForUser = async (userId) => {
     if (!userId) return;
+    const requestId = ++sessionsRequestRef.current;
     setSessionsLoading(true);
     setSessionsError("");
     resetSessionAndMetrics();
 
     try {
       const res = await api.get(`/sessions/?user_id=${userId}`);
+      if (sessionsRequestRef.current !== requestId) return;
       setSessions(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
+      if (sessionsRequestRef.current !== requestId) return;
       const msg = e?.response?.data?.detail || e?.message || "Nem sikerült betölteni a sessionöket.";
       setSessionsError(msg);
       setSessions([]);
     } finally {
+      if (sessionsRequestRef.current !== requestId) return;
       setSessionsLoading(false);
-    }
-  };
-
-  const loadSummaryForSession = async (sessionId) => {
-    if (!sessionId) return;
-
-    setSummary(null);
-    setSummaryLoading(true);
-    setSummaryInfo("");
-    setSummaryError("");
-
-    setShowRaw(false);
-    setRawMetrics(null);
-    setRawError("");
-
-    try {
-      const res = await api.get(`/sessions/${sessionId}/metrics/summary`);
-      setSummary(res.data);
-    } catch (e) {
-      const status = e?.response?.status;
-      const detail = e?.response?.data?.detail;
-
-      if (status === 404) {
-        setSummaryInfo("Ehhez a sessionhöz nincs elég mérés összesítéshez (summary).");
-      } else {
-        setSummaryError(detail || e?.message || "Nem sikerült betölteni a metrics summary-t.");
-      }
-    } finally {
-      setSummaryLoading(false);
     }
   };
 
   const loadRawMetrics = async (sessionId) => {
     if (!sessionId) return;
+    const requestId = ++rawRequestRef.current;
     setRawLoading(true);
     setRawError("");
     setRawMetrics(null);
 
     try {
       const res = await api.get(`/sessions/${sessionId}/metrics`);
+      if (rawRequestRef.current !== requestId) return;
       setRawMetrics(Array.isArray(res.data) ? res.data : []);
-      setShowRaw(true);
     } catch (e) {
+      if (rawRequestRef.current !== requestId) return;
       const msg = e?.response?.data?.detail || e?.message || "Nem sikerült betölteni a mintákat.";
       setRawError(msg);
       setRawMetrics([]);
-      setShowRaw(true);
     } finally {
+      if (rawRequestRef.current !== requestId) return;
       setRawLoading(false);
     }
   };
@@ -194,25 +178,24 @@ export default function AdminPage() {
   useEffect(() => {
     loadUsersPage();
   }, [limit, page]);
-  console.log("ADMINPAGE LOADED - NEW VERSION");
 
   // ───────── UI ─────────
   return (
-    <div style={{ padding: 20 }}>
-      <h1 style={{ marginTop: 0 }}>Admin – Sessions & Metrics</h1>
+    <div className="admin-page">
+      <h1 className="admin-page__title">Admin – Sessions & Metrics</h1>
 
-      <div style={{ display: "grid", gridTemplateColumns: "360px 1fr 420px", gap: 16 }}>
+      <div className="admin-page__grid">
         {/* ───────── LEFT: USERS ───────── */}
-        <section style={cardStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-            <h2 style={{ margin: 0, fontSize: 18 }}>Felhasználók</h2>
+        <section className="admin-card">
+          <div className="admin-card__header">
+            <h2 className="admin-card__title">Felhasználók</h2>
             <button onClick={loadUsersPage} disabled={usersLoading}>
               Frissítés
             </button>
           </div>
 
-          <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-            <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <div className="admin-controls">
+            <label className="admin-limit-label">
               Limit:
               <select
                 value={limit}
@@ -246,17 +229,17 @@ export default function AdminPage() {
           </div>
 
           <input
-            style={{ width: "100%", marginTop: 10, padding: 8 }}
+            className="admin-search-input"
             placeholder="Keresés (username / email)…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          {usersLoading && <p style={{ marginTop: 10 }}>Betöltés…</p>}
-          {usersError && <p style={{ marginTop: 10, color: "crimson" }}>{usersError}</p>}
+          {usersLoading && <p className="admin-status">Betöltés…</p>}
+          {usersError && <p className="admin-status admin-error">{usersError}</p>}
 
           {!usersLoading && !usersError && (
-            <div style={{ marginTop: 10, maxHeight: 520, overflow: "auto", border: "1px solid #ddd" }}>
+            <div className="admin-list">
               {filteredUsers.map((u) => {
                 const isSelected = Number(selectedUserId) === u.user_id;
                 return (
@@ -266,31 +249,26 @@ export default function AdminPage() {
                       setSelectedUserId(u.user_id);
                       loadSessionsForUser(u.user_id);
                     }}
-                    style={{
-                      padding: 10,
-                      cursor: "pointer",
-                      borderBottom: "1px solid #eee",
-                      background: isSelected ? "#f3f6ff" : "transparent",
-                    }}
+                    className={`admin-user-item${isSelected ? " is-selected" : ""}`}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                    <div className="admin-user-head">
                       <strong>{u.username}</strong>
-                      <span style={{ fontSize: 12, opacity: 0.75 }}>{u.role_id === 2 ? "ADMIN" : "USER"}</span>
+                      <span className="admin-user-role">{u.role_id === 2 ? "ADMIN" : "USER"}</span>
                     </div>
-                    <div style={{ fontSize: 12, opacity: 0.8 }}>{u.email}</div>
-                    <div style={{ fontSize: 12, opacity: 0.65 }}>ID: {u.user_id}</div>
+                    <div className="admin-user-email">{u.email}</div>
+                    <div className="admin-user-id">ID: {u.user_id}</div>
                   </div>
                 );
               })}
-              {filteredUsers.length === 0 && <div style={{ padding: 10, opacity: 0.7 }}>Nincs találat</div>}
+              {filteredUsers.length === 0 && <div className="admin-empty">Nincs találat</div>}
             </div>
           )}
         </section>
 
         {/* ───────── MIDDLE: SESSIONS ───────── */}
-        <section style={cardStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-            <h2 style={{ margin: 0, fontSize: 18 }}>
+        <section className="admin-card">
+          <div className="admin-card__header">
+            <h2 className="admin-card__title">
               Sessionök {selectedUser ? `– ${selectedUser.username} (ID: ${selectedUser.user_id})` : ""}
             </h2>
             <button onClick={() => selectedUserId && loadSessionsForUser(selectedUserId)} disabled={!selectedUserId || sessionsLoading}>
@@ -298,17 +276,17 @@ export default function AdminPage() {
             </button>
           </div>
 
-          {!selectedUserId && <p style={{ marginTop: 10, opacity: 0.75 }}>Válassz egy felhasználót bal oldalt.</p>}
-          {sessionsLoading && <p style={{ marginTop: 10 }}>Betöltés…</p>}
-          {sessionsError && <p style={{ marginTop: 10, color: "crimson" }}>{sessionsError}</p>}
+          {!selectedUserId && <p className="admin-status admin-muted">Válassz egy felhasználót bal oldalt.</p>}
+          {sessionsLoading && <p className="admin-status">Betöltés…</p>}
+          {sessionsError && <p className="admin-status admin-error">{sessionsError}</p>}
 
           {!sessionsLoading && !sessionsError && selectedUserId && (
-            <div style={{ marginTop: 10, overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className="admin-table-wrap">
+              <table className="admin-table">
                 <thead>
                   <tr>
                     {["Session ID", "Státusz", "Started", "Ended", "Device", "App ver."].map((h) => (
-                      <th key={h} style={thStyle}>{h}</th>
+                      <th key={h}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -320,27 +298,24 @@ export default function AdminPage() {
                     return (
                       <tr
                         key={s.session_id}
-                        style={{
-                          background: isSelected ? "#f3f6ff" : "transparent",
-                          cursor: "pointer",
-                        }}
+                        className={isSelected ? "is-selected" : ""}
                         onClick={() => {
                           setSelectedSessionId(s.session_id);
-                          loadSummaryForSession(s.session_id);
+                          loadRawMetrics(s.session_id);
                         }}
                       >
-                        <td style={tdStyle}>{s.session_id}</td>
-                        <td style={tdStyle}>{isActive ? "🟢 Aktív" : "⚪ Lezárt"}</td>
-                        <td style={tdStyle}>{fmtDate(s.started_at)}</td>
-                        <td style={tdStyle}>{fmtDate(s.ended_at)}</td>
-                        <td style={tdStyle}>{s.device_type ?? "-"}</td>
-                        <td style={tdStyle}>{s.app_version ?? "-"}</td>
+                        <td>{s.session_id}</td>
+                        <td>{isActive ? "🟢 Aktív" : "⚪ Lezárt"}</td>
+                        <td>{fmtDate(s.started_at)}</td>
+                        <td>{fmtDate(s.ended_at)}</td>
+                        <td>{s.device_type ?? "-"}</td>
+                        <td>{s.app_version ?? "-"}</td>
                       </tr>
                     );
                   })}
                   {sessions.length === 0 && (
                     <tr>
-                      <td style={tdStyle} colSpan={6}>
+                      <td colSpan={6}>
                         Nincs session ehhez a felhasználóhoz.
                       </td>
                     </tr>
@@ -352,18 +327,15 @@ export default function AdminPage() {
         </section>
 
         {/* ───────── RIGHT: METRICS ───────── */}
-        <section style={cardStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-            <h2 style={{ margin: 0, fontSize: 18 }}>Session részletek</h2>
-            <button onClick={() => selectedSessionId && loadSummaryForSession(selectedSessionId)} disabled={!selectedSessionId || summaryLoading}>
-              Summary frissítés
-            </button>
+        <section className="admin-card">
+          <div className="admin-card__header">
+            <h2 className="admin-card__title">Session részletek</h2>
           </div>
 
-          {!selectedSessionId && <p style={{ marginTop: 10, opacity: 0.75 }}>Kattints egy sessionre a táblázatban.</p>}
+          {!selectedSessionId && <p className="admin-status admin-muted">Kattints egy sessionre a táblázatban.</p>}
 
           {selectedSession && (
-            <div style={{ marginTop: 10, padding: 10, border: "1px solid #ddd" }}>
+            <div className="admin-detail-box">
               <div><strong>Session ID:</strong> {selectedSession.session_id}</div>
               <div><strong>User ID:</strong> {selectedSession.user_id}</div>
               <div><strong>Started:</strong> {fmtDate(selectedSession.started_at)}</div>
@@ -375,84 +347,53 @@ export default function AdminPage() {
 
           {selectedSessionId && (
             <>
-              <h3 style={{ marginTop: 16, marginBottom: 8 }}>Metrics summary</h3>
-
-              {summaryLoading && <p>Betöltés…</p>}
-
-              {!summaryLoading && summary && (
-                <div style={{ padding: 10, border: "1px solid #ddd" }}>
-                  <div style={kvRow}><span>Avg FPS</span><strong>{toFixedSafe(summary.avg_fps, 1)}</strong></div>
-                  <div style={kvRow}><span>Min FPS</span><strong>{summary.min_fps}</strong></div>
-                  <div style={kvRow}><span>Max FPS</span><strong>{summary.max_fps}</strong></div>
-                  <hr />
-                  <div style={kvRow}><span>Avg memory (MB)</span><strong>{toFixedSafe(summary.avg_memory_mb, 1)}</strong></div>
-                  <div style={kvRow}><span>Avg latency (ms)</span><strong>{toFixedSafe(summary.avg_latency_ms, 1)}</strong></div>
-                  <div style={kvRow}><span>Avg CPU/GPU usage</span><strong>{toFixedSafe(summary.avg_cpu_gpu_usage, 1)}</strong></div>
-                  <hr />
-                  <div style={kvRow}><span>Total samples</span><strong>{summary.total_samples}</strong></div>
-                </div>
-              )}
-
-              {!summaryLoading && !summary && summaryInfo && (
-                <div style={{ padding: 10, border: "1px solid #ddd", background: "#fff8e6" }}>
-                  <strong>Info:</strong> {summaryInfo}
-                </div>
-              )}
-
-              {!summaryLoading && !summary && summaryError && (
-                <div style={{ padding: 10, border: "1px solid #ddd", background: "#ffecec" }}>
-                  <strong>Hiba:</strong> {summaryError}
-                </div>
-              )}
-
-              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <div className="admin-metrics-header">
+                <h3 className="admin-metrics-title">Minták</h3>
                 <button onClick={() => selectedSessionId && loadRawMetrics(selectedSessionId)} disabled={!selectedSessionId || rawLoading}>
-                  Mutasd a mintákat
+                  Frissítés
                 </button>
-                {showRaw && (
-                  <button
-                    onClick={() => {
-                      setShowRaw(false);
-                      setRawMetrics(null);
-                      setRawError("");
-                    }}
-                  >
-                    Elrejtés
-                  </button>
-                )}
               </div>
 
-              {rawLoading && <p style={{ marginTop: 10 }}>Minták betöltése…</p>}
-              {showRaw && rawError && <p style={{ marginTop: 10, color: "crimson" }}>{rawError}</p>}
+              <div className="admin-metrics-meta">
+                <span className="admin-pill">Session: #{selectedSessionId}</span>
+              </div>
 
-              {showRaw && rawMetrics && (
-                <div style={{ marginTop: 10, maxHeight: 240, overflow: "auto", border: "1px solid #ddd" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr>
-                        {["Time", "FPS", "Mem (MB)", "Latency (ms)", "CPU/GPU", "ID"].map((h) => (
-                          <th key={h} style={thStyleSmall}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rawMetrics.map((m) => (
-                        <tr key={m.metrics_id}>
-                          <td style={tdStyleSmall}>{fmtDate(m.timestamp)}</td>
-                          <td style={tdStyleSmall}>{m.fps}</td>
-                          <td style={tdStyleSmall}>{m.memory_mb}</td>
-                          <td style={tdStyleSmall}>{m.latency_ms}</td>
-                          <td style={tdStyleSmall}>{m.cpu_gpu_usage}</td>
-                          <td style={tdStyleSmall}>{m.metrics_id}</td>
-                        </tr>
-                      ))}
-                      {rawMetrics.length === 0 && (
-                        <tr>
-                          <td style={tdStyleSmall} colSpan={6}>Nincs minta ehhez a sessionhöz.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+              {rawLoading && <p className="admin-status">Minták betöltése...</p>}
+              {rawError && <p className="admin-status admin-error">{rawError}</p>}
+
+              {rawMetrics && (
+                <div className="admin-metrics-list">
+                  {rawMetrics.map((m) => (
+                    <article key={m.metrics_id} className="admin-metric-card">
+                      <div className="admin-metric-row">
+                        <span className="admin-metric-label">Időpont</span>
+                        <span className="admin-metric-value admin-metric-value--time">{fmtDate(m.timestamp)}</span>
+                      </div>
+                      <div className="admin-metric-grid">
+                        <div className="admin-metric-stat">
+                          <span className="admin-metric-label">FPS</span>
+                          <strong className="admin-metric-value">{m.fps}</strong>
+                        </div>
+                        <div className="admin-metric-stat">
+                          <span className="admin-metric-label">Memoria (MB)</span>
+                          <strong className="admin-metric-value">{m.memory_mb}</strong>
+                        </div>
+                        <div className="admin-metric-stat">
+                          <span className="admin-metric-label">Latency (ms)</span>
+                          <strong className="admin-metric-value">{m.latency_ms}</strong>
+                        </div>
+                        <div className="admin-metric-stat">
+                          <span className="admin-metric-label">CPU/GPU</span>
+                          <strong className="admin-metric-value">{m.cpu_gpu_usage}</strong>
+                        </div>
+                        <div className="admin-metric-stat">
+                          <span className="admin-metric-label">ID</span>
+                          <strong className="admin-metric-value">{m.metrics_id}</strong>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                  {rawMetrics.length === 0 && <div className="admin-empty">Nincs minta ehhez a sessionhöz.</div>}
                 </div>
               )}
             </>
@@ -462,52 +403,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-function toFixedSafe(v, digits = 1) {
-  if (v === null || v === undefined) return "-";
-  const n = Number(v);
-  if (Number.isNaN(n)) return String(v);
-  return n.toFixed(digits);
-}
-
-const cardStyle = {
-  border: "1px solid #ddd",
-  borderRadius: 10,
-  padding: 12,
-  background: "var(--bg-color)",
-  color: "var(--text-color)",
-};
-
-const thStyle = {
-  textAlign: "left",
-  borderBottom: "1px solid #ddd",
-  padding: "8px 6px",
-  fontSize: 13,
-  whiteSpace: "nowrap",
-};
-
-const tdStyle = {
-  borderBottom: "1px solid #eee",
-  padding: "8px 6px",
-  fontSize: 13,
-  whiteSpace: "nowrap",
-};
-
-const thStyleSmall = {
-  ...thStyle,
-  fontSize: 12,
-  padding: "6px 6px",
-};
-
-const tdStyleSmall = {
-  ...tdStyle,
-  fontSize: 12,
-  padding: "6px 6px",
-};
-
-const kvRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 10,
-  padding: "4px 0",
-};
