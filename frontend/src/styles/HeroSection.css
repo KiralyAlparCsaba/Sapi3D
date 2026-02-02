@@ -26,20 +26,21 @@
   top: 60px;
   left: 60px;
   color: white;
-  font-size: 36px;
+  font-size: clamp(24px, 3vw, 36px);
   font-weight: 700;
   text-shadow: 0 3px 10px rgba(0,0,0,0.6);
 }
 
 .hero-text-right {
   position: absolute;
-  top: 400px;
+  bottom: 120px; 
   right: 60px;
   color: white;
-  font-size: 30px;
+  font-size: clamp(20px, 2.5vw, 30px);
   font-weight: 700;
   text-align: right;
   text-shadow: 0 3px 10px rgba(0,0,0,0.6);
+  max-width: 50%; 
 }
 
 .hero-button {
@@ -47,11 +48,12 @@
   right: 60px;
   bottom: 40px;
   background: var(--capsule-bg);
-  padding: 18px 40px;
+  padding: 1.2em 2.5em; 
   border-radius: 40px;
-  font-size: 20px;
+  font-size: clamp(16px, 1.5vw, 20px);
   font-weight: 700;
   transition: 0.5s ease;
+  white-space: nowrap; 
 }
 
 .hero-button:hover {
