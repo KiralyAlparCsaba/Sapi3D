@@ -73,6 +73,118 @@ docker compose -f docker-compose.dev.yml up --build -d
 docker compose -f docker-compose.prod.yml up --build -d
 ```
 
+## Mobile Testing
+
+### Quick Start for Mobile Development
+
+The application includes full mobile support with touch controls (dual joysticks for movement and camera control). To test on mobile devices:
+
+```bash
+# Start mobile development mode
+./run_mobile_dev.sh
+
+# Stop mobile development mode
+./stop_mobile_dev.sh
+```
+
+### What `run_mobile_dev.sh` Does
+
+1. **Starts backend services** (database + API) with Docker
+2. **Starts frontend** with Vite in network-exposed mode (`--host` flag)
+3. **Auto-detects your local IP** address
+4. **Displays mobile access URL** and QR code (if `qrencode` is installed)
+5. **Keeps services running** until you press Ctrl+C
+
+### Mobile Testing Workflow
+
+1. **Start the mobile dev environment**:
+   ```bash
+   ./run_mobile_dev.sh
+   ```
+
+2. **Connect your mobile device** to the same WiFi network as your computer
+
+3. **Access the app** on your mobile device:
+   - The script will display your local IP (e.g., `http://192.168.1.100:5173`)
+   - Open this URL in your mobile browser
+   - Or scan the QR code if displayed
+
+4. **Test mobile features**:
+   - Dual joystick controls (movement + camera)
+   - Touch interactions
+   - Performance on mobile hardware
+   - Responsive UI elements
+
+5. **Stop services** when done:
+   - Press `Ctrl+C` in the terminal (auto-cleanup)
+   - Or run `./stop_mobile_dev.sh` in another terminal
+
+### Mobile-Specific Features
+
+The app automatically detects mobile devices and provides:
+
+- **Dual Joystick Controls**:
+  - Right joystick: Movement (WASD equivalent)
+  - Left joystick: Camera look (mouse equivalent)
+- **Touch-optimized UI**: Larger touch targets
+- **Adjusted movement speed**: Optimized for mobile controls
+- **Mobile-specific camera controls**: Custom PointerLock alternative
+
+### Troubleshooting Mobile Testing
+
+#### Cannot Access from Mobile Device
+
+**Problem**: Mobile device can't reach the app
+
+**Solutions**:
+1. Ensure both devices are on the same WiFi network
+2. Check firewall settings on your computer
+3. Verify the IP address is correct: `ip addr` (Linux) or `ipconfig` (Windows)
+4. Try accessing the backend directly: `http://YOUR_IP:8000/health`
+
+#### QR Code Not Showing
+
+**Problem**: No QR code displayed in terminal
+
+**Solution**: Install `qrencode`
+```bash
+# Ubuntu/Debian
+sudo apt install qrencode
+
+# macOS
+brew install qrencode
+```
+
+#### Mobile Controls Not Working
+
+**Problem**: Joysticks not appearing or not responding
+
+**Solutions**:
+1. Check browser console for errors (use remote debugging)
+2. Ensure device is detected as mobile (check User-Agent)
+3. Try refreshing the page
+4. Clear browser cache on mobile device
+
+#### Backend API Not Accessible from Mobile
+
+**Problem**: Frontend loads but API calls fail
+
+**Solution**: Update API base URL in `frontend/src/services/api.js` to use your local IP instead of `localhost`
+
+### Optional: QR Code for Easy Access
+
+Install `qrencode` to get automatic QR code generation:
+
+```bash
+# Ubuntu/Debian
+sudo apt install qrencode
+
+# macOS
+brew install qrencode
+```
+
+The script will automatically display a QR code you can scan with your phone's camera.
+
 ## Backend Development
 
 ### Project Structure
