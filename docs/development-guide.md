@@ -80,26 +80,26 @@ docker compose -f docker-compose.prod.yml up --build -d
 The application includes full mobile support with touch controls (dual joysticks for movement and camera control). To test on mobile devices:
 
 ```bash
-# Start mobile development mode
-./run_mobile_dev.sh
+# Start mobile development mode with network access
+./run_dev.sh --mobile
 
-# Stop mobile development mode
-./stop_mobile_dev.sh
+# Stop services (same as normal dev mode)
+./stop_dev.sh
 ```
 
-### What `run_mobile_dev.sh` Does
+### What `--mobile` Flag Does
 
-1. **Starts backend services** (database + API) with Docker
-2. **Starts frontend** with Vite in network-exposed mode (`--host` flag)
-3. **Auto-detects your local IP** address
-4. **Displays mobile access URL** and QR code (if `qrencode` is installed)
-5. **Keeps services running** until you press Ctrl+C
+1. **Starts all services** (database, backend, frontend) in Docker containers
+2. **Auto-detects your local IP** address
+3. **Displays mobile access URLs** with your local IP
+4. **Generates QR code** for easy mobile access (from frontend container)
+5. **Fully containerized** - no host dependencies required
 
 ### Mobile Testing Workflow
 
 1. **Start the mobile dev environment**:
    ```bash
-   ./run_mobile_dev.sh
+   ./run_dev.sh --mobile
    ```
 
 2. **Connect your mobile device** to the same WiFi network as your computer
@@ -107,7 +107,7 @@ The application includes full mobile support with touch controls (dual joysticks
 3. **Access the app** on your mobile device:
    - The script will display your local IP (e.g., `http://192.168.1.100:5173`)
    - Open this URL in your mobile browser
-   - Or scan the QR code if displayed
+   - Or scan the QR code displayed in the terminal
 
 4. **Test mobile features**:
    - Dual joystick controls (movement + camera)
@@ -116,8 +116,9 @@ The application includes full mobile support with touch controls (dual joysticks
    - Responsive UI elements
 
 5. **Stop services** when done:
-   - Press `Ctrl+C` in the terminal (auto-cleanup)
-   - Or run `./stop_mobile_dev.sh` in another terminal
+   ```bash
+   ./stop_dev.sh
+   ```
 
 ### Mobile-Specific Features
 
