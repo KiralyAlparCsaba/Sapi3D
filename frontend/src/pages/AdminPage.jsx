@@ -41,13 +41,37 @@ export default function AdminPage() {
   const [sessions, setSessions] = useState([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessionsError, setSessionsError] = useState("");
-
   const [selectedSessionId, setSelectedSessionId] = useState(null);
 
   // ───────── METRICS (RAW) ─────────
   const [rawMetrics, setRawMetrics] = useState(null);
   const [rawLoading, setRawLoading] = useState(false);
   const [rawError, setRawError] = useState("");
+
+  // ───────── USER ADMIN ACTIONS ─────────
+const [userActionLoading, setUserActionLoading] = useState(false);
+const [userActionError, setUserActionError] = useState("");
+const [userActionSuccess, setUserActionSuccess] = useState("");
+
+const [editOpen, setEditOpen] = useState(false);
+const [editForm, setEditForm] = useState({ username: "", email: "", role_id: 1 });
+
+const openEditSelectedUser = () => {
+  if (!selectedUser) return;
+  setUserActionError("");
+  setUserActionSuccess("");
+  setEditForm({
+    username: selectedUser.username ?? "",
+    email: selectedUser.email ?? "",
+    role_id: selectedUser.role_id ?? 1,
+  });
+  setEditOpen(true);
+};
+
+const closeEdit = () => {
+  setEditOpen(false);
+};
+
 
   // ───────── DERIVED ─────────
   const selectedUser = useMemo(
@@ -83,7 +107,7 @@ export default function AdminPage() {
       setUsers(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       if (usersRequestRef.current !== requestId) return;
-      const msg = e?.response?.data?.detail || e?.message || "Nem sikerült betölteni a felhasználókat.";
+      const msg = "Failed to load users.";
       setUsersError(msg);
       setUsers([]);
     } finally {
@@ -121,7 +145,7 @@ export default function AdminPage() {
       setUsers(all);
     } catch (e) {
       if (usersRequestRef.current !== requestId) return;
-      const msg = e?.response?.data?.detail || e?.message || "Nem sikerült betölteni az összes felhasználót.";
+      const msg = "Failed to load all users.";
       setUsersError(msg);
       setUsers(all);
     } finally {
@@ -143,7 +167,7 @@ export default function AdminPage() {
       setSessions(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       if (sessionsRequestRef.current !== requestId) return;
-      const msg = e?.response?.data?.detail || e?.message || "Nem sikerült betölteni a sessionöket.";
+      const msg = "Failed to load sessions.";
       setSessionsError(msg);
       setSessions([]);
     } finally {
@@ -165,7 +189,7 @@ export default function AdminPage() {
       setRawMetrics(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       if (rawRequestRef.current !== requestId) return;
-      const msg = e?.response?.data?.detail || e?.message || "Nem sikerült betölteni a mintákat.";
+      const msg = "Failed to load metrics samples.";
       setRawError(msg);
       setRawMetrics([]);
     } finally {
@@ -174,6 +198,87 @@ export default function AdminPage() {
     }
   };
 
+const deleteSelectedUser = async () => {
+  if (!selectedUserId) return;
+
+  const ok = window.confirm(`Biztos törlöd ezt a felhasználót? (ID: ${selectedUserId})`);
+  if (!ok) return;
+
+  setUserActionLoading(true);
+  setUserActionError("");
+  setUserActionSuccess("");
+
+  try {
+    await api.delete(`/users/${selectedUserId}`); // DELETE /users/{user_id}
+
+    // tűnjön el a listából
+    setUsers((prev) => prev.filter((u) => u.user_id !== Number(selectedUserId)));
+
+    // reset jobb oldali dolgok
+    setSelectedUserId(null);
+    sessionsRequestRef.current += 1;
+    rawRequestRef.current += 1;
+    setSessions([]);
+    setSelectedSessionId(null);
+    setRawMetrics(null);
+
+    setUserActionSuccess("Felhasználó törölve.");
+  } catch (e) {
+    setUserActionError(e?.response?.data?.detail || "Failed to delete user.");
+  } finally {
+    setUserActionLoading(false);
+  }
+};
+
+const saveSelectedUserEdit = async () => {
+  if (!selectedUser) return;
+
+  const nextUsername = editForm.username.trim();
+  const nextEmail = editForm.email.trim();
+  const nextRoleId = Number(editForm.role_id);
+
+  if (!nextUsername) {
+    setUserActionError("A felhasználónév nem lehet üres.");
+    return;
+  }
+  if (!nextEmail) {
+    setUserActionError("Az e-mail nem lehet üres.");
+    return;
+  }
+
+  setUserActionLoading(true);
+  setUserActionError("");
+  setUserActionSuccess("");
+
+  try {
+    // ProfilPage mintájára: kell role_id, és avatar_url marad a meglévőből
+    const payload = {
+      username: nextUsername,
+      email: nextEmail,
+      avatar_url: selectedUser.avatar_url || "", // admin nem szerkeszti, csak továbbküldi
+      role_id: nextRoleId,
+    };
+
+    const res = await api.put(`/users/${selectedUser.user_id}`, payload);
+
+    // ha backend res.data.user-t küld
+    const updated = res.data?.user ? res.data.user : payload;
+
+    // frissítsük a users listában is
+    setUsers((prev) =>
+      prev.map((u) => (u.user_id === selectedUser.user_id ? { ...u, ...updated } : u))
+    );
+
+    setEditOpen(false);
+    setUserActionSuccess("Sikeresen mentve.");
+  } catch (e) {
+    setUserActionError(e?.response?.data?.detail || "Sikertelen mentés.");
+  } finally {
+    setUserActionLoading(false);
+  }
+};
+
+
   // ───────── EFFECTS ─────────
   useEffect(() => {
     loadUsersPage();
@@ -181,10 +286,11 @@ export default function AdminPage() {
 
   // ───────── UI ─────────
   return (
-    <div className="admin-page">
-      <h1 className="admin-page__title">Admin – Sessions & Metrics</h1>
+    <>
+      <div className="admin-page">
+        <h1 className="admin-page__title">Admin – Sessionök és metrikák</h1>
 
-      <div className="admin-page__grid">
+        <div className="admin-page__grid">
         {/* ───────── LEFT: USERS ───────── */}
         <section className="admin-card">
           <div className="admin-card__header">
@@ -204,7 +310,7 @@ export default function AdminPage() {
                   setLimit(Number(e.target.value));
                 }}
               >
-                {[25, 50, 100, 200, 500].map((x) => (
+                {[5,25, 50, 100, 200, 500].map((x) => (
                   <option key={x} value={x}>
                     {x}
                   </option>
@@ -285,7 +391,7 @@ export default function AdminPage() {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    {["Session ID", "Státusz", "Started", "Ended", "Device", "App ver."].map((h) => (
+                    {["Session azonosító", "Státusz", "Indult", "Lezárt", "Eszköz", "Alkalmazásverzió"].map((h) => (
                       <th key={h}>{h}</th>
                     ))}
                   </tr>
@@ -328,20 +434,41 @@ export default function AdminPage() {
 
         {/* ───────── RIGHT: METRICS ───────── */}
         <section className="admin-card">
-          <div className="admin-card__header">
-            <h2 className="admin-card__title">Session részletek</h2>
-          </div>
+          <div className="admin-card__header admin-card__header--row">
+  <h2 className="admin-card__title">Session részletek</h2>
+
+  <div className="admin-header-actions">
+    <button
+      onClick={openEditSelectedUser}
+      disabled={!selectedUser || userActionLoading}
+      title={!selectedUser ? "Válassz egy felhasználót bal oldalt." : ""}
+    >
+      User szerkesztése
+    </button>
+
+    <button
+      onClick={deleteSelectedUser}
+      disabled={!selectedUser || userActionLoading}
+      title={!selectedUser ? "Válassz egy felhasználót bal oldalt." : ""}
+    >
+      User törlése
+    </button>
+  </div>
+</div>
+{userActionError && <p className="admin-status admin-error">{userActionError}</p>}
+{userActionSuccess && <p className="admin-status">{userActionSuccess}</p>}
+
 
           {!selectedSessionId && <p className="admin-status admin-muted">Kattints egy sessionre a táblázatban.</p>}
 
           {selectedSession && (
             <div className="admin-detail-box">
-              <div><strong>Session ID:</strong> {selectedSession.session_id}</div>
-              <div><strong>User ID:</strong> {selectedSession.user_id}</div>
-              <div><strong>Started:</strong> {fmtDate(selectedSession.started_at)}</div>
-              <div><strong>Ended:</strong> {fmtDate(selectedSession.ended_at)}</div>
-              <div><strong>Device:</strong> {selectedSession.device_type ?? "-"}</div>
-              <div><strong>App version:</strong> {selectedSession.app_version ?? "-"}</div>
+              <div><strong>Session azonosító:</strong> {selectedSession.session_id}</div>
+              <div><strong>Felhasználó azonosító:</strong> {selectedSession.user_id}</div>
+              <div><strong>Indult:</strong> {fmtDate(selectedSession.started_at)}</div>
+              <div><strong>Lezárt:</strong> {fmtDate(selectedSession.ended_at)}</div>
+              <div><strong>Eszköz:</strong> {selectedSession.device_type ?? "-"}</div>
+              <div><strong>Alkalmazásverzió:</strong> {selectedSession.app_version ?? "-"}</div>
             </div>
           )}
 
@@ -355,7 +482,7 @@ export default function AdminPage() {
               </div>
 
               <div className="admin-metrics-meta">
-                <span className="admin-pill">Session: #{selectedSessionId}</span>
+                <span className="admin-pill">Kiválasztott session: #{selectedSessionId}</span>
               </div>
 
               {rawLoading && <p className="admin-status">Minták betöltése...</p>}
@@ -375,11 +502,11 @@ export default function AdminPage() {
                           <strong className="admin-metric-value">{m.fps}</strong>
                         </div>
                         <div className="admin-metric-stat">
-                          <span className="admin-metric-label">Memoria (MB)</span>
+                          <span className="admin-metric-label">Memória (MB)</span>
                           <strong className="admin-metric-value">{m.memory_mb}</strong>
                         </div>
                         <div className="admin-metric-stat">
-                          <span className="admin-metric-label">Latency (ms)</span>
+                          <span className="admin-metric-label">Késleltetés (ms)</span>
                           <strong className="admin-metric-value">{m.latency_ms}</strong>
                         </div>
                         <div className="admin-metric-stat">
@@ -401,5 +528,54 @@ export default function AdminPage() {
         </section>
       </div>
     </div>
+
+      {editOpen && (
+        <div className="admin-modal-backdrop" onClick={closeEdit}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="admin-modal-title">Felhasználó szerkesztése</h3>
+
+            <label className="admin-field">
+              Felhasználónév
+              <input
+                value={editForm.username}
+                onChange={(e) => setEditForm((p) => ({ ...p, username: e.target.value }))}
+                disabled={userActionLoading}
+              />
+            </label>
+
+            <label className="admin-field">
+              E-mail
+              <input
+                value={editForm.email}
+                onChange={(e) => setEditForm((p) => ({ ...p, email: e.target.value }))}
+                disabled={userActionLoading}
+              />
+            </label>
+
+            <label className="admin-field">
+              Szerepkör
+              <select
+                value={editForm.role_id}
+                onChange={(e) => setEditForm((p) => ({ ...p, role_id: Number(e.target.value) }))}
+                disabled={userActionLoading}
+              >
+                <option value={1}>USER</option>
+                <option value={2}>ADMIN</option>
+              </select>
+            </label>
+
+            <div className="admin-modal-actions">
+              <button onClick={closeEdit} disabled={userActionLoading}>
+                Mégse
+              </button>
+              <button onClick={saveSelectedUserEdit} disabled={userActionLoading}>
+                {userActionLoading ? "Mentés..." : "Mentés"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
+
 }

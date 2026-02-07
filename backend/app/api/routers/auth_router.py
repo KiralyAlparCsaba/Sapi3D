@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from services.auth_service import AuthService
 from schemas.user import UserLogin, UserCreate, Token, UserResponse
-from core.security import get_current_user
+from core.security import get_current_user, create_access_token
 
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -42,3 +42,16 @@ async def logout_user(
 async def get_me(current_user=Depends(get_current_user)):
     """Return the currently authenticated user's data."""
     return UserResponse.model_validate(current_user)
+
+
+@router.post("/refresh-token", response_model=Token)
+async def refresh_token(current_user=Depends(get_current_user)):
+    """Generate a new token based on current user (used after profile updates)."""
+    token = create_access_token({
+        "sub": str(current_user.user_id),
+        "username": current_user.username,
+        "role_id": current_user.role_id,
+        "session_id": current_user.session_id
+    })
+    
+    return Token(access_token=token)

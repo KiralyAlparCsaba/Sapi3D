@@ -3,8 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from core.database import get_db  
-from schemas.user import UserCreate, UserUpdate, UserResponse, UserLogin
+from schemas.user import UserCreate, UserUpdate, UserResponse, UserLogin, Token
 from services.user_service import UserService
+from core.security import get_current_user, create_access_token
 
 router = APIRouter(
     prefix="/users",
@@ -61,14 +62,39 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
     return await service.get_user_by_id(user_id)
 
 
-# ---- UPDATE USER ----
-@router.put("/{user_id}", response_model=UserResponse)
-async def update_user(user_id: int, user_data: UserUpdate, db: AsyncSession = Depends(get_db)):
+# ---- UPDATE USER (with new token) ----
+@router.put("/{user_id}", response_model=dict)
+async def update_user(
+    user_id: int, 
+    user_data: UserUpdate, 
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     """
-    Update a user by ID.
+    Update a user by ID and return new JWT token with updated data.
     """
+    # Ensure user can only update their own profile (or is admin)
+    if current_user.user_id != user_id and current_user.role_id != 2:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only update your own profile"
+        )
+    
     service = UserService(db)
-    return await service.update_user(user_id, user_data)
+    updated_user = await service.update_user(user_id, user_data)
+    
+    # Generate new token with updated data
+    new_token = create_access_token({
+        "sub": str(updated_user.user_id),
+        "username": updated_user.username,
+        "role_id": updated_user.role_id,
+        "session_id": current_user.session_id
+    })
+    
+    return {
+        "user": updated_user,
+        "token": new_token
+    }
 
 
 # ---- DELETE USER ----

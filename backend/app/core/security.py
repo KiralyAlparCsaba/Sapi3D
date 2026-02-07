@@ -45,7 +45,8 @@ def decode_access_token(token: str) -> dict:
         return {
             "sub": payload.get("sub"),
             "username": payload.get("username"),
-            "role_id": payload.get("role_id"), 
+            "role_id": payload.get("role_id"),
+            "session_id": payload.get("session_id"),
             "exp": payload.get("exp"),
         }
     except JWTError:
@@ -66,6 +67,7 @@ async def get_current_user(
     token = credentials.credentials
     payload = decode_access_token(token)
     username = payload.get("username")
+    session_id = payload.get("session_id")
 
     if not username:
         raise HTTPException(status_code=401, detail="Invalid token payload")
@@ -75,4 +77,7 @@ async def get_current_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # Attach session_id to user object for later use
+    user.session_id = session_id
+    
     return user
