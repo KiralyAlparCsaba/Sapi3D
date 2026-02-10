@@ -21,7 +21,7 @@ export default function AdminPage() {
   const [usersError, setUsersError] = useState("");
 
   const [limit, setLimit] = useState(100);
-  const [page, setPage] = useState(1); // 1-indexed
+  const [page, setPage] = useState(1); 
   const skip = useMemo(() => (page - 1) * limit, [page, limit]);
 
   const [search, setSearch] = useState("");
@@ -209,12 +209,10 @@ const deleteSelectedUser = async () => {
   setUserActionSuccess("");
 
   try {
-    await api.delete(`/users/${selectedUserId}`); // DELETE /users/{user_id}
+    await api.delete(`/users/${selectedUserId}`);
 
-    // tűnjön el a listából
     setUsers((prev) => prev.filter((u) => u.user_id !== Number(selectedUserId)));
 
-    // reset jobb oldali dolgok
     setSelectedUserId(null);
     sessionsRequestRef.current += 1;
     rawRequestRef.current += 1;
@@ -251,20 +249,17 @@ const saveSelectedUserEdit = async () => {
   setUserActionSuccess("");
 
   try {
-    // ProfilPage mintájára: kell role_id, és avatar_url marad a meglévőből
     const payload = {
       username: nextUsername,
       email: nextEmail,
-      avatar_url: selectedUser.avatar_url || "", // admin nem szerkeszti, csak továbbküldi
+      avatar_url: selectedUser.avatar_url || "", 
       role_id: nextRoleId,
     };
 
     const res = await api.put(`/users/${selectedUser.user_id}`, payload);
 
-    // ha backend res.data.user-t küld
     const updated = res.data?.user ? res.data.user : payload;
 
-    // frissítsük a users listában is
     setUsers((prev) =>
       prev.map((u) => (u.user_id === selectedUser.user_id ? { ...u, ...updated } : u))
     );

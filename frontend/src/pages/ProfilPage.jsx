@@ -100,18 +100,15 @@ export default function ProfilPage() {
         username: nextUsername,
         email: nextEmail,
         avatar_url: me.avatar_url || "",
-        role_id: me.role_id, // nem szerkeszthető
+        role_id: me.role_id, 
       };
 
-      // ✅ user_id + PUT /users/{user_id}
       const res = await api.put(`/users/${me.user_id}`, payload);
 
-      // 🔑 Az új token a válaszban van
       if (res.data?.token) {
         updateToken(res.data.token);
       }
 
-      // Frissítsd az UI-t az új adatokkal
       if (res.data?.user) {
         setMe((prev) => (prev ? { ...prev, ...res.data.user } : prev));
       } else {

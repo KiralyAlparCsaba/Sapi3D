@@ -1,17 +1,13 @@
-/* Oldal konténer: középre igazít és a globális háttér marad */
 .profil-page {
   min-height: calc(100vh - 0px);
   padding: 28px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
-
-  /* A globális body háttér (var(--navbar-bg)) maradjon érvényben */
   background: transparent;
   color: var(--text-color);
 }
 
-/* Finom háttérfény: mélységet ad, de nem írja felül a témát */
 .profil-page::before {
   content: "";
   position: fixed;
@@ -19,7 +15,6 @@
   pointer-events: none;
   z-index: 0;
 
-  /* Green spotlight */
   background:
     radial-gradient(900px 520px at 22% 14%, rgba(0, 120, 0, 0.22), transparent 62%),
     radial-gradient(900px 520px at 82% 18%, rgba(159, 209, 159, 0.28), transparent 62%),
@@ -27,7 +22,6 @@
   opacity: 0.42;
 }
 
-/* A tartalom az overlay fölött jelenik meg */
 .profil-header-row,
 .profil-card,
 .profil-error {
@@ -44,8 +38,6 @@
   margin-bottom: 16px;
 }
 
-
-/* Frissítés gomb: jól látható, theme-hez illeszkedő */
 .profil-refresh {
   border: 1px solid rgba(0, 120, 0, 0.18);
   background: rgba(210, 238, 210, 0.75);
@@ -75,14 +67,12 @@
   opacity: 0.6;
 }
 
-/* Profil kártya: rétegezett megjelenés light módban */
 .profil-card {
   width: min(720px, 100%);
   border-radius: 22px;
   padding: 26px 22px 22px;
   text-align: center;
 
-  /* Green glass + depth */
   background:
     linear-gradient(180deg, rgba(210, 238, 210, 0.72), rgba(210, 238, 210, 0.50));
   border: 1px solid rgba(0, 120, 0, 0.18);
@@ -103,7 +93,6 @@
   to   { opacity: 1; transform: none; }
 }
 
-/* Avatar blokk: kiemelt, kör alakú */
 .profil-avatar-wrap {
   display: flex;
   justify-content: center;
@@ -117,7 +106,6 @@
   object-fit: cover;
   border: 2px solid var(--capsule-bg);
 
-  /* Highlight ring + shadow */
   box-shadow:
     0 0 0 7px rgba(159, 209, 159, 0.35),
     0 0 44px rgba(0, 120, 0, 0.22),
@@ -144,7 +132,6 @@
   background: rgba(255, 255, 255, 0.10);
 }
 
-/* Adatok rácsa: nagyobb távolságok a jobb olvashatósághoz */
 .profil-meta {
   margin-top: 44px;
   display: grid;
@@ -203,7 +190,6 @@
   color: var(--text-color);
 }
 
-/* Hibaüzenet doboz */
 .profil-error {
   width: min(720px, 100%);
   margin-top: 12px;
@@ -218,7 +204,6 @@
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* Dark mód finomhangolás: jobb kontraszt és olvashatóság */
 [data-theme="dark"] .profil-card {
   background: rgba(0, 0, 0, 0.25);
   border-color: rgba(255, 255, 255, 0.10);
@@ -246,12 +231,6 @@
   color: var(--text-color);
 }
 
-
-/* fő kártya: zöld üveg + depth */
-/* meta kártyák: még kontrasztosabb lebegés + capsule keret */
-/* szöveg kontraszt: light zöldön legyen erős, de ne fekete “brutál” */
-/* gomb: zöld üveg + capsule border */
-/* avatar: lightban is maradjon “ring”, de zöldes és premium */
 .profil-edit-actions {
   display: flex;
   gap: 10px;
