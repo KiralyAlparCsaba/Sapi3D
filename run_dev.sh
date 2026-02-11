@@ -18,15 +18,25 @@ fi
 
 # Detect local IP address (for mobile mode)
 detect_local_ip() {
+    LOCAL_IP=""
+
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         # Linux
         LOCAL_IP=$(hostname -I | awk '{print $1}')
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
-        LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "localhost")
-    else
+        # cSpell:disable-next-line
+        LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)
+    elif [[ "$OSTYPE" == "msys"* ]]; then
+        # Windows (Git Bash/mingw64)
+        LOCAL_IP=$(ipconfig.exe | grep -i "IPv4" | grep -v "127.0.0.1" | awk '{print $NF}' | head -n1 | tr -d '\r')
+    fi
+
+    # Fallback to localhost if no IP detected
+    if [[ -z "$LOCAL_IP" ]]; then
         LOCAL_IP="localhost"
     fi
+
     echo "$LOCAL_IP"
 }
 

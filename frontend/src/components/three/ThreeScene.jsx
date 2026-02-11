@@ -6,6 +6,40 @@ import Building from "./Building";
 import * as THREE from "three";
 import MobilePointerLockControls from "./MobilePointerLockControls";
 
+// ÚJ IMPORTOK
+import Metrics from "./Metrics";
+import usePerformanceUploader from "./usePerformanceUploader";
+
+// Külön komponensbe szervezzük a mérést, hogy hozzáférjen a gl (renderer)-hez
+function PerformanceMonitor({ sessionId }) {
+  const { gl } = useThree();
+
+  // 1. Singleton Metrics példány létrehozása
+  const [metrics] = useState(() => new Metrics(gl));
+
+  // 2. DOM kezelés: Felcsatolás és LEVÁLASZTÁS (fontos!)
+  useEffect(() => {
+    metrics.attach();
+
+    // Ez a cleanup függvény fut le, amikor a komponens frissül vagy megszűnik.
+    // Ez tünteti el a "szellem" szöveget.
+    return () => {
+      metrics.detach();
+    };
+  }, [metrics]);
+
+  // 3. Adatgyűjtés
+  usePerformanceUploader(metrics, sessionId);
+
+  // 4. Render loop
+  useFrame(() => {
+    metrics.begin();
+    metrics.end();
+  });
+
+  return null;
+}
+
 // SCENE CONTENT
 function SceneContent({ controlsRef, sessionId, isMobile }) {
   const collisionRef = useRef(null);
@@ -20,11 +54,10 @@ function SceneContent({ controlsRef, sessionId, isMobile }) {
   }, [isMobile, camera]);
 
   const player = UsePlayerMovement(
-  controlsRef,
-  collisionRef,
-  isMobile ? 7.0 : 10.0
-);
-
+    controlsRef,
+    collisionRef,
+    isMobile ? 7.0 : 10.0
+  );
 
   useFrame((_, delta) => {
     if (collisionRef.current) player.updateMovement(delta);
@@ -36,6 +69,9 @@ function SceneContent({ controlsRef, sessionId, isMobile }) {
 
   return (
     <Suspense fallback={null}>
+      {/* Itt helyezzük el a monitorozót, hogy a Canvas contexten belül legyen */}
+      <PerformanceMonitor sessionId={sessionId} />
+
       <Building
         sessionId={sessionId}
         onWorldReady={(mesh) => {
@@ -63,15 +99,12 @@ export default function ThreeScene() {
 
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-
   useEffect(() => {
     if (!isMobile) {
-      
       import("@react-three/drei").then((mod) => {
         setPointerLock(() => mod.PointerLockControls);
       });
     } else {
-      
       const cleanup = createMobileJoystick(
         (x, y) => (window.joystickMove = { x, y }),
         (lx, ly) => (window.joystickLook = { lx, ly })
