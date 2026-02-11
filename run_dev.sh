@@ -61,6 +61,7 @@ if [ "$MOBILE_MODE" = true ]; then
     
     # Update .env file with the detected IP for both API and frontend
     sed -i "s|VITE_API_URL=.*|VITE_API_URL=http://$LOCAL_IP:8000|g" .env
+
 fi
 
 echo ""
