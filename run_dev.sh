@@ -51,8 +51,14 @@ else
 fi
 echo ""
 
-echo "📋 Copying .env.dev.example to .env..."
-cp .env.dev.example .env
+echo "📋 Checking for .env file..."
+if [ ! -f .env ]; then
+    echo "❌ ERROR: .env file not found!"
+    exit 1
+fi
+
+echo "✅ .env file found"
+echo ""
 
 # If mobile mode, update VITE_API_URL with the detected IP
 if [ "$MOBILE_MODE" = true ]; then

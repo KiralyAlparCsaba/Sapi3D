@@ -19,10 +19,10 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
-.env.prod
+.env.backup
 
 # Keep example files tracked
-!.env.*.example
+!env.*.example
 
 # OS generated files
 .DS_Store

@@ -12,20 +12,16 @@ echo "=========================================="
 echo ""
 
 echo ""
-echo "🔍 Validating production configuration..."
-
-# Fail-fast validation for production
-if grep -q "CHANGE_THIS" .env; then
-    echo "❌ ERROR: Production .env contains placeholder values!"
-    echo "   Please update .env.prod.example with secure values before running."
-    echo ""
-    echo "   Required changes:"
-    echo "   - POSTGRES_PASSWORD"
-    echo "   - JWT_SECRET (generate with: python -c \"import secrets; print(secrets.token_urlsafe(32))\")"
-    echo "   - DATABASE_URL password"
-    echo ""
+echo "📋 Checking for .env file..."
+if [ ! -f .env ]; then
+    echo "❌ ERROR: .env file not found!"
     exit 1
 fi
+
+echo "✅ .env file found"
+echo ""
+
+echo "🔍 Validating production configuration..."
 
 if grep -q "dev-secret-key" .env; then
     echo "❌ ERROR: Development secrets detected in production!"
