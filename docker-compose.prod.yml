@@ -5,6 +5,11 @@
 # Usage: docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up
 
 services:
+  # Database Production Overrides
+  db:
+    env_file:
+      - .env
+
   # Backend Production Overrides
   backend:
     volumes:
@@ -22,4 +27,4 @@ services:
   frontend:
     # Uses full Dockerfile (multi-stage build with Nginx)
     ports:
-      - "3000:80"  # Nginx production server
+      - "80:80"  # Nginx production server (accessible by external reverse proxy)
