@@ -11,9 +11,6 @@ echo "  Sapi3D - Production Mode"
 echo "=========================================="
 echo ""
 
-echo "📋 Copying .env.prod.example to .env..."
-cp .env.prod.example .env
-
 echo ""
 echo "🔍 Validating production configuration..."
 
@@ -43,7 +40,7 @@ docker compose -f docker-compose.base.yml -f docker-compose.prod.yml down --remo
 
 echo ""
 echo "🚀 Starting containers in production mode..."
-docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up -d --build --no-cache
+docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up -d --build
 
 echo ""
 echo "⏳ Waiting for services to be healthy..."
