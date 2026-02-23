@@ -32,7 +32,7 @@ export default function usePerformanceUploader(metrics, sessionId) {
             fps: Math.round(avgFps),
             memory_mb: Math.round(avgMem),
             latency_ms: Math.round(avgLat)
-            // cpu_gpu_usage defaults to 0 on backend
+
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
