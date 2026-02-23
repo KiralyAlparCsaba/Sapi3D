@@ -34,7 +34,7 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
   }, []);
 
   //
-  // Load model + gather trigger boxes
+  // Load model + gather trigger boxes AND colliders
   //
   useEffect(() => {
     triggerBoxes.current = []; // reset
@@ -48,6 +48,15 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
         const box = new THREE.Box3().setFromObject(child);
         triggerBoxes.current.push(box);
         child.visible = false;
+      }
+
+      // Hide all Collision meshes (like COL_stairs1)
+      if (child.name.startsWith("COL")) {
+        child.visible = false;
+        
+        // Optimization: stop Three.js from processing shadows for invisible colliders
+        child.castShadow = false; 
+        child.receiveShadow = false;
       }
     });
 

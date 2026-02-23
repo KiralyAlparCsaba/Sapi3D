@@ -46,7 +46,7 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
     collidableDirtyRef.current = false;
   };
 
-  // Billentyűzet kezelés (nem nyúlunk hozzá)
+  // Billentyűzet kezelés 
   useEffect(() => {
     const down = (e) => {
       if (e.code === "KeyW" || e.code === "ArrowUp") move.current.forward = true;
