@@ -2,6 +2,8 @@ import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // 1. Added import
 
+import { AuthProvider } from "./context/AuthContext";
+
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import LandingPage from "./components/auth/LandingPage";
@@ -13,7 +15,7 @@ import AdminLayout from "./components/layout/AdminLayout";
 import HomePage from "./pages/HomePage";
 import EventsPage from "./pages/EventsPage";
 import LocationsPage from "./pages/LocationsPage";
-import ContactPage from "./pages/ContactPage";
+import ProfilPage from "./pages/ProfilPage";
 import AdminPage from "./pages/AdminPage";
 import ModelPage from "./pages/ModelPage";
 
@@ -104,27 +106,29 @@ export default function App() {
   }, []);
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        <Route path="/app/model" element={<ModelLayout />}>
-          <Route index element={<ModelPage />} />
-        </Route>
-
-        <Route path="/app" element={<ProtectedLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="events" element={<EventsPage />} />
-          <Route path="locations" element={<LocationsPage />} />
-          <Route path="contact" element={<ContactPage />} />
-
-          <Route element={<AdminLayout />}>
-            <Route path="admin" element={<AdminPage />} />
+          <Route path="/app/model" element={<ModelLayout />}>
+            <Route index element={<ModelPage />} />
           </Route>
-        </Route>
-      </Routes>
-    </Router>
+
+          <Route path="/app" element={<ProtectedLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="events" element={<EventsPage />} />
+            <Route path="locations" element={<LocationsPage />} />
+            <Route path="profil" element={<ProfilPage />} />
+
+            <Route element={<AdminLayout />}>
+              <Route path="admin" element={<AdminPage />} />
+            </Route>
+          </Route>
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }

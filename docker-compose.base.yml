@@ -17,9 +17,9 @@ services:
     image: postgres:16-alpine
     container_name: sapi3d-db
     environment:
-      POSTGRES_USER: sapi3d
-      POSTGRES_PASSWORD: sapi3d_password
-      POSTGRES_DB: sapi3d
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:

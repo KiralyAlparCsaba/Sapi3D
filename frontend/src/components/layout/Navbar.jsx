@@ -1,28 +1,23 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../styles/Navbar.css";
-import { jwtDecode } from "jwt-decode";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Navbar({ theme, setTheme}) {
   const navigate = useNavigate();
+  const { user, logout, isAuthenticated } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const token = sessionStorage.getItem("token");
   let username = "Guest";
   let isAdmin = false;
 
-  if (token) {
-    try {
-      const decoded = jwtDecode(token);
-      username = decoded.username || "Logged in user";
-      isAdmin = decoded.role_id === 2;
-    } catch (err) {
-      console.error("JWT decode error:", err);
-    }
+  if (isAuthenticated && user) {
+    username = user.username || "Logged in user";
+    isAdmin = user.role_id === 2;
   }
 
   const handleLogout = () => {
-    sessionStorage.removeItem("token");
+    logout();
     navigate("/login");
   };
 
@@ -57,7 +52,7 @@ export default function Navbar({ theme, setTheme}) {
             <Link to="/app/model" className="nav-link">Modell</Link>
             <Link to="/app/events" className="nav-link">Események</Link>
             <Link to="/app/locations" className="nav-link">Helyszínek</Link>
-            <Link to="/app/contact" className="nav-link">Kapcsolat</Link>
+            <Link to="/app/profil" className="nav-link">Profil</Link>
             {isAdmin && <Link to="/app/admin" className="nav-link">Admin</Link>}
           </div>
         </div>
@@ -101,7 +96,7 @@ export default function Navbar({ theme, setTheme}) {
           <Link to="/app/model" onClick={() => setDrawerOpen(false)}>Modell</Link>
           <Link to="/app/events" onClick={() => setDrawerOpen(false)}>Események</Link>
           <Link to="/app/locations" onClick={() => setDrawerOpen(false)}>Helyszínek</Link>
-          <Link to="/app/contact" onClick={() => setDrawerOpen(false)}>Kapcsolat</Link>
+          <Link to="/app/profil" onClick={() => setDrawerOpen(false)}>Profil</Link>
           {isAdmin && <Link to="/app/admin" onClick={() => setDrawerOpen(false)}>Admin</Link>}
         </div>
 

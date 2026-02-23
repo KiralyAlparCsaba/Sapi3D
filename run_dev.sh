@@ -19,8 +19,18 @@ fi
 # Detect local IP address (for mobile mode)
 detect_local_ip() {
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Linux
-        LOCAL_IP=$(hostname -I | awk '{print $1}')
+        # Check if running in WSL
+        if grep -qi microsoft /proc/version 2>/dev/null || grep -qi wsl /proc/version 2>/dev/null; then
+            # WSL: Get Windows host IP from ipconfig.exe
+            LOCAL_IP=$(ipconfig.exe 2>/dev/null | grep "IPv4 Address" | grep -v "169\." | grep -v "172\." | head -1 | awk '{print $NF}' | sed 's/\r$//')
+            if [ -z "$LOCAL_IP" ]; then
+                # Fallback: try first IPv4 that is not localhost
+                LOCAL_IP=$(ipconfig.exe 2>/dev/null | grep -i "ipv4" | grep -v "169\." | grep -v "172\." | head -1 | awk '{print $NF}' | sed 's/\r$//')
+            fi
+        else
+            # Native Linux
+            LOCAL_IP=$(hostname -I | awk '{print $1}')
+        fi
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
         LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "localhost")
@@ -41,8 +51,24 @@ else
 fi
 echo ""
 
-echo "📋 Copying .env.dev.example to .env..."
-cp .env.dev.example .env
+echo "📋 Checking for .env file..."
+if [ ! -f .env ]; then
+    echo "❌ ERROR: .env file not found!"
+    exit 1
+fi
+
+echo "✅ .env file found"
+echo ""
+
+# If mobile mode, update VITE_API_URL with the detected IP
+if [ "$MOBILE_MODE" = true ]; then
+    LOCAL_IP=$(detect_local_ip)
+    echo "📱 Updating VITE_API_URL for mobile access: http://$LOCAL_IP:8000"
+    
+    # Update .env file with the detected IP for both API and frontend
+    sed -i "s|VITE_API_URL=.*|VITE_API_URL=http://$LOCAL_IP:8000|g" .env
+
+fi
 
 echo ""
 echo "🧹 Cleaning up existing containers..."

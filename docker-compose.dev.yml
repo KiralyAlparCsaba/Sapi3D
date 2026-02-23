@@ -29,7 +29,7 @@ services:
       - ./frontend/public:/app/public
       - ./frontend/index.html:/app/index.html
       - ./frontend/vite.config.js:/app/vite.config.js
-    environment:
-      - VITE_API_URL=http://localhost:8000
+    env_file:
+      - .env
     # Override CMD to run Vite dev server
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

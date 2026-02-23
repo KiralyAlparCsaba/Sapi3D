@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import "../../styles/Login.css";
 import {metricsCollector} from "../three/metricsCollector.js";
 
@@ -8,6 +9,7 @@ function Login() {
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,8 +28,8 @@ function Login() {
 
       const token = res.data.access_token;
 
-      // Store token
-      sessionStorage.setItem("token", token);
+      // 🔑 Frissítsd az AuthContext-et (ez módosítja a sessionStorage-t és a state-t)
+      login(token);
 
       // 2️⃣ Decode JWT and extract BOTH user_id + session_id
       const payload = JSON.parse(atob(token.split(".")[1]));
