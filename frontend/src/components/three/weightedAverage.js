@@ -6,12 +6,11 @@ export function weightedAverage(samples, key) {
     const prev = samples[i - 1];
     const curr = samples[i];
     const dt = (curr.timestamp - prev.timestamp) / 1000; // seconds
-
     if (dt <= 0) continue;
 
     totalWeighted += prev[key] * dt;
     totalTime += dt;
   }
 
-  return totalTime > 0 ? totalWeighted / totalTime : 0;
+  return totalTime > 0 ? totalWeighted / totalTime : samples[0][key] || 0;
 }

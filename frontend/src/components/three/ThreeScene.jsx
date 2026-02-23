@@ -6,46 +6,31 @@ import Building from "./Building";
 import * as THREE from "three";
 import MobilePointerLockControls from "./MobilePointerLockControls";
 
-// ÚJ IMPORTOK
 import Metrics from "./Metrics";
 import usePerformanceUploader from "./usePerformanceUploader";
 
-// Külön komponensbe szervezzük a mérést, hogy hozzáférjen a gl (renderer)-hez
+// Metrics monitor
 function PerformanceMonitor({ sessionId }) {
   const { gl } = useThree();
-
-  // 1. Singleton Metrics példány létrehozása
   const [metrics] = useState(() => new Metrics(gl));
 
-  // 2. DOM kezelés: Felcsatolás és LEVÁLASZTÁS (fontos!)
   useEffect(() => {
     metrics.attach();
-
-    // Ez a cleanup függvény fut le, amikor a komponens frissül vagy megszűnik.
-    // Ez tünteti el a "szellem" szöveget.
-    return () => {
-      metrics.detach();
-    };
+    return () => metrics.detach();
   }, [metrics]);
 
-  // 3. Adatgyűjtés
   usePerformanceUploader(metrics, sessionId);
 
-  // 4. Render loop
-  useFrame(() => {
-    metrics.begin();
-    metrics.end();
-  });
+  useFrame((_, delta) => metrics.end(delta * 1000)); // pass delta in ms
 
   return null;
 }
 
-// SCENE CONTENT
+// Scene content
 function SceneContent({ controlsRef, sessionId, isMobile }) {
   const collisionRef = useRef(null);
   const { camera } = useThree();
 
-  // Mobile controls init
   useEffect(() => {
     if (isMobile) {
       controlsRef.current = new MobilePointerLockControls(camera);
@@ -61,32 +46,24 @@ function SceneContent({ controlsRef, sessionId, isMobile }) {
 
   useFrame((_, delta) => {
     if (collisionRef.current) player.updateMovement(delta);
-
-    if (controlsRef.current?.update) {
-      controlsRef.current.update(delta);
-    }
+    controlsRef.current?.update?.(delta);
   });
 
   return (
     <Suspense fallback={null}>
-      {/* Itt helyezzük el a monitorozót, hogy a Canvas contexten belül legyen */}
       <PerformanceMonitor sessionId={sessionId} />
 
       <Building
         sessionId={sessionId}
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
-
           const cam = controlsRef.current.getObject();
           const rayOrigin = cam.position.clone();
           rayOrigin.y = 10;
 
           const ray = new THREE.Raycaster(rayOrigin, new THREE.Vector3(0, -1, 0));
           const hits = ray.intersectObjects(mesh.children, true);
-
-          if (hits.length > 0) {
-            cam.position.y = hits[0].point.y + 1.2;
-          }
+          if (hits.length > 0) cam.position.y = hits[0].point.y + 1.2;
         }}
       />
     </Suspense>
@@ -101,19 +78,16 @@ export default function ThreeScene() {
 
   useEffect(() => {
     if (!isMobile) {
-      import("@react-three/drei").then((mod) => {
-        setPointerLock(() => mod.PointerLockControls);
-      });
+      import("@react-three/drei").then(mod => setPointerLock(() => mod.PointerLockControls));
     } else {
-      const cleanup = createMobileJoystick(
+      return createMobileJoystick(
         (x, y) => (window.joystickMove = { x, y }),
         (lx, ly) => (window.joystickLook = { lx, ly })
       );
-      return cleanup;
     }
   }, []);
 
-  const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
+  const sessionId = Number(sessionStorage.getItem("session_id"));
 
   return (
     <>
@@ -135,23 +109,13 @@ export default function ThreeScene() {
         ← Vissza a főoldalra
       </button>
 
-      <Canvas
-        camera={{ position: [0, 1.7, 3], fov: 75 }}
-        style={{ width: "100vw", height: "100vh" }}
-      >
+      <Canvas camera={{ position: [0, 1.7, 3], fov: 75 }} style={{ width: "100vw", height: "100vh" }}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
 
-        <SceneContent
-          controlsRef={controlsRef}
-          sessionId={sessionId}
-          isMobile={isMobile}
-        />
+        <SceneContent controlsRef={controlsRef} sessionId={sessionId} isMobile={isMobile} />
 
-        {/* Desktop only */}
-        {!isMobile && PointerLock && (
-          <PointerLock ref={controlsRef} />
-        )}
+        {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}
       </Canvas>
     </>
   );
