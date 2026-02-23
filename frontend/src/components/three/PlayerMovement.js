@@ -29,6 +29,12 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
   const collidableRef = useRef([]);
   const collidableDirtyRef = useRef(true);
 
+  // FAILSAFE CONFIG 
+  // Teleport location (Blender coordinates converted)
+  const SPAWN_POS = new THREE.Vector3(1, -0.099324, 6.3213);
+  const FALL_DEATH_Y = -15;
+
+
   const markCollidableDirty = () => {
     collidableDirtyRef.current = true;
   };
@@ -243,6 +249,19 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
       onGround.current = false;
       velocity.current.y += gravity * delta;
       root.position.y += velocity.current.y * delta;
+    }
+
+    // 7) FAILSAFE: Ha a játékos kiesik a pályáról (Fall out of map)
+    if (root.position.y < FALL_DEATH_Y) {
+      console.log("Player fell! Resetting to spawn...");
+      
+      // Teleport the root body
+      root.position.copy(SPAWN_POS);
+
+      camera.position.set(0, 1.7, 0); // Reset camera relative position to root
+      
+      // CRITICAL: Reset falling velocity so they don't instantly clip through the spawn floor!
+      velocity.current.set(0, 0, 0); 
     }
 
     if (controls.update) controls.update(delta);
