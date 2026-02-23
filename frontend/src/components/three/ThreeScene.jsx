@@ -9,22 +9,37 @@ import MobilePointerLockControls from "./MobilePointerLockControls";
 // SCENE CONTENT
 function SceneContent({ controlsRef, sessionId, isMobile }) {
   const collisionRef = useRef(null);
-  const { camera } = useThree();
+  const { camera, scene } = useThree();
+  const playerRootRef = useRef(new THREE.Object3D());
+
+  useEffect(() => {
+    scene.add(playerRootRef.current);
+    // root world start (eddigi camera start: [0, 1.7, 3])
+    playerRootRef.current.position.set(0, 0, 3);
+    playerRootRef.current.add(camera);
+    camera.position.set(0, 1.7, 0);
+
+    return () => {
+      if (camera.parent === playerRootRef.current) {
+        playerRootRef.current.remove(camera);
+      }
+      scene.remove(playerRootRef.current);
+    };
+  }, [camera, scene]);
 
   // Mobile controls init
   useEffect(() => {
     if (isMobile) {
       controlsRef.current = new MobilePointerLockControls(camera);
-      camera.position.set(0, 1.7, 3);
     }
   }, [isMobile, camera]);
 
   const player = UsePlayerMovement(
-  controlsRef,
-  collisionRef,
-  isMobile ? 7.0 : 10.0
-);
-
+    controlsRef,
+    collisionRef,
+    playerRootRef,
+    isMobile ? 7.0 : 10.0
+  );
 
   useFrame((_, delta) => {
     if (collisionRef.current) player.updateMovement(delta);
@@ -40,16 +55,16 @@ function SceneContent({ controlsRef, sessionId, isMobile }) {
         sessionId={sessionId}
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
-
           const cam = controlsRef.current.getObject();
-          const rayOrigin = cam.position.clone();
+          const rayOrigin = new THREE.Vector3();
+          cam.getWorldPosition(rayOrigin);
           rayOrigin.y = 10;
 
           const ray = new THREE.Raycaster(rayOrigin, new THREE.Vector3(0, -1, 0));
           const hits = ray.intersectObjects(mesh.children, true);
 
           if (hits.length > 0) {
-            cam.position.y = hits[0].point.y + 1.2;
+            playerRootRef.current.position.y = hits[0].point.y;
           }
         }}
       />
@@ -63,15 +78,12 @@ export default function ThreeScene() {
 
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-
   useEffect(() => {
     if (!isMobile) {
-      
       import("@react-three/drei").then((mod) => {
         setPointerLock(() => mod.PointerLockControls);
       });
     } else {
-      
       const cleanup = createMobileJoystick(
         (x, y) => (window.joystickMove = { x, y }),
         (lx, ly) => (window.joystickLook = { lx, ly })
@@ -102,23 +114,14 @@ export default function ThreeScene() {
         ← Vissza a főoldalra
       </button>
 
-      <Canvas
-        camera={{ position: [0, 1.7, 3], fov: 75 }}
-        style={{ width: "100vw", height: "100vh" }}
-      >
+      <Canvas camera={{ position: [0, 1.7, 3], fov: 75 }} style={{ width: "100vw", height: "100vh" }}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
 
-        <SceneContent
-          controlsRef={controlsRef}
-          sessionId={sessionId}
-          isMobile={isMobile}
-        />
+        <SceneContent controlsRef={controlsRef} sessionId={sessionId} isMobile={isMobile} />
 
         {/* Desktop only */}
-        {!isMobile && PointerLock && (
-          <PointerLock ref={controlsRef} />
-        )}
+        {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}
       </Canvas>
     </>
   );

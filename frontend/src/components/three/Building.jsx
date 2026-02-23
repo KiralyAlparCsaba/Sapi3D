@@ -9,11 +9,11 @@ import { measureLatency } from "./Latency";
 
 export default function Building({ controlsRef, onInsideChange, onWorldReady, sessionId }) {
   // Load GLTF building model from backend API
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const gltf = useGLTF(`${API_URL}/model`);
   const roofRef = useRef();
   const interiorRef = useRef();
-  const triggerBoxes = useRef([]);  // <--- multiple boxes
+  const triggerBoxes = useRef([]); // <--- multiple boxes
   const isInsideRef = useRef(false);
 
   const { camera, gl } = useThree();
@@ -21,6 +21,8 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
   const avgFps = useRef(60);
   const metricsRef = useRef();
   if (!metricsRef.current) metricsRef.current = new Metrics(gl);
+
+  const camWorldPosRef = useRef(new THREE.Vector3());
 
   useEffect(() => {
     if (sessionId) metricsCollector.setSession(sessionId);
@@ -35,7 +37,7 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
   // Load model + gather trigger boxes
   //
   useEffect(() => {
-    triggerBoxes.current = [];  // reset
+    triggerBoxes.current = []; // reset
 
     gltf.scene.traverse((child) => {
       if (child.name === "Roof") roofRef.current = child;
@@ -52,7 +54,6 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
     if (onWorldReady) onWorldReady(gltf.scene);
   }, [gltf.scene, onWorldReady]);
 
-
   //
   // MAIN LOOP
   //
@@ -63,15 +64,12 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
     //
     // 1. Check camera inside ANY of the trigger boxes
     //
-    if (
-      roofRef.current &&
-      interiorRef.current &&
-      triggerBoxes.current.length > 0
-    ) {
+    if (roofRef.current && interiorRef.current && triggerBoxes.current.length > 0) {
       let inside = false;
+      camera.getWorldPosition(camWorldPosRef.current);
 
       for (const box of triggerBoxes.current) {
-        if (box.containsPoint(camera.position)) {
+        if (box.containsPoint(camWorldPosRef.current)) {
           inside = true;
           break;
         }
