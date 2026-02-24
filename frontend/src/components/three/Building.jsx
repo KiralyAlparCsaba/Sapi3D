@@ -8,19 +8,26 @@ import { metricsCollector } from "./metricsCollector";
 import { measureLatency } from "./Latency";
 
 export default function Building({ controlsRef, onInsideChange, onWorldReady, sessionId }) {
-  // Load GLTF building model from backend API
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const gltf = useGLTF(`${API_URL}/model`);
+  
   const roofRef = useRef();
   const interiorRef = useRef();
-  const triggerBoxes = useRef([]);  // <--- multiple boxes
+  const triggerBoxes = useRef([]); 
   const isInsideRef = useRef(false);
 
   const { camera, gl } = useThree();
 
+  // --- INITIAL SPAWN POINT ---
+  // We keep this here ONLY to snap the camera to the start when the game first loads.
+  const SPAWN_POS = new THREE.Vector3(-0.017955, -0.099324 + 1.7, 6.3213); 
+  // ---------------------------
+
   const avgFps = useRef(60);
   const metricsRef = useRef();
   if (!metricsRef.current) metricsRef.current = new Metrics(gl);
+
+  const camWorldPosRef = useRef(new THREE.Vector3());
 
   useEffect(() => {
     if (sessionId) metricsCollector.setSession(sessionId);
@@ -32,10 +39,13 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
   }, []);
 
   //
-  // Load model + gather trigger boxes
+  // Load model + gather triggers and colliders
   //
   useEffect(() => {
-    triggerBoxes.current = [];  // reset
+    triggerBoxes.current = []; // reset
+
+    // Immediately snap camera to your spawn point when model loads
+    camera.position.copy(SPAWN_POS);
 
     gltf.scene.traverse((child) => {
       if (child.name === "Roof") roofRef.current = child;
@@ -47,11 +57,17 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
         triggerBoxes.current.push(box);
         child.visible = false;
       }
+
+      // Hide all Collision meshes
+      if (child.name.startsWith("COL")) {
+        child.visible = false;
+        child.castShadow = false; 
+        child.receiveShadow = false;
+      }
     });
 
     if (onWorldReady) onWorldReady(gltf.scene);
-  }, [gltf.scene, onWorldReady]);
-
+  }, [gltf.scene, onWorldReady, camera]);
 
   //
   // MAIN LOOP
@@ -60,18 +76,16 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
     const metrics = metricsRef.current;
     metrics.begin();
 
+    camera.getWorldPosition(camWorldPosRef.current);
+
     //
     // 1. Check camera inside ANY of the trigger boxes
     //
-    if (
-      roofRef.current &&
-      interiorRef.current &&
-      triggerBoxes.current.length > 0
-    ) {
+    if (roofRef.current && interiorRef.current && triggerBoxes.current.length > 0) {
       let inside = false;
 
       for (const box of triggerBoxes.current) {
-        if (box.containsPoint(camera.position)) {
+        if (box.containsPoint(camWorldPosRef.current)) {
           inside = true;
           break;
         }
@@ -79,10 +93,8 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
 
       if (inside !== isInsideRef.current) {
         isInsideRef.current = inside;
-
         roofRef.current.visible = !inside;
         interiorRef.current.visible = inside;
-
         onInsideChange?.(inside);
       }
     }

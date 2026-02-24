@@ -1,20 +1,58 @@
 import { useRef, useEffect } from "react";
 import * as THREE from "three";
 
-export default function PlayerMovement(controlsRef, sceneRef, moveSpeed = 10.0) {
+export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, moveSpeed = 10.0) {
   const move = useRef({ forward: false, backward: false, left: false, right: false });
   const velocity = useRef(new THREE.Vector3());
   const direction = new THREE.Vector3();
   const raycaster = useRef(new THREE.Raycaster());
 
+  const frontDir = new THREE.Vector3();
+  const sideDir = new THREE.Vector3();
+  const worldStep = new THREE.Vector3();
+  const checkDirTmp = new THREE.Vector3();
+
+  const camWorldPosRef = useRef(new THREE.Vector3());
+  const originRef = useRef(new THREE.Vector3());
+
+  // Konfiguráció
   const playerHeight = 1.7;
-  const collisionDistance = 0.25;
+  const collisionDistance = 0.32;
   const gravity = -30;
   const onGround = useRef(false);
   const MAX_STEP_HEIGHT = 0.5;
   const DAMPING = 5.0;
 
-  // Keyboard (desktop only)
+  const MAX_SUBSTEP_DIST = 0.07;
+  const SKIN_WALL = 0.05;
+  const HEIGHTS = [-1.2, -0.7, -0.2];
+  const collidableRef = useRef([]);
+  const collidableDirtyRef = useRef(true);
+
+  // FAILSAFE CONFIG 
+  // Teleport location (Blender coordinates converted)
+  const SPAWN_POS = new THREE.Vector3(1, -0.099324, 6.3213);
+  const FALL_DEATH_Y = -15;
+
+
+  const markCollidableDirty = () => {
+    collidableDirtyRef.current = true;
+  };
+
+  const rebuildCollidablesIfNeeded = (scene) => {
+    if (!collidableDirtyRef.current) return;
+    const list = [];
+    scene.traverse((child) => {
+      if (!child || !child.isMesh) return;
+      if (child.name === "Roof") return;
+      if (child.name && child.name.startsWith("TriggerZone")) return;
+      list.push(child);
+    });
+    collidableRef.current = list;
+    collidableDirtyRef.current = false;
+  };
+
+  // Billentyűzet kezelés 
   useEffect(() => {
     const down = (e) => {
       if (e.code === "KeyW" || e.code === "ArrowUp") move.current.forward = true;
@@ -41,24 +79,31 @@ export default function PlayerMovement(controlsRef, sceneRef, moveSpeed = 10.0) 
   const updateMovement = (delta) => {
     const scene = sceneRef.current;
     const controls = controlsRef.current;
-    if (!scene || !controls) return;
+    const root = playerRootRef?.current;
+
+    if (!scene || !controls || !root) return;
+
+    rebuildCollidablesIfNeeded(scene);
+    const collidable = collidableRef.current;
 
     const camera = controls.getObject();
+
+    camera.getWorldPosition(camWorldPosRef.current);
 
     // MOBILE joystick → pass rotation to controller
     if (controls.setLook && window.joystickLook) {
       controls.setLook(window.joystickLook.lx, window.joystickLook.ly);
     }
 
-    // --- Velocity damping
-    velocity.current.x -= velocity.current.x * DAMPING * delta;
-    velocity.current.z -= velocity.current.z * DAMPING * delta;
+    // 1) Sebesség csillapítás
+    const dampK = Math.exp(-DAMPING * delta);
+    velocity.current.x *= dampK;
+    velocity.current.z *= dampK;
 
-    // DESKTOP keys
+    // 2) Irány meghatározása (Keyboard + Joystick)
     direction.z = Number(move.current.forward) - Number(move.current.backward);
     direction.x = Number(move.current.right) - Number(move.current.left);
 
-    // MOBILE joystick
     if (window.joystickMove) {
       direction.x = window.joystickMove.x;
       direction.z = window.joystickMove.y;
@@ -66,83 +111,161 @@ export default function PlayerMovement(controlsRef, sceneRef, moveSpeed = 10.0) 
 
     direction.normalize();
 
-    // accelerate
+    // 3) Gyorsítás
     if (direction.z !== 0) velocity.current.z -= direction.z * moveSpeed * delta;
     if (direction.x !== 0) velocity.current.x -= direction.x * moveSpeed * delta;
 
-    const moveVec = new THREE.Vector3(
-      velocity.current.x * delta,
-      0,
-      velocity.current.z * delta
-    );
+    // 4) Világ-irányok kiszámítása a kamerához képest
+    camera.getWorldDirection(frontDir);
+    frontDir.y = 0;
+    frontDir.normalize();
+    sideDir.crossVectors(frontDir, camera.up).normalize();
 
-    // Scene colliders
-    const collidable = [];
-    scene.traverse((child) => {
-  // Check if it starts with "TriggerZone" (Handles "TriggerZone A", "TriggerZone B", etc.)
-  const isTrigger = child.name.startsWith("TriggerZone");
+    const clampStep = (moveX, moveZ) => {
+      worldStep
+        .set(0, 0, 0)
+        .addScaledVector(sideDir, moveX)
+        .addScaledVector(frontDir, moveZ);
 
-  if (child.isMesh && child.name !== "Roof" && !isTrigger) {
-    collidable.push(child);
-  }
-  });
+      const dist = worldStep.length();
+      if (dist < 1e-6) return { ok: true, scale: 1, blocked: false };
 
-    // Wall collision
-    const offsets = [
-      new THREE.Vector3(0.18, 0, 0),
-      new THREE.Vector3(-0.18, 0, 0),
-      new THREE.Vector3(0, 0, 0.18),
-      new THREE.Vector3(0, 0, -0.18),
-    ];
+      checkDirTmp.copy(worldStep).multiplyScalar(1 / dist);
 
-    const dir = moveVec.clone().normalize();
-    let blocked = false;
+      let minAllowed = dist;
 
-    for (const o of offsets) {
-      const origin = camera.position.clone().add(o);
-      raycaster.current.set(origin, dir);
-      const hit = raycaster.current.intersectObjects(collidable, true)[0];
+      for (let i = 0; i < HEIGHTS.length; i++) {
+        const h = HEIGHTS[i];
+        originRef.current.copy(camWorldPosRef.current);
+        originRef.current.y += h;
 
-      if (hit && hit.distance < collisionDistance) {
-        blocked = true;
-        break;
+        raycaster.current.set(originRef.current, checkDirTmp);
+        raycaster.current.far = dist + collisionDistance + SKIN_WALL;
+
+        const hits = raycaster.current.intersectObjects(collidable, true);
+        if (!hits.length) continue;
+
+        // Legközelebbi
+        let nearest = hits[0];
+        for (let j = 1; j < hits.length; j++) {
+          if (hits[j].distance < nearest.distance) nearest = hits[j];
+        }
+
+        const d = nearest.distance;
+        const allowed = d - (collisionDistance + SKIN_WALL);
+
+        if (allowed < minAllowed) minAllowed = allowed;
       }
+
+      if (minAllowed <= 0) return { ok: false, scale: 0, blocked: true };
+
+      const scale = Math.min(1, minAllowed / dist);
+      return { ok: scale > 0, scale, blocked: scale < 1 };
+    };
+
+    // 5) Mozgás sub-stepping-el + wall-sliding
+    const totalX = -velocity.current.x * delta;
+    const totalZ = -velocity.current.z * delta;
+
+    const totalDist = Math.sqrt(totalX * totalX + totalZ * totalZ);
+    const steps = Math.max(1, Math.ceil(totalDist / MAX_SUBSTEP_DIST));
+
+    for (let i = 0; i < steps; i++) {
+      const stepX = totalX / steps;
+      const stepZ = totalZ / steps;
+
+      const diag = clampStep(stepX, stepZ);
+
+      if (diag.ok && diag.scale > 0) {
+        const sx = stepX * diag.scale;
+        const sz = stepZ * diag.scale;
+        if (Math.abs(sx) > 1e-8) root.position.addScaledVector(sideDir, sx);
+        if (Math.abs(sz) > 1e-8) root.position.addScaledVector(frontDir, sz);
+
+        if (diag.blocked) {
+          velocity.current.x *= 0.6;
+          velocity.current.z *= 0.6;
+        }
+      } else {
+        let movedX = false;
+        let movedZ = false;
+
+        const cx = clampStep(stepX, 0);
+        if (cx.ok && cx.scale > 0) {
+          const sx = stepX * cx.scale;
+          if (Math.abs(sx) > 1e-8) root.position.addScaledVector(sideDir, sx);
+          movedX = true;
+
+          if (cx.blocked) velocity.current.x *= 0.5;
+        } else {
+          velocity.current.x = 0;
+        }
+
+        const cz = clampStep(0, stepZ);
+        if (cz.ok && cz.scale > 0) {
+          const sz = stepZ * cz.scale;
+          if (Math.abs(sz) > 1e-8) root.position.addScaledVector(frontDir, sz);
+          movedZ = true;
+
+          if (cz.blocked) velocity.current.z *= 0.5;
+        } else {
+          velocity.current.z = 0;
+        }
+
+        if (!movedX && !movedZ) {
+          velocity.current.x = 0;
+          velocity.current.z = 0;
+        }
+      }
+      camera.getWorldPosition(camWorldPosRef.current);
     }
 
-    if (!blocked) {
-      controls.moveRight(-moveVec.x);
-      controls.moveForward(-moveVec.z);
-    }
+    // 6) Padló érzékelés és gravitáció
+    const downOrigin = originRef.current.copy(camWorldPosRef.current);
+    downOrigin.y += 0.2;
 
-    // Floor detection
     const downRay = new THREE.Raycaster(
-      camera.position.clone().add(new THREE.Vector3(0, 0.2, 0)),
+      downOrigin,
       new THREE.Vector3(0, -1, 0),
       0,
-      playerHeight + MAX_STEP_HEIGHT + 1.0
+      playerHeight + MAX_STEP_HEIGHT + 0.5
     );
 
-    const hits = downRay.intersectObjects(collidable, true);
-    const currentY = camera.position.y - playerHeight;
+    const floorHits = downRay.intersectObjects(collidable, true);
+    const currentFeetY = root.position.y;
 
-    const valid = hits.filter((h) => h.point.y - currentY <= MAX_STEP_HEIGHT);
+    let topFloor = null;
+    for (let i = 0; i < floorHits.length; i++) {
+      const h = floorHits[i];
+      if (h.point.y - currentFeetY > MAX_STEP_HEIGHT) continue;
+      if (!topFloor || h.point.y > topFloor.point.y) topFloor = h;
+    }
 
-    if (valid.length) {
-      const floor = valid.reduce((a, b) => (b.point.y > a.point.y ? b : a));
+    if (topFloor) {
       onGround.current = true;
       velocity.current.y = 0;
-      camera.position.y = floor.point.y + playerHeight;
+      root.position.y = topFloor.point.y;
     } else {
       onGround.current = false;
       velocity.current.y += gravity * delta;
-      camera.position.y += velocity.current.y * delta;
+      root.position.y += velocity.current.y * delta;
     }
 
-    //Call controller update (rotate camera)
-    if (controls.update) {
-      controls.update(delta);
+    // 7) FAILSAFE: Ha a játékos kiesik a pályáról (Fall out of map)
+    if (root.position.y < FALL_DEATH_Y) {
+      console.log("Player fell! Resetting to spawn...");
+      
+      // Teleport the root body
+      root.position.copy(SPAWN_POS);
+
+      camera.position.set(0, 1.7, 0); // Reset camera relative position to root
+      
+      // CRITICAL: Reset falling velocity so they don't instantly clip through the spawn floor!
+      velocity.current.set(0, 0, 0); 
     }
+
+    if (controls.update) controls.update(delta);
   };
 
-  return { updateMovement, move, velocity };
+  return { updateMovement, move, velocity, markCollidableDirty };
 }
