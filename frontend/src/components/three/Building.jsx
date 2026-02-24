@@ -7,20 +7,26 @@ import Metrics from "./Metrics";
 import { metricsCollector } from "./metricsCollector";
 import { measureLatency } from "./Latency";
 
-export default function Building({ controlsRef, onInsideChange, onWorldReady, sessionId }) {
+export default function Building({
+  controlsRef,
+  onInsideChange,
+  onWorldReady,
+  sessionId,
+}) {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const gltf = useGLTF(`${API_URL}/model`);
-  
+
   const roofRef = useRef();
   const interiorRef = useRef();
-  const triggerBoxes = useRef([]); 
+  const triggerBoxes = useRef([]);
   const isInsideRef = useRef(false);
 
   const { camera, gl } = useThree();
 
   // --- INITIAL SPAWN POINT ---
-  // We keep this here ONLY to snap the camera to the start when the game first loads.
-  const SPAWN_POS = new THREE.Vector3(-0.017955, -0.099324 + 1.7, 6.3213); 
+  // ONLY for first-load snap
+  const SPAWN_POS = new THREE.Vector3(-0.017955, -0.099324 + 1.7, 6.3213);
+  const didSnapRef = useRef(false);
   // ---------------------------
 
   const avgFps = useRef(60);
@@ -44,8 +50,11 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
   useEffect(() => {
     triggerBoxes.current = []; // reset
 
-    // Immediately snap camera to your spawn point when model loads
-    camera.position.copy(SPAWN_POS);
+    // Snap camera only once on first load
+    if (!didSnapRef.current) {
+      camera.position.copy(SPAWN_POS);
+      didSnapRef.current = true;
+    }
 
     gltf.scene.traverse((child) => {
       if (child.name === "Roof") roofRef.current = child;
@@ -61,7 +70,7 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
       // Hide all Collision meshes
       if (child.name.startsWith("COL")) {
         child.visible = false;
-        child.castShadow = false; 
+        child.castShadow = false;
         child.receiveShadow = false;
       }
     });
@@ -81,7 +90,11 @@ export default function Building({ controlsRef, onInsideChange, onWorldReady, se
     //
     // 1. Check camera inside ANY of the trigger boxes
     //
-    if (roofRef.current && interiorRef.current && triggerBoxes.current.length > 0) {
+    if (
+      roofRef.current &&
+      interiorRef.current &&
+      triggerBoxes.current.length > 0
+    ) {
       let inside = false;
 
       for (const box of triggerBoxes.current) {

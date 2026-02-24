@@ -1,5 +1,3 @@
-// teleport.js
-
 import * as THREE from "three";
 
 export class TeleportSystem {
