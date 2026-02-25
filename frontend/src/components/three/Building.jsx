@@ -8,9 +8,8 @@ import { metricsCollector } from "./metricsCollector";
 import { measureLatency } from "./Latency";
 
 export default function Building({ controlsRef, onInsideChange, onWorldReady, sessionId }) {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-  const gltf = useGLTF(`${API_URL}/model`);
-  
+  // Load GLTF building model via relative path (proxied through Nginx in production)
+  const gltf = useGLTF('/model');
   const roofRef = useRef();
   const interiorRef = useRef();
   const triggerBoxes = useRef([]); 
