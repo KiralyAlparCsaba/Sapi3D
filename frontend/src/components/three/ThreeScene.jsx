@@ -13,14 +13,14 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport }) {
   const { camera, scene } = useThree();
   const playerRootRef = useRef(new THREE.Object3D());
 
-  // IMPORTANT: prevent double-teleport (StrictMode / re-mount / onWorldReady twice)
+  // FONTOS: megakadályozza a dupla teleportálást (StrictMode / re-mount miatt)
   const didTeleportRef = useRef(false);
 
   useEffect(() => {
     scene.add(playerRootRef.current);
 
-    // root world start
-    playerRootRef.current.position.set(0, 0, 3);
+    // root world start - ITT JAVÍTVA 0, 0, 0-RA
+    playerRootRef.current.position.set(0, 0, 0);
 
     // attach camera to player root
     playerRootRef.current.add(camera);
@@ -56,12 +56,11 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport }) {
     }
   });
 
-  // ✅ Helper: normalize names robustly
-  // Marker.003 / Marker_003 / Marker003 -> marker003
+  // Segéd: nevek normalizálása
   const normalize = (s) =>
     (s || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
 
-  // Helper: find marker by exact name (normalized), fallback to first marker in scene
+  // Segéd: marker keresése név alapján
   const findMarkerObject = (mesh, wantedName) => {
     const wanted = normalize(wantedName);
 
@@ -71,12 +70,12 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport }) {
     mesh.traverse((child) => {
       const n = normalize(child.name);
 
-      // first marker fallback
+      // fallback az első "marker" szót tartalmazó objektumra
       if (!firstAny && n.includes("marker")) {
         firstAny = child;
       }
 
-      // exact match
+      // pontos egyezés
       if (!exact && wanted && n === wanted) {
         exact = child;
       }
@@ -92,45 +91,67 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport }) {
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
 
-          // If we already teleported once, don't do it again
+          // Ha már teleportáltunk, ne csináljuk újra
           if (didTeleportRef.current) return;
 
           const markerObj = findMarkerObject(mesh, markerToTeleport);
 
           if (!markerObj) {
-            console.warn("NO MARKER FOUND IN MODEL AT ALL");
+            console.warn("NEM TALÁLHATÓ MARKER A MODELLBEN");
             return;
           }
 
           console.log(
             "Teleport target:",
-            markerToTeleport || "(no marker passed)",
-            "-> using:",
+            markerToTeleport || "(nincs marker átadva)",
+            "-> használatban:",
             markerObj.name
           );
 
-          // ---- TELEPORT (move player root) ----
-          const markerWorldPos = new THREE.Vector3();
-          markerObj.getWorldPosition(markerWorldPos);
+          // ---- TELEPORT LOGIKA ----
 
-          // Move PLAYER ROOT (camera is child)
-          playerRootRef.current.position.x = markerWorldPos.x;
-          playerRootRef.current.position.z = markerWorldPos.z;
+          // 1. Kiszámoljuk a marker VALÓS térbeli közepét (Befoglaló doboz)
+          // Ez kiküszöböli a Blenderben elcsúszott Origin (középpont) hibákat.
+          const box = new THREE.Box3().setFromObject(markerObj);
+          const markerTrueCenter = new THREE.Vector3();
+          box.getCenter(markerTrueCenter);
 
-          // Fix Y using raycast down from above marker
-          const downOrigin = markerWorldPos.clone();
-          downOrigin.y += 10;
+          // 2. Beállítjuk a játékos X és Z pozícióját a valós középpontra
+          playerRootRef.current.position.x = markerTrueCenter.x;
+          playerRootRef.current.position.z = markerTrueCenter.z;
+
+          // 3. Y tengely beállítása Raycasttal (picit a valós középpont felettről lőjük a sugarat lefelé)
+          const downOrigin = markerTrueCenter.clone();
+          downOrigin.y += 0.5; // Fél méterrel a marker közepe felett kezdünk, nehogy a plafont találja el
 
           const downRay = new THREE.Raycaster(
             downOrigin,
             new THREE.Vector3(0, -1, 0)
           );
+          // Csak a mesh gyerekeit vizsgáljuk, de kihagyjuk a rejtett objektumokat
           const groundHits = downRay.intersectObjects(mesh.children, true);
 
           if (groundHits.length > 0) {
             playerRootRef.current.position.y = groundHits[0].point.y;
+          } else {
+            // Ha valamiért nem talál padlót, használja a marker valós magasságát fallbackként
+            playerRootRef.current.position.y = markerTrueCenter.y;
           }
 
+          // 4. Forgatás (Quaternion) átvétele
+          const markerQuaternion = new THREE.Quaternion();
+          markerObj.getWorldQuaternion(markerQuaternion);
+          playerRootRef.current.quaternion.copy(markerQuaternion);
+
+          // 5. BIZTOSÍTÉK: Kamera lokális nullázása (nehogy el legyen csúszva a Root-hoz képest)
+          camera.position.set(0, 1.7, 0);
+
+          // 6. FIZIKA JAVÍTÁS: Elrejtjük a markert, hogy a PlayerMovement (collision) NE lökjön ki belőle!
+          markerObj.visible = false;
+          // Kiemeljük a játéktérből is, biztos ami tuti
+          markerObj.position.y -= 100;
+
+          // 7. Kontrollerek frissítése az új pozíción
           if (controlsRef.current?.update) controlsRef.current.update(0);
 
           // Mark teleport done
@@ -147,9 +168,9 @@ export default function ThreeScene() {
 
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // Read marker from router state
+  // Marker kiolvasása a router state-ből
   const routeLocation = useLocation();
-  const markerToTeleport = routeLocation.state?.marker; // e.g. "Marker.003" or "Marker003"
+  const markerToTeleport = routeLocation.state?.marker; // pl. "Marker.003" vagy "Marker003"
 
   useEffect(() => {
     if (!isMobile) {
@@ -186,8 +207,9 @@ export default function ThreeScene() {
         ← Vissza a főoldalra
       </button>
 
+      {/* ITT IS JAVÍTVA A KAMERA POZÍCIÓ: [0, 1.7, 0] */}
       <Canvas
-        camera={{ position: [0, 1.7, 3], fov: 75 }}
+        camera={{ position: [0, 1.7, 0], fov: 75 }}
         style={{ width: "100vw", height: "100vh" }}
       >
         <ambientLight intensity={0.6} />
