@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
-import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { useMemo } from "react";
 
 export default function LocationsPage() {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -12,79 +10,16 @@ export default function LocationsPage() {
       { name: "Dékáni hivatal", room: "232-es terem", marker: "Marker001" },
       { name: "Fehér Áron labor", room: "243-as terem", marker: "Marker005" },
       { name: "Nagy előadó", room: "114-es terem", marker: "Marker003" },
+      { name: "Könyvtár", room: "Könyvtár", marker: "Marker002" },
+      { name: "Büfé", room: "Büfé", marker: "Marker004" },
+      { name: "Matematika-informatika tanszék", room: "Matematika-informatika tanszék", marker: "Marker006" },
+      { name: "Villamosmérnöki tanszék", room: "Villamosmérnöki tanszék", marker: "Marker007" },
+      { name: "Gépészmérnöki tanszék", room: "Gépészmérnöki tanszék", marker: "Marker008" },
+      { name: "Kertészmérnöki tanszék", room: "Kertészmérnöki tanszék", marker: "Marker009" },
+      { name: "Brassai labor", room: "Brassai labor", marker: "Marker010" },
     ],
     []
   );
-
-  // --- Debug marker list state ---
-  const [markerNames, setMarkerNames] = useState([]);
-  const [loadingMarkers, setLoadingMarkers] = useState(false);
-  const [markerError, setMarkerError] = useState("");
-  const [selectedMarker, setSelectedMarker] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadMarkers() {
-      setLoadingMarkers(true);
-      setMarkerError("");
-
-      try {
-        const loader = new GLTFLoader();
-
-        // cache-busting so you always see latest model during dev
-        const url = `${API_URL}/model?cb=${Date.now()}`;
-
-        const gltf = await new Promise((resolve, reject) => {
-          loader.load(url, resolve, undefined, reject);
-        });
-
-        if (cancelled) return;
-
-        const names = [];
-        gltf.scene.traverse((child) => {
-          const n = (child.name || "").trim();
-          if (!n) return;
-
-          // marker filter (case-insensitive)
-          if (n.toLowerCase().includes("marker")) {
-            names.push(n);
-          }
-        });
-
-        // Unique + sort
-        const uniqueSorted = Array.from(new Set(names)).sort((a, b) =>
-          a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
-        );
-
-        setMarkerNames(uniqueSorted);
-      } catch (e) {
-        console.error(e);
-        setMarkerError("Nem sikerült betölteni a modellt / markereket.");
-      } finally {
-        if (!cancelled) setLoadingMarkers(false);
-      }
-    }
-
-    loadMarkers();
-    return () => {
-      cancelled = true;
-    };
-  }, [API_URL]);
-
-  const copyToClipboard = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      // fallback
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-    }
-  };
 
   return (
     <div style={{ padding: "40px" }}>
@@ -141,121 +76,6 @@ export default function LocationsPage() {
             </Link>
           </div>
         ))}
-      </div>
-
-      {/* Debug panel */}
-      <div
-        style={{
-          marginTop: "40px",
-          padding: "16px",
-          borderRadius: "12px",
-          background: "rgba(0,0,0,0.05)",
-          border: "1px solid rgba(0,0,0,0.08)",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <h3 style={{ margin: 0 }}>Marker debug lista</h3>
-            <p style={{ marginTop: 6, marginBottom: 0, opacity: 0.8 }}>
-              Itt látod az összes “marker” nevű objektumot, amit a GLTF-ben megtaláltunk.
-            </p>
-          </div>
-
-          <div style={{ textAlign: "right" }}>
-            {loadingMarkers ? (
-              <span>Betöltés…</span>
-            ) : (
-              <span>Talált: <b>{markerNames.length}</b></span>
-            )}
-          </div>
-        </div>
-
-        {markerError ? (
-          <p style={{ marginTop: 12, color: "crimson" }}>{markerError}</p>
-        ) : null}
-
-        {/* Selected marker quick actions */}
-        <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <div style={{ padding: "8px 10px", background: "white", borderRadius: 8 }}>
-            Kiválasztott:{" "}
-            <b>{selectedMarker || "(nincs)"}</b>
-          </div>
-
-          <button
-            type="button"
-            disabled={!selectedMarker}
-            onClick={() => copyToClipboard(selectedMarker)}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid rgba(0,0,0,0.15)",
-              background: "white",
-              cursor: selectedMarker ? "pointer" : "not-allowed",
-            }}
-          >
-            Másolás
-          </button>
-        </div>
-
-        {/* Marker list */}
-        <div
-          style={{
-            marginTop: 12,
-            maxHeight: 240,
-            overflow: "auto",
-            background: "white",
-            borderRadius: 10,
-            border: "1px solid rgba(0,0,0,0.1)",
-            padding: 10,
-          }}
-        >
-          {loadingMarkers ? (
-            <div style={{ padding: 8, opacity: 0.7 }}>Model betöltése…</div>
-          ) : markerNames.length === 0 ? (
-            <div style={{ padding: 8, opacity: 0.7 }}>
-              Nem találtunk “marker” nevű objektumot a modellben.
-            </div>
-          ) : (
-            markerNames.map((name) => (
-              <div
-                key={name}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "8px 10px",
-                  borderRadius: 8,
-                  marginBottom: 6,
-                  background:
-                    selectedMarker === name ? "rgba(46,125,50,0.10)" : "transparent",
-                  cursor: "pointer",
-                }}
-                onClick={() => setSelectedMarker(name)}
-                title="Kattints a kijelöléshez"
-              >
-                <span style={{ fontFamily: "monospace" }}>{name}</span>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    copyToClipboard(name);
-                    setSelectedMarker(name);
-                  }}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 8,
-                    border: "1px solid rgba(0,0,0,0.15)",
-                    background: "white",
-                    cursor: "pointer",
-                  }}
-                >
-                  Másol
-                </button>
-              </div>
-            ))
-          )}
-        </div>
       </div>
     </div>
   );
