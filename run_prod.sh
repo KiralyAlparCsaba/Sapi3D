@@ -32,23 +32,23 @@ echo "✅ Configuration validated"
 
 echo ""
 echo "💾 Backing up database before redeploy..."
-if docker ps --format '{{.Names}}' | grep -q "sapi3d-db"; then
-    mkdir -p backups
-    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-    docker exec sapi3d-db pg_dump -U sapi3d sapi3d > backups/pre_deploy_${TIMESTAMP}.sql \
-        && echo "✅ Backup saved: backups/pre_deploy_${TIMESTAMP}.sql" \
-        || echo "⚠️  Backup failed (continuing anyway)"
+mkdir -p backups
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="backups/pre_deploy_${TIMESTAMP}.sql"
+if docker exec sapi3d-db-prod pg_dump -U sapi3d sapi3d > "$BACKUP_FILE" 2>/dev/null; then
+    echo "✅ Backup saved: $BACKUP_FILE"
 else
-    echo "ℹ️  Database not running, skipping backup"
+    rm -f "$BACKUP_FILE"
+    echo "ℹ️  Database not running or backup failed (continuing anyway)"
 fi
 
 echo ""
 echo "🧹 Cleaning up existing containers..."
-docker compose -f docker-compose.base.yml -f docker-compose.prod.yml down --remove-orphans
+docker compose -f docker-compose.prod.yml down --remove-orphans
 
 echo ""
 echo "🚀 Starting containers in production mode..."
-docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml up -d --build
 
 echo ""
 echo "⏳ Waiting for services to be healthy..."
@@ -58,16 +58,16 @@ echo ""
 echo "✅ Production environment started!"
 echo ""
 echo "📍 Services:"
-echo "   Frontend:  http://localhost:3000"
+echo "   Frontend:  http://localhost:80"
 echo "   Backend:   http://localhost:8000"
 echo "   API Docs:  http://localhost:8000/docs"
 echo "   ReDoc:     http://localhost:8000/redoc"
 echo ""
 echo "📊 Container Status:"
-docker compose -f docker-compose.base.yml -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml ps
 echo ""
 echo "📝 View logs:"
-echo "   docker compose -f docker-compose.base.yml -f docker-compose.prod.yml logs -f"
+echo "   docker compose -f docker-compose.prod.yml logs -f"
 echo ""
 echo "🛑 Stop services:"
 echo "   ./stop_prod.sh"
