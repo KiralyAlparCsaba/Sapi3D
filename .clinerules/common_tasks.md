@@ -11,6 +11,7 @@
 ```bash
 ./run_prod.sh
 ```
+> ⚠️ **Always use `./run_prod.sh` for production deploys** — it automatically backs up the database before restarting.
 
 ### Stop Development Environment
 ```bash
@@ -21,11 +22,12 @@
 ```bash
 ./stop_prod.sh
 ```
+> ℹ️ `./stop_prod.sh` automatically backs up the database before stopping.
 
-### Rebuild After Code Changes
-```bash
-docker compose down && docker compose up --build -d
-```
+### ⚠️ DANGER — Volume Warning
+**NEVER** run `docker compose down -v` or `docker compose down --volumes` — this **permanently deletes all database data**.
+
+The safe `down` command (no `-v`) is used inside all `run_*.sh` / `stop_*.sh` scripts.
 
 ### View Logs
 ```bash
@@ -49,6 +51,25 @@ docker restart sapi3d-backend
 docker restart sapi3d-frontend
 ```
 
+## Database Backups
+
+Backups are created automatically in the `backups/` directory:
+- **`./run_prod.sh`** — saves `backups/pre_deploy_<timestamp>.sql` before every production redeploy
+- **`./stop_prod.sh`** — saves `backups/stop_<timestamp>.sql` before stopping production
+
+### Manual Backup
+```bash
+mkdir -p backups
+docker exec sapi3d-db pg_dump -U sapi3d sapi3d > backups/manual_$(date +%Y%m%d_%H%M%S).sql
+```
+
+### Restore from Backup
+```bash
+docker exec -i sapi3d-db psql -U sapi3d -d sapi3d < backups/<filename>.sql
+```
+
+> ℹ️ The `backups/` folder is in `.gitignore` — SQL dumps are not committed to the repo.
+
 ## Development Workflows
 
 ### Adding a New API Endpoint
@@ -59,7 +80,7 @@ docker restart sapi3d-frontend
 4. **Register Router** in `backend/app/main.py`
 5. **Rebuild & Test**:
    ```bash
-   docker compose down && docker compose up --build -d
+   ./run_dev.sh
    ```
 6. **Test in Swagger**: http://localhost:8000/docs
 
@@ -70,7 +91,7 @@ docker restart sapi3d-frontend
 3. **Create Repository** (`backend/app/repositories/`)
 4. **Rebuild Backend**:
    ```bash
-   docker compose down && docker compose up --build -d
+   ./run_dev.sh
    ```
 5. **Verify Table**: 
    ```bash
@@ -83,7 +104,7 @@ docker restart sapi3d-frontend
 2. **Import in Parent** (e.g., `App.jsx`)
 3. **Rebuild Frontend**:
    ```bash
-   docker compose down && docker compose up --build -d
+   ./run_dev.sh
    ```
 4. **Test**: http://localhost:3000
 
@@ -148,10 +169,8 @@ kill -9 <PID>
 
 ### Docker Build Cache Issues
 ```bash
-# Clean rebuild
-docker compose down
-docker system prune -a
-docker compose up --build -d
+# Clean rebuild (preserves database)
+./run_dev.sh
 ```
 
 ### Database Connection Issues

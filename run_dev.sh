@@ -71,6 +71,18 @@ if [ "$MOBILE_MODE" = true ]; then
 fi
 
 echo ""
+echo "💾 Backing up database before restart..."
+if docker ps --format '{{.Names}}' | grep -q "sapi3d-db"; then
+    mkdir -p backups
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    docker exec sapi3d-db pg_dump -U sapi3d sapi3d > backups/pre_deploy_dev_${TIMESTAMP}.sql \
+        && echo "✅ Backup saved: backups/pre_deploy_dev_${TIMESTAMP}.sql" \
+        || echo "⚠️  Backup failed (continuing anyway)"
+else
+    echo "ℹ️  Database not running, skipping backup"
+fi
+
+echo ""
 echo "🧹 Cleaning up existing containers..."
 docker compose -f docker-compose.base.yml -f docker-compose.dev.yml down --remove-orphans
 
