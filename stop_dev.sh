@@ -11,15 +11,15 @@ echo "  Sapi3D - Stop Development Mode"
 echo "=========================================="
 echo ""
 
-echo "� Backing up database before stop..."
-if docker ps --format '{{.Names}}' | grep -q "sapi3d-db"; then
-    mkdir -p backups
-    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-    docker exec sapi3d-db pg_dump -U sapi3d sapi3d > backups/stop_dev_${TIMESTAMP}.sql \
-        && echo "✅ Backup saved: backups/stop_dev_${TIMESTAMP}.sql" \
-        || echo "⚠️  Backup failed (continuing anyway)"
+echo "💾 Backing up database before stop..."
+mkdir -p backups
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="backups/stop_dev_${TIMESTAMP}.sql"
+if docker exec sapi3d-db pg_dump -U sapi3d sapi3d 2>/dev/null | cat > "$BACKUP_FILE" && [ -s "$BACKUP_FILE" ]; then
+    echo "✅ Backup saved: $BACKUP_FILE"
 else
-    echo "ℹ️  Database not running, skipping backup"
+    rm -f "$BACKUP_FILE"
+    echo "ℹ️  Database not running or backup failed (continuing anyway)"
 fi
 
 echo ""
