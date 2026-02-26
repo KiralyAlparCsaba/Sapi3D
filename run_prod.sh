@@ -31,16 +31,7 @@ fi
 echo "✅ Configuration validated"
 
 echo ""
-echo "💾 Backing up database before redeploy..."
-mkdir -p backups
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="backups/pre_deploy_${TIMESTAMP}.sql"
-if docker exec sapi3d-db-prod pg_dump -U sapi3d sapi3d > "$BACKUP_FILE" 2>/dev/null; then
-    echo "✅ Backup saved: $BACKUP_FILE"
-else
-    rm -f "$BACKUP_FILE"
-    echo "ℹ️  Database not running or backup failed (continuing anyway)"
-fi
+./backup.sh prod || true
 
 echo ""
 echo "🧹 Cleaning up existing containers..."

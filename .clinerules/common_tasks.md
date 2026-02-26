@@ -13,6 +13,20 @@
 ```
 > ⚠️ **Always use `./run_prod.sh` for production deploys** — it automatically backs up the database before restarting.
 
+### On-demand Backup
+```bash
+./backup.sh dev    # Backup dev database now
+./backup.sh prod   # Backup prod database now
+```
+
+### Restore from Backup
+```bash
+./restore.sh dev               # List available dev backups
+./restore.sh prod              # List available prod backups
+./restore.sh dev  backups/dev_20260226_090000.sql   # Restore specific backup
+./restore.sh prod backups/prod_20260226_090000.sql  # Restore specific backup
+```
+
 ### Stop Development Environment
 ```bash
 ./stop_dev.sh
@@ -53,19 +67,22 @@ docker restart sapi3d-frontend
 
 ## Database Backups
 
-Backups are created automatically in the `backups/` directory:
-- **`./run_prod.sh`** — saves `backups/pre_deploy_<timestamp>.sql` before every production redeploy
-- **`./stop_prod.sh`** — saves `backups/stop_<timestamp>.sql` before stopping production
+Backups are saved to the `backups/` directory as `dev_TIMESTAMP.sql` or `prod_TIMESTAMP.sql`.
 
-### Manual Backup
+Automatic backups happen on every `run_*.sh` and `stop_*.sh` call.
+
+### On-demand Backup
 ```bash
-mkdir -p backups
-docker exec sapi3d-db pg_dump -U sapi3d sapi3d > backups/manual_$(date +%Y%m%d_%H%M%S).sql
+./backup.sh dev    # Backup dev database now
+./backup.sh prod   # Backup prod database now
 ```
 
 ### Restore from Backup
 ```bash
-docker exec -i sapi3d-db psql -U sapi3d -d sapi3d < backups/<filename>.sql
+./restore.sh dev               # List available dev backups
+./restore.sh prod              # List available prod backups
+./restore.sh dev  backups/dev_20260226_090000.sql   # Restore specific backup
+./restore.sh prod backups/prod_20260226_090000.sql  # Restore specific backup
 ```
 
 > ℹ️ The `backups/` folder is in `.gitignore` — SQL dumps are not committed to the repo.
