@@ -90,3 +90,7 @@ class InfoPanelResponse(InfoPanelBase):
     panel_id: int
     
     model_config = ConfigDict(from_attributes=True)
+
+class LocationObjectResponse(BaseModel):
+    """Schema for a single object name found in the 3D model."""
+    object_name: str = Field(...,min_length=1, max_length=200)
