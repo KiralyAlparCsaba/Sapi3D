@@ -9,7 +9,7 @@ from schemas.session import SessionCreate, SessionUpdate, SessionResponse
 from schemas.metrics import PerfMetricsCreate, PerfMetricsResponse, PerfMetricsSummary
 
 
-router = APIRouter(prefix="/sessions", tags=["Sessions"])
+router = APIRouter(prefix="/sessions")
 
 
 # ───────────────────────────────
