@@ -11,7 +11,6 @@ class PerfMetricsBase(BaseModel):
     fps: int = Field(..., ge=0)
     memory_mb: int = Field(..., ge=0)
     latency_ms: int = Field(..., ge=0)
-    cpu_gpu_usage: int = Field(0, ge=0)
 
 
 class PerfMetricsCreate(PerfMetricsBase):
@@ -32,7 +31,6 @@ class PerfMetricsSummary(BaseModel):
     avg_fps: float
     avg_memory_mb: float
     avg_latency_ms: float
-    avg_cpu_gpu_usage: float
     min_fps: int
     max_fps: int
     total_samples: int
