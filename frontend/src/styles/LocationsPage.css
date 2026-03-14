@@ -1,0 +1,213 @@
+/* ── Oldal wrapper ── */
+/* A Locations oldal teljes külső konténere */
+.loc-page {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Oldalcím (h1) a wrapperen belül */
+.loc-page h1 { font-size: 2rem; margin-top: 6px; }
+/* Bevezető leírás közvetlenül a címsor alatt */
+.loc-page h3 { font-size: 1.25rem; margin-top: 8px; }
+
+/* ── Helyszínek grid ── */
+/* A kártyákat tartalmazó szekció külső margója */
+.loc-locations { margin-top: 40px; }
+
+/* Reszponzív rács a helyszínkártyákhoz */
+.loc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  margin-top: 20px;
+}
+
+@media (max-width: 900px) {
+  .loc-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Kártya ── */
+/* Egyetlen helyszínkártya alap stílusa */
+.loc-card {
+  background: var(--bg-color);
+  border: 1px solid var(--capsule-bg);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 16px var(--shadow-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Kártya hover állapot: enyhe kiemelés */
+.loc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+/* Kártya címsora */
+.loc-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  text-align: center;
+}
+/* Kártya marker/azonosító sor (pl. jelölő) */
+.loc-card-marker { font-size: 0.85rem; font-weight: 600; opacity: 0.6; margin-bottom: 4px; }
+/* Kártya fő információs szövege */
+.loc-card-info {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  line-height: 1.5;
+}
+
+/* Kártyán belüli akciógombok konténere */
+.loc-card-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+
+/* Nyilvános link gomb (pl. megnyitás/részletek) */
+.loc-card-link {
+  padding: 10px 16px;
+  border-radius: 10px;
+  text-align: center;
+  background-color: var(--capsule-bg);
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+/* Nyilvános link gomb hover állapota */
+.loc-card-link:hover { opacity: 0.85; }
+
+/* Admin akciók (szerkesztés/törlés) vízszintes sora */
+.loc-card-admin-actions { display: flex; gap: 8px; }
+
+/* Szerkesztés gomb a kártyán */
+.loc-btn-edit {
+  flex: 1; padding: 8px 12px; border-radius: 8px;
+  background: var(--navbar-bg); color: var(--text-color);
+  font-size: 0.85rem; font-weight: 600;
+}
+/* Szerkesztés gomb hover állapota */
+.loc-btn-edit:hover { opacity: 0.8; }
+
+/* Törlés gomb a kártyán */
+.loc-btn-delete {
+  flex: 1; padding: 8px 12px; border-radius: 8px;
+  background: #c0392b; color: white;
+  font-size: 0.85rem; font-weight: 600;
+}
+/* Törlés gomb hover állapota (csak engedélyezett esetben) */
+.loc-btn-delete:hover:not(:disabled) { opacity: 0.85; }
+
+/* ── Inline edit form ── */
+/* Kártyán belüli inline szerkesztő űrlap konténere */
+.loc-edit-form { display: flex; flex-direction: column; gap: 8px; }
+
+/* Inline szerkesztő input és textarea mezők */
+.loc-edit-form input,
+.loc-edit-form select,
+.loc-edit-form textarea {
+  width: 100%; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--capsule-bg);
+  background: var(--bg-color); color: var(--text-color);
+  font-size: 0.9rem; font-family: inherit;
+}
+/* Inline select lenyíló mező viselkedése */
+.loc-edit-form select { cursor: pointer; }
+
+/* Tiltott inline select vizuális állapota */
+.loc-edit-form select:disabled { opacity: 0.65; cursor: not-allowed; }
+
+/* Inline textarea átméretezhetősége csak függőlegesen */
+.loc-edit-form textarea { resize: vertical; }
+
+/* Inline mentés/mégse gombok sora */
+.loc-edit-actions { display: flex; gap: 8px; }
+
+/* Inline mentés gomb */
+.loc-btn-save {
+  flex: 1; padding: 8px 12px; border-radius: 8px;
+  background: var(--capsule-bg); color: var(--text-color);
+  font-weight: 600; font-size: 0.85rem;
+}
+/* Inline mégse gomb */
+.loc-btn-cancel {
+  flex: 1; padding: 8px 12px; border-radius: 8px;
+  background: var(--navbar-bg); color: var(--text-color); font-size: 0.85rem;
+}
+
+/* ── Admin create form ── */
+/* Admin új helyszín létrehozó panel konténere */
+.loc-admin-create {
+  margin-top: 36px;
+  background: var(--bg-color);
+  border: 1px solid var(--capsule-bg);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 16px var(--shadow-color);
+  max-width: 560px;
+}
+/* Admin létrehozó panel címe */
+.loc-admin-create h2 { margin-bottom: 16px; }
+
+/* Új helyszín létrehozó űrlap elrendezése */
+.loc-create-form { display: flex; flex-direction: column; gap: 10px; }
+
+/* Létrehozó űrlap input és textarea mezők */
+.loc-create-form input,
+.loc-create-form select,
+.loc-create-form textarea {
+  width: 100%; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--capsule-bg);
+  background: var(--bg-color); color: var(--text-color);
+  font-size: 0.95rem; font-family: inherit;
+}
+/* Létrehozó select lenyíló mező viselkedése */
+.loc-create-form select { cursor: pointer; }
+
+/* Tiltott select vizuális állapota */
+.loc-create-form select:disabled { opacity: 0.65; cursor: not-allowed; }
+
+/* Létrehozó textarea átméretezésének iránya */
+.loc-create-form textarea { resize: vertical; }
+
+/* Új helyszín létrehozása gomb */
+.loc-btn-create {
+  padding: 10px 16px; border-radius: 10px;
+  background: var(--capsule-bg); color: var(--text-color);
+  font-weight: 700; font-size: 0.95rem;
+}
+/* Létrehozás gomb hover állapota (csak engedélyezve) */
+.loc-btn-create:hover:not(:disabled) { opacity: 0.85; }
+
+/* ── Admin location objects ── */
+/* Admin objektumlista panel külső konténere */
+.loc-admin-objects {
+  margin-top: 40px;
+  background: var(--bg-color);
+  border: 1px solid var(--capsule-bg);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 16px var(--shadow-color);
+  max-width: 400px;
+}
+/* Admin objektumlista panel címe */
+.loc-admin-objects h2 { margin-bottom: 12px; }
+/* Admin objektumlista (<ul>) alap elrendezése */
+.loc-admin-objects ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+/* Admin objektumlista egy sora (<li>) */
+.loc-admin-objects li {
+  padding: 6px 10px; background: var(--navbar-bg);
+  border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+}
+
+/* ── Üzenet szalagok ── */
+/* Hibaüzenet szöveg stílusa */
+.loc-error { color: #c0392b; font-size: 0.88rem; margin-top: 4px; }
+/* Sikerüzenet szöveg stílusa */
+.loc-success { color: #27ae60; font-size: 0.88rem; margin-top: 4px; }

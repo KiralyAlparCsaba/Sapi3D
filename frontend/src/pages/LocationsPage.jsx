@@ -8,6 +8,8 @@ export default function LocationsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role_id === 2;
 
+  const getObjectName = (obj) => (typeof obj === "string" ? obj : obj?.object_name || "");
+
   // Locations (visible to all)
   const [locations, setLocations] = useState([]);
   const [locationsLoading, setLocationsLoading] = useState(false);
@@ -180,126 +182,133 @@ export default function LocationsPage() {
     }
   };
 
-  return (
-    <div>
-      <h1>Fontosabb egyetemi helyszínek</h1>
-      <p>Ismerd meg a Sapientia campus kulcsfontosságú helyszíneit</p>
+return (
+  <div className="loc-page">
+    <h1>Fontosabb egyetemi helyszínek</h1>
+    <h3>Ismerd meg a Sapientia campus kulcsfontosságú helyszíneit</h3>
 
-      {isAdmin && (
-        <section>
-          <h2>Új helyszín létrehozása (admin)</h2>
-          <form onSubmit={handleCreateLocation}>
-            <input
-              type="text"
-              placeholder="Név"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Marker / button_location"
-              value={newButtonLocation}
-              onChange={(e) => setNewButtonLocation(e.target.value)}
-            />
-            <textarea
-              placeholder="Leírás"
-              value={newInformation}
-              onChange={(e) => setNewInformation(e.target.value)}
-              rows={4}
-            />
-            <button type="submit" disabled={createLoading}>
-              {createLoading ? "Mentés..." : "Helyszín létrehozása"}
-            </button>
-          </form>
+    {isAdmin && (
+      <section className="loc-admin-create">
+        <h2>Új helyszín létrehozása</h2>
+        <form onSubmit={handleCreateLocation} className="loc-create-form">
+          <input type="text" placeholder="Név" value={newName} onChange={(e) => setNewName(e.target.value)} />
+          <select
+            value={newButtonLocation}
+            onChange={(e) => setNewButtonLocation(e.target.value)}
+            disabled={objectsLoading || locationObjects.length === 0}
+          >
+            <option value="">
+              {objectsLoading ? "Location objectek betöltése..." : "Válassz location objectet"}
+            </option>
+            {locationObjects.map((obj) => {
+              const objectName = getObjectName(obj);
+              if (!objectName) return null;
 
-          {createError && <p>{createError}</p>}
-          {createSuccess && <p>{createSuccess}</p>}
-        </section>
-      )}
+              return (
+                <option key={objectName} value={objectName}>
+                  {objectName}
+                </option>
+              );
+            })}
+          </select>
+          <textarea placeholder="Leírás" value={newInformation} onChange={(e) => setNewInformation(e.target.value)} rows={4} />
+          <button type="submit" disabled={createLoading} className="loc-btn-create">
+            {createLoading ? "Mentés..." : "Helyszín létrehozása"}
+          </button>
+        </form>
+        {!objectsLoading && locationObjects.length === 0 && (
+          <p className="loc-error">Nincs elérhető location object a választáshoz.</p>
+        )}
+        {createError && <p className="loc-error">{createError}</p>}
+        {createSuccess && <p className="loc-success">{createSuccess}</p>}
+      </section>
+    )}
 
-      <section>
-        <h2>Helyszínek</h2>
-        {locationsLoading && <p>Betöltés...</p>}
-        {locationsError && <p>{locationsError}</p>}
+    <section className="loc-locations">
+      {locationsLoading && <p>Betöltés...</p>}
+      {locationsError && <p className="loc-error">{locationsError}</p>}
 
-        {!locationsLoading && !locationsError && (
-          <div>
-            {locations.map((loc) => (
-              <div key={loc.loc_id}>
-                {isAdmin && editingLoc?.loc_id === loc.loc_id ? (
-                  <form onSubmit={handleEditLocation}>
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      placeholder="Név"
-                    />
-                    <input
-                      type="text"
-                      value={editButtonLocation}
-                      onChange={(e) => setEditButtonLocation(e.target.value)}
-                      placeholder="Marker / button_location"
-                    />
-                    <textarea
-                      value={editInformation}
-                      onChange={(e) => setEditInformation(e.target.value)}
-                      placeholder="Leírás"
-                      rows={3}
-                    />
-                    {editError && <p>{editError}</p>}
-                    <button type="submit" disabled={editLoading}>
-                      {editLoading ? "Mentés..." : "Mentés"}
-                    </button>
-                    <button type="button" onClick={cancelEdit}>Mégse</button>
-                  </form>
-                ) : (
-                  <>
-                    <div>
-                      <h3>{loc.name}</h3>
-                      <p>Marker: {loc.button_location}</p>
-                      <p>{loc.information}</p>
-                    </div>
-                    <Link
-                      to="/app/model"
-                      state={{ marker: loc.button_location }}
-                    >
+      {!locationsLoading && !locationsError && (
+        <div className="loc-grid">
+          {locations.map((loc) => (
+            <div key={loc.loc_id} className="loc-card">
+              {isAdmin && editingLoc?.loc_id === loc.loc_id ? (
+                <form onSubmit={handleEditLocation} className="loc-edit-form">
+                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Név" />
+                  <select
+                    value={editButtonLocation}
+                    onChange={(e) => setEditButtonLocation(e.target.value)}
+                    disabled={objectsLoading || (locationObjects.length === 0 && !editButtonLocation)}
+                  >
+                    <option value="">
+                      {objectsLoading ? "Location objectek betöltése..." : "Válassz location objectet"}
+                    </option>
+                    {editButtonLocation &&
+                      !locationObjects.some((obj) => getObjectName(obj) === editButtonLocation) && (
+                        <option value={editButtonLocation}>{editButtonLocation} (jelenlegi)</option>
+                      )}
+                    {locationObjects.map((obj) => {
+                      const objectName = getObjectName(obj);
+                      if (!objectName) return null;
+
+                      return (
+                        <option key={objectName} value={objectName}>
+                          {objectName}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <textarea value={editInformation} onChange={(e) => setEditInformation(e.target.value)} placeholder="Leírás" rows={3} />
+                  {editError && <p className="loc-error">{editError}</p>}
+                  <div className="loc-edit-actions">
+                    <button type="submit" disabled={editLoading} className="loc-btn-save">{editLoading ? "Mentés..." : "Mentés"}</button>
+                    <button type="button" onClick={cancelEdit} className="loc-btn-cancel">Mégse</button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <div>
+                    <h3>{loc.name}</h3>
+                    <p className="loc-card-info">{loc.information}</p>
+                  </div>
+                  <div className="loc-card-actions">
+                    <Link to="/app/model" state={{ marker: loc.button_location }} className="loc-card-link">
                       Indítsd el a 3D modellt
                     </Link>
                     {isAdmin && (
-                      <>
-                        <button type="button" onClick={() => openEdit(loc)}>Szerkesztés</button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteLocation(loc.loc_id)}
-                          disabled={deletingId === loc.loc_id}
-                        >
+                      <div className="loc-card-admin-actions">
+                        <button type="button" onClick={() => openEdit(loc)} className="loc-btn-edit">Szerkesztés</button>
+                        <button type="button" onClick={() => handleDeleteLocation(loc.loc_id)} disabled={deletingId === loc.loc_id} className="loc-btn-delete">
                           {deletingId === loc.loc_id ? "Törlés..." : "Törlés"}
                         </button>
-                      </>
+                      </div>
                     )}
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+
+    {isAdmin && (
+      <section className="loc-admin-objects">
+        <h2>Location objectek</h2>
+        {objectsLoading && <p>Betöltés...</p>}
+        {objectsError && <p className="loc-error">{objectsError}</p>}
+        {!objectsLoading && !objectsError && (
+          <ul>
+            {locationObjects.map((obj) => {
+              const objectName = getObjectName(obj);
+              if (!objectName) return null;
+
+              return <li key={objectName}>{objectName}</li>;
+            })}
+          </ul>
         )}
       </section>
-
-      {isAdmin && (
-        <section>
-          <h2>Location objectek (admin)</h2>
-          {objectsLoading && <p>Betöltés...</p>}
-          {objectsError && <p>{objectsError}</p>}
-
-          {!objectsLoading && !objectsError && (
-            <ul>
-              {locationObjects.map((obj) => (
-                <li key={obj.object_name}>{obj.object_name}</li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
-    </div>
-  );
+    )}
+  </div>
+);
 }
