@@ -3,6 +3,18 @@ import api from "../services/api";
 import "../styles/AdminPage.css";
  
 
+function resolveAvatarUrl(avatarUrl) {
+  if (!avatarUrl) return "";
+  if (/^https?:\/\//i.test(avatarUrl)) return avatarUrl;
+
+  const envBase = (import.meta.env.VITE_API_URL || "").trim();
+  const base = envBase || `${window.location.protocol}//${window.location.hostname}:8000`;
+  const normalizedBase = base.replace(/\/$/, "");
+  const normalizedPath = avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
+
 function fmtDate(value) {
   if (!value) return "-";
   const d = new Date(value);
@@ -55,6 +67,11 @@ const [userActionSuccess, setUserActionSuccess] = useState("");
 
 const [editOpen, setEditOpen] = useState(false);
 const [editForm, setEditForm] = useState({ username: "", email: "", role_id: 1 });
+const avatarInputRef = useRef(null);
+const [avatarActionLoading, setAvatarActionLoading] = useState(false);
+const [avatarActionType, setAvatarActionType] = useState(null);
+const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+const [avatarVersion, setAvatarVersion] = useState(0);
 
 const openEditSelectedUser = () => {
   if (!selectedUser) return;
@@ -72,6 +89,109 @@ const closeEdit = () => {
   setEditOpen(false);
 };
 
+const triggerSelectedUserAvatarPicker = () => {
+  if (!selectedUser || avatarActionLoading || userActionLoading) return;
+  avatarInputRef.current?.click();
+};
+
+const uploadSelectedUserAvatar = async (event) => {
+  const selectedFile = event.target.files?.[0];
+  if (!selectedFile || !selectedUser) return;
+
+  const allowedTypes = ["image/jpeg", "image/png"];
+  if (!allowedTypes.includes(selectedFile.type)) {
+    setUserActionError("Csak JPG vagy PNG képet tölthetsz fel.");
+    event.target.value = "";
+    return;
+  }
+
+  const maxBytes = 3 * 1024 * 1024;
+  if (selectedFile.size > maxBytes) {
+    setUserActionError("A fájl túl nagy. Maximum méret: 3MB.");
+    event.target.value = "";
+    return;
+  }
+
+  setAvatarActionLoading(true);
+  setAvatarActionType("upload");
+  setUserActionError("");
+  setUserActionSuccess("");
+
+  try {
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    const method = selectedUser.avatar_url ? "put" : "post";
+    const res = await api.request({
+      method,
+      url: `/users/${selectedUser.user_id}/avatar`,
+      data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    const updatedUser = res.data?.user;
+    if (updatedUser) {
+      setUsers((prev) =>
+        prev.map((u) => (u.user_id === selectedUser.user_id ? { ...u, ...updatedUser } : u))
+      );
+    }
+
+    setAvatarLoadFailed(false);
+    setAvatarVersion(Date.now());
+    window.dispatchEvent(
+      new CustomEvent("avatar-updated", {
+        detail: { userId: selectedUser.user_id },
+      })
+    );
+    setUserActionSuccess("Profilkép sikeresen frissítve.");
+  } catch (e) {
+    setUserActionError(e?.response?.data?.detail || "A profilkép frissítése sikertelen.");
+  } finally {
+    setAvatarActionLoading(false);
+    setAvatarActionType(null);
+    event.target.value = "";
+  }
+};
+
+const deleteSelectedUserAvatar = async () => {
+  if (!selectedUser?.avatar_url || !selectedUser?.user_id) return;
+
+  const ok = window.confirm(`Biztosan törlöd ${selectedUser.username} profilképét?`);
+  if (!ok) return;
+
+  setAvatarActionLoading(true);
+  setAvatarActionType("delete");
+  setUserActionError("");
+  setUserActionSuccess("");
+
+  try {
+    const res = await api.delete(`/users/${selectedUser.user_id}/avatar`);
+    const updatedUser = res.data?.user;
+
+    if (updatedUser) {
+      setUsers((prev) =>
+        prev.map((u) => (u.user_id === selectedUser.user_id ? { ...u, ...updatedUser } : u))
+      );
+    }
+
+    setAvatarLoadFailed(false);
+    setAvatarVersion(Date.now());
+    window.dispatchEvent(
+      new CustomEvent("avatar-updated", {
+        detail: { userId: selectedUser.user_id },
+      })
+    );
+    setUserActionSuccess("Profilkép törölve.");
+  } catch (e) {
+    setUserActionError(e?.response?.data?.detail || "A profilkép törlése sikertelen.");
+  } finally {
+    setAvatarActionLoading(false);
+    setAvatarActionType(null);
+  }
+};
+
 
   // ───────── DERIVED ─────────
   const selectedUser = useMemo(
@@ -83,6 +203,12 @@ const closeEdit = () => {
     () => sessions.find((s) => s.session_id === Number(selectedSessionId)) ?? null,
     [sessions, selectedSessionId]
   );
+
+  const selectedAvatarUrl = resolveAvatarUrl(selectedUser?.avatar_url || "");
+  const selectedAvatarSrc = selectedAvatarUrl
+    ? `${selectedAvatarUrl}${selectedAvatarUrl.includes("?") ? "&" : "?"}v=${avatarVersion}`
+    : "";
+  const selectedInitial = (selectedUser?.username || "?").trim().charAt(0).toUpperCase() || "?";
 
   const canPrevUsers = page > 1;
   const canNextUsers = users.length === limit; 
@@ -279,6 +405,11 @@ const saveSelectedUserEdit = async () => {
     loadUsersPage();
   }, [limit, page]);
 
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+    setAvatarVersion(0);
+  }, [selectedUserId]);
+
   // ───────── UI ─────────
   return (
     <>
@@ -452,6 +583,57 @@ const saveSelectedUserEdit = async () => {
 </div>
 {userActionError && <p className="admin-status admin-error">{userActionError}</p>}
 {userActionSuccess && <p className="admin-status">{userActionSuccess}</p>}
+
+          {selectedUser && (
+            <div className="admin-avatar-panel">
+              <div className="admin-avatar-preview-wrap">
+                {selectedAvatarSrc && !avatarLoadFailed ? (
+                  <img
+                    src={selectedAvatarSrc}
+                    alt="Selected user avatar"
+                    className="admin-avatar-preview"
+                    onError={() => setAvatarLoadFailed(true)}
+                  />
+                ) : (
+                  <div className="admin-avatar-preview admin-avatar-preview--fallback">{selectedInitial}</div>
+                )}
+                <div className="admin-avatar-meta">
+                  <strong>Profilkép</strong>
+                  <span>{selectedUser.username}</span>
+                </div>
+              </div>
+
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                onChange={uploadSelectedUserAvatar}
+                className="admin-avatar-input"
+              />
+
+              <button
+                onClick={triggerSelectedUserAvatarPicker}
+                disabled={avatarActionLoading || userActionLoading}
+                className="admin-avatar-button"
+                type="button"
+              >
+                {avatarActionLoading && avatarActionType === "upload"
+                  ? "Feltöltés..."
+                  : (selectedUser.avatar_url ? "Profilkép módosítása" : "Profilkép feltöltése")}
+              </button>
+
+              {selectedUser.avatar_url && (
+                <button
+                  onClick={deleteSelectedUserAvatar}
+                  disabled={avatarActionLoading || userActionLoading}
+                  className="admin-avatar-button admin-avatar-button--danger"
+                  type="button"
+                >
+                  {avatarActionLoading && avatarActionType === "delete" ? "Törlés..." : "Profilkép törlése"}
+                </button>
+              )}
+            </div>
+          )}
 
 
           {!selectedSessionId && <p className="admin-status admin-muted">Kattints egy sessionre a táblázatban.</p>}
