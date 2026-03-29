@@ -1,9 +1,12 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+import os
+
 from repositories.user_repository import UserRepository, RoleRepository
 from core.security import hash_password
 from schemas.user import UserCreate, UserUpdate, UserResponse
 from core.logging import logger
+from core.config import settings
 
 class UserService:
     """Service layer for user management (CRUD)."""
@@ -90,6 +93,92 @@ class UserService:
         await self.db.commit()
         await self.db.refresh(updated_user)
         logger.info(f"Updated user ID {user_id}")
+
+        return UserResponse.model_validate(updated_user, from_attributes=True)
+
+    # -----------------------
+    # UPLOAD AVATAR
+    # -----------------------
+    async def upload_avatar(self, user_id: int, file_bytes: bytes, content_type: str) -> UserResponse:
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if content_type not in settings.avatar_allowed_mime_types:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid avatar format. Allowed formats: JPG, PNG"
+            )
+
+        if not file_bytes:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+        if len(file_bytes) > settings.avatar_max_size_bytes:
+            raise HTTPException(status_code=413, detail="Avatar file is too large. Max size is 3MB")
+
+        extension_by_mime = {
+            "image/jpeg": "jpg",
+            "image/png": "png",
+        }
+        extension = extension_by_mime[content_type]
+        base_name = f"{user_id:09d}"
+        avatar_filename = f"{base_name}.{extension}"
+
+        avatars_dir = settings.avatars_directory
+        os.makedirs(avatars_dir, exist_ok=True)
+
+        # Keep exactly one avatar file per user by removing previous extension variants.
+        for allowed_ext in settings.avatar_allowed_extensions:
+            candidate = os.path.join(avatars_dir, f"{base_name}.{allowed_ext}")
+            if os.path.exists(candidate) and candidate != os.path.join(avatars_dir, avatar_filename):
+                try:
+                    os.remove(candidate)
+                except OSError as exc:
+                    logger.warning(f"Failed to remove old avatar file {candidate}: {exc}")
+
+        target_path = os.path.join(avatars_dir, avatar_filename)
+        try:
+            with open(target_path, "wb") as avatar_file:
+                avatar_file.write(file_bytes)
+        except OSError as exc:
+            logger.error(f"Failed to save avatar for user ID {user_id}: {exc}")
+            raise HTTPException(status_code=500, detail="Failed to save avatar")
+
+        avatar_url = f"/static/avatars/{avatar_filename}"
+        updated_user = await self.user_repo.update(user_id, avatar_url=avatar_url)
+        await self.db.commit()
+        await self.db.refresh(updated_user)
+        logger.info(f"Uploaded avatar for user ID {user_id}")
+
+        return UserResponse.model_validate(updated_user, from_attributes=True)
+
+    # -----------------------
+    # DELETE AVATAR
+    # -----------------------
+    async def delete_avatar(self, user_id: int) -> UserResponse:
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        base_name = f"{user_id:09d}"
+        avatars_dir = settings.avatars_directory
+
+        removed_any = False
+        for allowed_ext in settings.avatar_allowed_extensions:
+            candidate = os.path.join(avatars_dir, f"{base_name}.{allowed_ext}")
+            if os.path.exists(candidate):
+                try:
+                    os.remove(candidate)
+                    removed_any = True
+                except OSError as exc:
+                    logger.warning(f"Failed to remove avatar file {candidate}: {exc}")
+
+        updated_user = await self.user_repo.update(user_id, avatar_url=None)
+        await self.db.commit()
+        await self.db.refresh(updated_user)
+        logger.info(
+            f"Deleted avatar for user ID {user_id}. Removed file: {'yes' if removed_any else 'no'}"
+        )
 
         return UserResponse.model_validate(updated_user, from_attributes=True)
 

@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     # Model Settings
     models_directory: str = "static/models"
     default_model_filename: str = "sapi3D_V1.4.2.glb"
+
+    # Avatar Upload Settings
+    avatars_directory: str = "static/avatars"
+    avatar_max_size_bytes: int = 3 * 1024 * 1024  # 3MB
+    avatar_allowed_mime_types: List[str] = ["image/jpeg", "image/png"]
+    avatar_allowed_extensions: List[str] = ["jpg", "png"]
     
     # Database Settings
     database_url: str = "postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d"

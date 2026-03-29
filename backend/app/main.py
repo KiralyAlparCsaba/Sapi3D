@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+import os
 
 from api.routers import health, model, user_router, auth_router, session_router, location_router
 from core.config import settings
@@ -18,6 +20,7 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing database...")
     try:
         await init_db()
+        os.makedirs(settings.avatars_directory, exist_ok=True)
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize database: {type(e).__name__}: {e}", exc_info=True)
@@ -58,6 +61,10 @@ app.add_middleware(
     allow_methods=settings.cors_methods,
     allow_headers=settings.cors_headers,
 )
+
+# Static avatar files
+os.makedirs(settings.avatars_directory, exist_ok=True)
+app.mount("/static/avatars", StaticFiles(directory=settings.avatars_directory), name="avatars")
 
 # Include routers
 app.include_router(health.router, tags=["Health"])
