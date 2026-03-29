@@ -374,7 +374,7 @@ export default function LocationsPage() {
                             Részletek megtekintése
                           </button>
                           <Link to="/app/model" state={{ marker: loc.button_location }} className="loc-card-link">
-                            Indítsd el a 3D modellt
+                            Megtekintés a 3D modellben
                           </Link>
                           {isAdmin && (
                             <div className="loc-card-admin-actions">
