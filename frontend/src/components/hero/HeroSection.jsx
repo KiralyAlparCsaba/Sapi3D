@@ -19,13 +19,13 @@ export default function HeroSection() {
 
         <div className="hero-text-left">
           <h1>
-            Üdvözlünk a Sapientia<br />campus oldalán
+            Üdvözlünk a Sapientia<br />egyetem oldalán
           </h1>
         </div>
 
         <div className="hero-text-right">
           <h2>
-            Fedezd fel a campust egy interaktív<br />3D modellen keresztül
+            Fedezd fel az egyetemet egy interaktív<br />3D modellen keresztül
           </h2>
         </div>
 
@@ -35,8 +35,8 @@ export default function HeroSection() {
 
         {/* MOBILE hero overlay */}
         <div className="hero-mobile-overlay">
-          <h1>Üdvözlünk a Sapientia<br />campus oldalán</h1>
-          <h2>Fedezd fel a campust egy interaktív<br />3D modellen keresztül</h2>
+          <h1>Üdvözlünk a Sapientia<br />egyetem oldalán</h1>
+          <h2>Fedezd fel az egyetemet egy interaktív<br />3D modellen keresztül</h2>
 
           <Link to="/app/model" className="hero-mobile-button">
             Indítsd el a 3D modellt
