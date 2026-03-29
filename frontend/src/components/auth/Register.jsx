@@ -3,6 +3,29 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api.js";
 import "../../styles/Register.css";
 
+function getPasswordValidationMessage(password) {
+  const missing = [];
+  if (password.length < 8) missing.push("legalább 8 karakter");
+  if (!/[a-z]/.test(password)) missing.push("legalább 1 kisbetű");
+  if (!/[A-Z]/.test(password)) missing.push("legalább 1 nagybetű");
+  if (!/[0-9]/.test(password)) missing.push("legalább 1 szám");
+
+  if (missing.length === 0) return "";
+  return `A jelszóból hiányzik: ${missing.join(", ")}.`;
+}
+
+function normalizeBackendError(detail) {
+  if (!detail) return "Hiba történt a regisztráció során!";
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => item?.msg)
+      .filter(Boolean)
+      .join(" | ") || "Hibás adatok";
+  }
+  return "Hiba történt a regisztráció során!";
+}
+
 export default function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -23,6 +46,12 @@ export default function Register() {
     setError("");
     setSuccess("");
 
+    const passwordMessage = getPasswordValidationMessage(formData.password);
+    if (passwordMessage) {
+      setError(passwordMessage);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError("A jelszavak nem egyeznek!");
       return;
@@ -33,7 +62,6 @@ export default function Register() {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        role_id: 1, 
       });
 
       console.log("Regisztráció sikeres:", res.data);
@@ -41,11 +69,7 @@ export default function Register() {
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       console.error("Regisztrációs hiba:", err);
-      if (err.response && err.response.data?.detail) {
-        setError(err.response.data.detail);
-      } else {
-        setError("Hiba történt a regisztráció során!");
-      }
+      setError(normalizeBackendError(err.response?.data?.detail));
     }
   };
 
