@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import "../../styles/Navbar.css";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
+import { metricsCollector } from "../three/metricsCollector";
+import { weightedAverage } from "../three/weightedAverage";
 
 function resolveAvatarUrl(avatarUrl) {
   if (!avatarUrl) return "";
@@ -68,7 +70,43 @@ export default function Navbar({ theme, setTheme}) {
     };
   }, [isAuthenticated, user?.user_id, user?.username]);
 
-  const handleLogout = () => {
+  const flushMetricsAndEndSession = async () => {
+    const sessionId =
+      metricsCollector.sessionId || sessionStorage.getItem("session_id");
+
+    if (!sessionId) return;
+
+    const samples = metricsCollector.getSamples?.() || [];
+    if (samples.length >= 2) {
+      const payload = {
+        session_id: Number(sessionId),
+        fps: Math.round(weightedAverage(samples, "fps")),
+        memory_mb: Math.round(weightedAverage(samples, "memory_mb")),
+        latency_ms: Math.round(weightedAverage(samples, "latency_ms")),
+        timestamp: new Date().toISOString(),
+      };
+
+      try {
+        await api.post(`/sessions/${sessionId}/metrics`, payload);
+      } catch (err) {
+        console.error("Failed to upload performance metrics on logout:", err);
+      }
+    }
+
+    try {
+      await api.put(`/sessions/${sessionId}`, {
+        ended_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("Failed to end session on logout:", err);
+    }
+
+    metricsCollector.clear();
+    sessionStorage.removeItem("session_id");
+  };
+
+  const handleLogout = async () => {
+    await flushMetricsAndEndSession();
     logout();
     navigate("/login");
   };

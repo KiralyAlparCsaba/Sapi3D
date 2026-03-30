@@ -152,7 +152,6 @@ Real-time performance monitoring during 3D exploration.
 - `fps` - Frames per second
 - `memory_mb` - Memory usage in MB
 - `latency_ms` - Network latency in milliseconds
-- `cpu_gpu_usage` - CPU/GPU utilization percentage
 
 ---
 

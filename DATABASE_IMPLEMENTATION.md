@@ -62,7 +62,7 @@ All 11 tables implemented using modern SQLAlchemy 2.0 syntax with type hints:
 
 #### `backend/app/models/metrics.py`
 11. **PerfMetrics**: Performance metrics per session
-    - `metrics_id` (PK), `session_id` (FK), `timestamp`, `fps`, `memory_mb`, `latency_ms`, `cpu_gpu_usage`
+   - `metrics_id` (PK), `session_id` (FK), `timestamp`, `fps`, `memory_mb`, `latency_ms`
 
 ### ✅ Phase 3: Database Layer (Connection & Repositories)
 

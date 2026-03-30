@@ -687,10 +687,6 @@ const saveSelectedUserEdit = async () => {
                           <strong className="admin-metric-value">{m.latency_ms}</strong>
                         </div>
                         <div className="admin-metric-stat">
-                          <span className="admin-metric-label">CPU/GPU</span>
-                          <strong className="admin-metric-value">{m.cpu_gpu_usage}</strong>
-                        </div>
-                        <div className="admin-metric-stat">
                           <span className="admin-metric-label">ID</span>
                           <strong className="admin-metric-value">{m.metrics_id}</strong>
                         </div>

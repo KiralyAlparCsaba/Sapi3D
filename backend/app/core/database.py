@@ -1,3 +1,4 @@
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from typing import AsyncGenerator
 
@@ -58,6 +59,24 @@ async def init_db() -> None:
     logger.info("Creating database tables...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Backward-compatibility patch:
+        # legacy databases may still have cpu_gpu_usage from earlier schema.
+        # We no longer use that field, so remove it if present.
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'perf_metrics'
+                      AND column_name = 'cpu_gpu_usage'
+                ) THEN
+                    ALTER TABLE perf_metrics
+                    DROP COLUMN cpu_gpu_usage;
+                END IF;
+            END
+            $$;
+        """))
     logger.info("Database tables created successfully")
     
     # Seed initial roles if they don't exist

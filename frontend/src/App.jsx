@@ -67,7 +67,6 @@ export default function App() {
           memory_mb: Math.round(avgMem),
           latency_ms: Math.round(avgLat),
           timestamp: new Date().toISOString(),
-          cpu_gpu_usage: 0,
         };
 
         // sendBeacon is perfect for metrics (POST)
