@@ -21,7 +21,7 @@ class PerfMetricsCreate(PerfMetricsBase):
 class PerfMetricsResponse(PerfMetricsBase):
     """Schema for PerfMetrics response."""
     metrics_id: int
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 

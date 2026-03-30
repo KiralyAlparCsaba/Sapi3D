@@ -71,6 +71,9 @@ if [ "$MOBILE_MODE" = true ]; then
 fi
 
 echo ""
+./backup.sh dev || true
+
+echo ""
 echo "🧹 Cleaning up existing containers..."
 docker compose -f docker-compose.base.yml -f docker-compose.dev.yml down --remove-orphans
 

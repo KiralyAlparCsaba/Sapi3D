@@ -6,7 +6,6 @@ from models.metrics import PerfMetrics
 from repositories.base import BaseRepository
 from schemas.metrics import PerfMetricsSummary
 
-
 class MetricsRepository(BaseRepository[PerfMetrics]):
     """Repository for PerfMetrics model with custom queries."""
 
@@ -38,8 +37,7 @@ class MetricsRepository(BaseRepository[PerfMetrics]):
 
     async def get_summary_for_session(self, session_id: int) -> Optional[PerfMetricsSummary]:
         """
-        Compute WEIGHTED average metrics based on time between samples.
-        This avoids FPS spikes from distorting averages.
+        Compute weighted average metrics based on time between samples.
         """
         metrics = await self.get_by_session_id(session_id)
         if len(metrics) < 2:

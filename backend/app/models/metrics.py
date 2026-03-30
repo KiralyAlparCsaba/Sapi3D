@@ -7,9 +7,9 @@ from models.base import Base
 
 class PerfMetrics(Base):
     """PerfMetrics model for tracking performance metrics per session."""
-    
+
     __tablename__ = "perf_metrics"
-    
+
     metrics_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     session_id: Mapped[int] = mapped_column(Integer, ForeignKey("sessions.session_id"), nullable=False, index=True)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -19,6 +19,6 @@ class PerfMetrics(Base):
     
     # Relationships
     session: Mapped["Session"] = relationship("Session", back_populates="perf_metrics")
-    
+
     def __repr__(self) -> str:
         return f"<PerfMetrics(metrics_id={self.metrics_id}, session_id={self.session_id}, fps={self.fps})>"
