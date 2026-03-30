@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
@@ -93,6 +93,104 @@ async def update_user(
     return {
         "user": updated_user,
         "token": new_token
+    }
+
+
+# ---- UPLOAD USER AVATAR ----
+@router.post("/{user_id}/avatar", response_model=dict)
+async def upload_avatar(
+    user_id: int,
+    file: UploadFile = File(...),
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Upload avatar image for a user.
+
+    Rules:
+    - Regular users can upload only their own avatar.
+    - Admins can upload avatar for any user.
+    """
+    if current_user.user_id != user_id and current_user.role_id != 2:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only upload your own avatar"
+        )
+
+    file_bytes = await file.read()
+    await file.close()
+
+    service = UserService(db)
+    updated_user = await service.upload_avatar(
+        user_id=user_id,
+        file_bytes=file_bytes,
+        content_type=file.content_type or ""
+    )
+
+    return {
+        "user": updated_user
+    }
+
+
+@router.put("/{user_id}/avatar", response_model=dict)
+async def replace_avatar(
+    user_id: int,
+    file: UploadFile = File(...),
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Replace avatar image for a user.
+
+    Rules:
+    - Regular users can replace only their own avatar.
+    - Admins can replace avatar for any user.
+    """
+    if current_user.user_id != user_id and current_user.role_id != 2:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only upload your own avatar"
+        )
+
+    file_bytes = await file.read()
+    await file.close()
+
+    service = UserService(db)
+    updated_user = await service.upload_avatar(
+        user_id=user_id,
+        file_bytes=file_bytes,
+        content_type=file.content_type or ""
+    )
+
+    return {
+        "user": updated_user
+    }
+
+
+@router.delete("/{user_id}/avatar", response_model=dict)
+async def delete_avatar(
+    user_id: int,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Delete avatar image for a user.
+
+    Rules:
+    - Regular users can delete only their own avatar.
+    - Admins can delete avatar for any user.
+    """
+    if current_user.user_id != user_id and current_user.role_id != 2:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only delete your own avatar"
+        )
+
+    service = UserService(db)
+    updated_user = await service.delete_avatar(user_id=user_id)
+
+    return {
+        "user": updated_user
     }
 
 

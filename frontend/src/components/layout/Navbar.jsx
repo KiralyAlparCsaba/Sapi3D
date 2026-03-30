@@ -1,12 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../styles/Navbar.css";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../services/api";
+
+function resolveAvatarUrl(avatarUrl) {
+  if (!avatarUrl) return "";
+  if (/^https?:\/\//i.test(avatarUrl)) return avatarUrl;
+
+  const envBase = (import.meta.env.VITE_API_URL || "").trim();
+  const base = envBase || `${window.location.protocol}//${window.location.hostname}:8000`;
+  const normalizedBase = base.replace(/\/$/, "");
+  const normalizedPath = avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`;
+  return `${normalizedBase}${normalizedPath}`;
+}
 
 export default function Navbar({ theme, setTheme}) {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+  const [avatarVersion, setAvatarVersion] = useState(0);
 
   let username = "Guest";
   let isAdmin = false;
@@ -15,6 +30,43 @@ export default function Navbar({ theme, setTheme}) {
     username = user.username || "Logged in user";
     isAdmin = user.role_id === 2;
   }
+
+  const initial = (username || "?").trim().charAt(0).toUpperCase() || "?";
+  const avatarSrc = avatarUrl ? `${avatarUrl}${avatarUrl.includes("?") ? "&" : "?"}v=${avatarVersion}` : "";
+
+  const loadAvatar = async () => {
+    if (!isAuthenticated) {
+      setAvatarUrl("");
+      setAvatarLoadFailed(false);
+      return;
+    }
+
+    try {
+      const res = await api.get("/auth/me");
+      const resolved = resolveAvatarUrl(res.data?.avatar_url || "");
+      setAvatarUrl(resolved);
+      setAvatarLoadFailed(false);
+      setAvatarVersion(Date.now());
+    } catch (_err) {
+      setAvatarUrl("");
+      setAvatarLoadFailed(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAvatar();
+
+    const handleAvatarUpdated = (event) => {
+      void event;
+      loadAvatar();
+    };
+
+    window.addEventListener("avatar-updated", handleAvatarUpdated);
+
+    return () => {
+      window.removeEventListener("avatar-updated", handleAvatarUpdated);
+    };
+  }, [isAuthenticated, user?.user_id, user?.username]);
 
   const handleLogout = () => {
     logout();
@@ -68,7 +120,18 @@ export default function Navbar({ theme, setTheme}) {
           </div>
 
           <span className="nav-username">{username}</span>
-          <img src="/user-icon.png" alt="Profile" className="nav-profile" />
+          {avatarSrc && !avatarLoadFailed ? (
+            <img
+              src={avatarSrc}
+              alt="Profile"
+              className="nav-profile"
+              onError={() => setAvatarLoadFailed(true)}
+            />
+          ) : (
+            <div className="nav-profile nav-profile-fallback" aria-label="Profile initial">
+              {initial}
+            </div>
+          )}
           <button className="nav-logout" onClick={handleLogout}>⏻</button>
         </div>
 
@@ -110,7 +173,18 @@ export default function Navbar({ theme, setTheme}) {
           </div>
 
           <div className="drawer-user">
-            <img src="/user-icon.png" className="drawer-profile" />
+            {avatarSrc && !avatarLoadFailed ? (
+              <img
+                src={avatarSrc}
+                alt="Profile"
+                className="drawer-profile"
+                onError={() => setAvatarLoadFailed(true)}
+              />
+            ) : (
+              <div className="drawer-profile drawer-profile-fallback" aria-label="Profile initial">
+                {initial}
+              </div>
+            )}
             <span>{username}</span>
           </div>
 
