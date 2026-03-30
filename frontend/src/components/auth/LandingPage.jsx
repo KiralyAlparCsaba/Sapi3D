@@ -8,9 +8,9 @@ export default function LandingPage() {
   return (
     <div className="landing-container">
       <div className="landing-content">
-        <h1>Sapientia Campus 3D</h1>
+        <h1>Sapientia Egyetem 3D</h1>
         <p>
-          Fedezd fel a Sapientia Erdélyi Magyar Tudományegyetem campusát interaktív 3D-ben.
+          Fedezd fel a Sapientia Erdélyi Magyar Tudományegyetemet interaktív 3D-ben.
         </p>
         <button onClick={() => navigate("/login")} className="landing-btn">
           Belépés

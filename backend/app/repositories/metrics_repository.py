@@ -1,7 +1,6 @@
 from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
 
 from models.metrics import PerfMetrics
 from repositories.base import BaseRepository
@@ -49,7 +48,6 @@ class MetricsRepository(BaseRepository[PerfMetrics]):
         weighted_mem = 0.0
         weighted_latency = 0.0
 
-        # Compute weighted values based on duration between samples
         for i in range(1, len(metrics)):
             prev: PerfMetrics = metrics[i - 1]
             curr: PerfMetrics = metrics[i]

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from api.routers import health, model, user_router, auth_router,session_router
+from api.routers import health, model, user_router, auth_router, session_router, location_router
 from core.config import settings
 from core.logging import logger
 from core.database import init_db, close_db
@@ -38,9 +38,13 @@ app = FastAPI(
     version=settings.api_version,
     description=settings.api_description,
     openapi_tags=[
-        {"name": "health", "description": "Health check and system status endpoints"},
-        {"name": "model", "description": "3D model file serving and metadata endpoints"},
-        {"name": "users", "description": "User management and authentication"},
+        {"name": "Health", "description": "Health check and system status endpoints"},
+        {"name": "Model", "description": "3D model file serving and metadata endpoints"},
+        {"name": "Users", "description": "User management and authentication"},
+        {"name": "Locations", "description": "Location domain and model object endpoints"},
+        {"name": "Devices", "description": "Device management endpoints"},
+        {"name": "Sessions", "description": "Session management and performance metrics endpoints"},
+        {"name": "Auth", "description": "Authentication and authorization endpoints"},
     ],
     docs_url="/docs",  # Swagger UI
     redoc_url="/redoc",  # ReDoc alternative documentation
@@ -56,12 +60,13 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(health.router, tags=["health"])
-app.include_router(model.router, tags=["model"])
-app.include_router(user_router.router, tags=["users"])
+app.include_router(health.router, tags=["Health"])
+app.include_router(model.router, tags=["Model"])
+app.include_router(user_router.router, tags=["Users"])
 app.include_router(auth_router.router, tags=["Auth"])
 app.include_router(session_router.router, tags=["Sessions"])
-app.include_router(device_router)
+app.include_router(device_router, tags=["Devices"])
+app.include_router(location_router.router, tags=["Locations"])
 
 
 

@@ -7,7 +7,7 @@ from schemas.user import UserLogin, UserCreate, Token, UserResponse
 from core.security import get_current_user, create_access_token
 
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(prefix="/auth")
 
 
 @router.post("/register", response_model=UserResponse)

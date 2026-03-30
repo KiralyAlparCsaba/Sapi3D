@@ -9,7 +9,6 @@ from core.security import get_current_user, create_access_token
 
 router = APIRouter(
     prefix="/users",
-    tags=["users"],
     responses={404: {"description": "Not found"}},
 )
 

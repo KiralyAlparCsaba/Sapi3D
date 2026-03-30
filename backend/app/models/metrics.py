@@ -16,7 +16,7 @@ class PerfMetrics(Base):
     fps: Mapped[int] = mapped_column(Integer, nullable=False)
     memory_mb: Mapped[int] = mapped_column(Integer, nullable=False)
     latency_ms: Mapped[int] = mapped_column(BigInteger, nullable=False)
-
+    
     # Relationships
     session: Mapped["Session"] = relationship("Session", back_populates="perf_metrics")
 

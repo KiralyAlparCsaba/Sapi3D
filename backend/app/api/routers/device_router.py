@@ -6,7 +6,7 @@ from repositories.session_repository import DeviceRepository, SessionRepository
 from schemas.session import DeviceResponse
 
 
-router = APIRouter(prefix="/devices", tags=["Devices"])
+router = APIRouter(prefix="/devices")
 
 
 @router.get("", response_model=list[DeviceResponse])
