@@ -52,7 +52,7 @@ function Login() {
 
     } catch (err) {
       console.error("Login error:", err);
-      setError("Hibás felhasználónév vagy jelszó!");
+      setError(err.response?.data?.detail || "Hibás felhasználónév vagy jelszó!");
     }
   };
 

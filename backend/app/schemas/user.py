@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
 
 # Role Schemas
@@ -31,7 +31,22 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """Schema for creating a User."""
     password: str = Field(..., min_length=8, max_length=100)
-    role_id: int = Field(default=2)  # Default to regular user role
+    role_id: int = Field(default=1)  # Default to regular user role
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, value: str) -> str:
+        missing = []
+        if not any(ch.islower() for ch in value):
+            missing.append("at least one lowercase letter")
+        if not any(ch.isupper() for ch in value):
+            missing.append("at least one uppercase letter")
+        if not any(ch.isdigit() for ch in value):
+            missing.append("at least one digit")
+
+        if missing:
+            raise ValueError(f"Password must contain {', '.join(missing)}")
+        return value
 
 
 class UserUpdate(BaseModel):
