@@ -46,7 +46,7 @@ class AuthService:
             user_id=user.user_id,
             device_id=device.device_id,
             device_type=device_data["device_type"],  # optional, legacy
-            app_version="1.0.0",
+            app_version="1.1.0",
             started_at=datetime.now(timezone.utc)
         )
         session = await self.session_repo.create(**session_data.dict())
