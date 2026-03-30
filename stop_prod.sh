@@ -11,12 +11,14 @@ echo "  Sapi3D - Stop Production Mode"
 echo "=========================================="
 echo ""
 
+./backup.sh prod || true
+
+echo ""
 echo "🛑 Stopping production containers..."
-docker compose -f docker-compose.base.yml -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml down
 
 echo ""
 echo "✅ Production containers stopped successfully!"
 echo ""
-echo "💡 To remove volumes as well, run:"
-echo "   docker compose -f docker-compose.base.yml -f docker-compose.prod.yml down -v"
+echo "⚠️  WARNING: Never run 'down -v' or 'down --volumes' — this permanently deletes the database!"
 echo ""

@@ -8,11 +8,15 @@ export default defineConfig({
     host: true,
     port: 5173,
     allowedHosts: 'all',
-    proxy: {
+      proxy: {
       '/api': {
         target: 'http://backend:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
+      },
+      '/model': {
+        target: 'http://backend:8000',
+        changeOrigin: true,
       }
     }
   }

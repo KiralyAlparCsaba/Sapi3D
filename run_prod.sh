@@ -31,12 +31,15 @@ fi
 echo "✅ Configuration validated"
 
 echo ""
+./backup.sh prod || true
+
+echo ""
 echo "🧹 Cleaning up existing containers..."
-docker compose -f docker-compose.base.yml -f docker-compose.prod.yml down --remove-orphans --volumes
+docker compose -f docker-compose.prod.yml down --remove-orphans
 
 echo ""
 echo "🚀 Starting containers in production mode..."
-docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml up -d --build
 
 echo ""
 echo "⏳ Waiting for services to be healthy..."
@@ -46,16 +49,16 @@ echo ""
 echo "✅ Production environment started!"
 echo ""
 echo "📍 Services:"
-echo "   Frontend:  http://localhost:3000"
+echo "   Frontend:  http://localhost:80"
 echo "   Backend:   http://localhost:8000"
 echo "   API Docs:  http://localhost:8000/docs"
 echo "   ReDoc:     http://localhost:8000/redoc"
 echo ""
 echo "📊 Container Status:"
-docker compose -f docker-compose.base.yml -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml ps
 echo ""
 echo "📝 View logs:"
-echo "   docker compose -f docker-compose.base.yml -f docker-compose.prod.yml logs -f"
+echo "   docker compose -f docker-compose.prod.yml logs -f"
 echo ""
 echo "🛑 Stop services:"
 echo "   ./stop_prod.sh"

@@ -11,12 +11,14 @@ echo "  Sapi3D - Stop Development Mode"
 echo "=========================================="
 echo ""
 
-echo "🛑 Stopping development containers..."
+./backup.sh dev || true
+
+echo ""
+echo "�🛑 Stopping development containers..."
 docker compose -f docker-compose.base.yml -f docker-compose.dev.yml down
 
 echo ""
 echo "✅ Development containers stopped successfully!"
 echo ""
-echo "💡 To remove volumes as well, run:"
-echo "   docker compose -f docker-compose.base.yml -f docker-compose.dev.yml down -v"
+echo "⚠️  WARNING: Never run 'down -v' or 'down --volumes' — this permanently deletes the database!"
 echo ""
