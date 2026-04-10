@@ -14,8 +14,8 @@ export default function Building({
   onInsideChange,
   onWorldReady,
   sessionId,
-  infoPanelsData,  // Ajtókhoz (coordinates_obj_name, information, media_url)
-  locationsData    // Hologramokhoz (name, button_location, information)
+  infoPanelsData,
+  locationsData
 }) {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const gltf = useGLTF(`${API_URL}/model`);
@@ -26,7 +26,6 @@ export default function Building({
   const isInsideRef = useRef(false);
 
   const hoveredDoorRef = useRef(null);
-  // hoveredDoor most a doorRoot-ot tárolja (a névvel rendelkező node), nem a hit mesh-t
   const [hoveredDoor, setHoveredDoor] = useState(null);
   const [hologramMarkers, setHologramMarkers] = useState([]);
 
@@ -42,9 +41,9 @@ export default function Building({
   const raycaster = new THREE.Raycaster();
   const centerScreen = new THREE.Vector2(0, 0);
 
-  //
-  // INIT
-  //
+  // ✅ PROXIMITY LIMIT
+  const MAX_DISTANCE = 3;
+
   useEffect(() => {
     if (sessionId) metricsCollector.setSession(sessionId);
   }, [sessionId]);
@@ -54,9 +53,6 @@ export default function Building({
     return () => metricsRef.current.detach();
   }, []);
 
-  //
-  // LOAD MODEL
-  //
   useEffect(() => {
     triggerBoxes.current = [];
     const foundHolograms = [];
@@ -80,22 +76,17 @@ export default function Building({
         child.visible = false;
       }
 
-      // FIX: az ajtó root node-ját megjelöljük, majd az összes leszármazottjára
-      // ráírjuk az isDoor flag-et ÉS a doorRoot referenciát.
-      // Így a raycast bármely mélységű mesh-t eltalálja, mégis visszakövethetjük
-      // a névvel rendelkező szülő node-hoz.
       if (child.name.toLowerCase().includes("door")) {
         child.userData.isDoor = true;
-        child.userData.doorRoot = child; // ő maga a root
+        child.userData.doorRoot = child;
 
         child.traverse((descendant) => {
-          if (descendant === child) return; // magát ne írjuk felül
+          if (descendant === child) return;
           descendant.userData.isDoor = true;
           descendant.userData.doorRoot = child;
         });
       }
 
-      // HOLOGRAM MARKEREK - locationsData alapján
       if (child.name.toLowerCase().includes("marker")) {
         child.visible = false;
 
@@ -125,34 +116,34 @@ export default function Building({
     onWorldReady?.(gltf.scene);
   }, [gltf.scene, camera, onWorldReady, locationsData]);
 
-  //
-  // MAIN LOOP
-  //
   useFrame(async (_, delta) => {
     const metrics = metricsRef.current;
     metrics.begin();
 
-    // 🎯 RAYCAST – minden ajtót keres, mélyen egymásba ágyazott mesh-eket is
+    // 🎯 RAYCAST
     raycaster.setFromCamera(centerScreen, camera);
     const intersects = raycaster.intersectObjects(gltf.scene.children, true);
 
     let hoveredRoot = null;
+
     for (const hit of intersects) {
       if (hit.object.userData.isDoor) {
-        // Visszakövetjük a névvel rendelkező root node-hoz
-        hoveredRoot = hit.object.userData.doorRoot || hit.object;
-        break;
+        const root = hit.object.userData.doorRoot || hit.object;
+
+        // ✅ CORRECT PROXIMITY CHECK
+        if (hit.distance <= MAX_DISTANCE) {
+          hoveredRoot = root;
+          break;
+        }
       }
     }
 
-    // Csak akkor frissítjük ha változott (referencia alapján)
     if (hoveredRoot !== hoveredDoorRef.current) {
       hoveredDoorRef.current = hoveredRoot;
       setHoveredDoor(hoveredRoot);
     }
 
-    // ✨ HIGHLIGHT – doorRoot alapján highlight-olunk, így az egész ajtó (minden
-    // leszármazott mesh) egységesen világít, függetlenül a hierarchia mélységétől
+    // ✨ HIGHLIGHT
     gltf.scene.traverse((obj) => {
       if (obj.userData.isDoor && obj.material) {
         const sameRoot = hoveredRoot && obj.userData.doorRoot === hoveredRoot;
@@ -184,7 +175,7 @@ export default function Building({
       onInsideChange?.(inside);
     }
 
-    // 📊 FPS
+    // 📊 METRICS
     const fps = 1 / delta;
     avgFps.current = avgFps.current * 0.9 + fps * 0.1;
 
@@ -218,14 +209,12 @@ export default function Building({
     <>
       <primitive object={gltf.scene} />
 
-      {/* 🚪 INTERACTIVE DOOR – infoPanelsData alapján */}
       <InteractiveDoor
         mesh={hoveredDoor}
-        databaseInfo={infoPanelsData}  // Itt az infoPanelsData-t adjuk át!
+        databaseInfo={infoPanelsData}
         isHovered={!!hoveredDoor}
       />
 
-      {/* 💚 HOLOGRAM PANELEK – locationsData alapján */}
       {hologramMarkers.map((marker) => (
         <HologramPanel
           key={marker.id}
