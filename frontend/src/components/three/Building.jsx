@@ -14,7 +14,8 @@ export default function Building({
   onInsideChange,
   onWorldReady,
   sessionId,
-  databaseInfo
+  infoPanelsData,  // Ajtókhoz (coordinates_obj_name, information, media_url)
+  locationsData    // Hologramokhoz (name, button_location, information)
 }) {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const gltf = useGLTF(`${API_URL}/model`);
@@ -94,6 +95,7 @@ export default function Building({
         });
       }
 
+      // HOLOGRAM MARKEREK - locationsData alapján
       if (child.name.toLowerCase().includes("marker")) {
         child.visible = false;
 
@@ -102,7 +104,7 @@ export default function Building({
         box.getCenter(center);
 
         const normalizedChildName = child.name.toLowerCase();
-        const dbEntry = databaseInfo?.find((item) => {
+        const dbEntry = locationsData?.find((item) => {
           const dbName = item.name ? item.name.toLowerCase() : "";
           const dbButtonLoc = item.button_location ? item.button_location.toLowerCase() : "";
           return dbName === normalizedChildName || dbButtonLoc === normalizedChildName;
@@ -121,7 +123,7 @@ export default function Building({
 
     setHologramMarkers(foundHolograms);
     onWorldReady?.(gltf.scene);
-  }, [gltf.scene, camera, onWorldReady, databaseInfo]);
+  }, [gltf.scene, camera, onWorldReady, locationsData]);
 
   //
   // MAIN LOOP
@@ -216,15 +218,14 @@ export default function Building({
     <>
       <primitive object={gltf.scene} />
 
-      {/* 🚪 INTERACTIVE DOOR – a doorRoot-ot adjuk át, hogy a world position
-          és a DB keresés mindig a névvel rendelkező node alapján történjen */}
+      {/* 🚪 INTERACTIVE DOOR – infoPanelsData alapján */}
       <InteractiveDoor
         mesh={hoveredDoor}
-        databaseInfo={databaseInfo}
+        databaseInfo={infoPanelsData}  // Itt az infoPanelsData-t adjuk át!
         isHovered={!!hoveredDoor}
       />
 
-      {/* 💚 HOLOGRAM PANELEK */}
+      {/* 💚 HOLOGRAM PANELEK – locationsData alapján */}
       {hologramMarkers.map((marker) => (
         <HologramPanel
           key={marker.id}

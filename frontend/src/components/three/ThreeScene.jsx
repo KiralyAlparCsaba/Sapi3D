@@ -8,8 +8,7 @@ import * as THREE from "three";
 import MobilePointerLockControls from "./MobilePointerLockControls";
 
 // SCENE CONTENT
-// ÚJ: bekerült a databaseInfo a propok közé
-function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, databaseInfo }) {
+function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, infoPanelsData, locationsData }) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
   const playerRootRef = useRef(new THREE.Object3D());
@@ -89,7 +88,8 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, data
     <Suspense fallback={null}>
       <Building
         sessionId={sessionId}
-        databaseInfo={databaseInfo} // ÚJ: Továbbadjuk a Building-nek!
+        infoPanelsData={infoPanelsData}  // Ajtókhoz
+        locationsData={locationsData}    // Hologramokhoz
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
 
@@ -160,8 +160,9 @@ export default function ThreeScene() {
   const controlsRef = useRef();
   const [PointerLock, setPointerLock] = useState(null);
 
-  // ÚJ: Állapot az adatbázisból érkező locations adatoknak
-  const [locationsData, setLocationsData] = useState([]);
+  // ÚJ: Két külön állapot a két különböző adatforráshoz
+  const [infoPanelsData, setInfoPanelsData] = useState([]);  // Ajtókhoz
+  const [locationsData, setLocationsData] = useState([]);    // Hologramokhoz
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -170,7 +171,21 @@ export default function ThreeScene() {
   const routeLocation = useLocation();
   const markerToTeleport = routeLocation.state?.marker;
 
-  // ÚJ RÉSZ: API lekérés a locations végpontról
+  // FETCH: Info Panels (ajtókhoz)
+  useEffect(() => {
+    fetch(`${API_URL}/info-panels/`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Hiba a hálózati válaszban");
+        return res.json();
+      })
+      .then((data) => {
+        console.log("✅ Info Panels betöltve (ajtókhoz):", data);
+        setInfoPanelsData(data);
+      })
+      .catch((err) => console.error("❌ Hiba az info panels lekérésekor:", err));
+  }, [API_URL]);
+
+  // FETCH: Locations (hologramokhoz)
   useEffect(() => {
     fetch(`${API_URL}/locations/`)
       .then((res) => {
@@ -178,10 +193,10 @@ export default function ThreeScene() {
         return res.json();
       })
       .then((data) => {
-        console.log("✅ Adatbázis infók betöltve:", data);
+        console.log("✅ Locations betöltve (hologramokhoz):", data);
         setLocationsData(data);
       })
-      .catch((err) => console.error("❌ Hiba az adatbázis lekérésekor:", err));
+      .catch((err) => console.error("❌ Hiba a locations lekérésekor:", err));
   }, [API_URL]);
 
   useEffect(() => {
@@ -231,7 +246,8 @@ export default function ThreeScene() {
           sessionId={sessionId}
           isMobile={isMobile}
           markerToTeleport={markerToTeleport}
-          databaseInfo={locationsData} // ÚJ: Itt adjuk át az állapotot
+          infoPanelsData={infoPanelsData}  // Ajtókhoz
+          locationsData={locationsData}    // Hologramokhoz
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}
