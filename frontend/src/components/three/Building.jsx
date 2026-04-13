@@ -17,7 +17,13 @@ export default function Building({
   infoPanelsData,
   locationsData
 }) {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  // IMPORTANT (production): never default to "http://localhost:8000".
+  // In the user's browser, "localhost" points to their own device and is often blocked
+  // (loopback protection) when your site is served over HTTPS.
+  //
+  // Our production nginx proxies the backend under the same origin at /api.
+  // So the model endpoint becomes: /api/model
+  const API_URL = import.meta.env.VITE_API_URL || "/api";
   const gltf = useGLTF(`${API_URL}/model`);
 
   const roofRef = useRef();
