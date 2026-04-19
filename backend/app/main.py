@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
 
-from api.routers import health, model, user_router, auth_router, session_router, location_router,info_panels_router
+from api.routers import health, model, user_router, auth_router, session_router, location_router, event_router,info_panels_router
 from core.config import settings
 from core.logging import logger
 from core.database import init_db, close_db
@@ -21,6 +21,7 @@ async def lifespan(app: FastAPI):
     try:
         await init_db()
         os.makedirs(settings.avatars_directory, exist_ok=True)
+        os.makedirs(settings.events_directory, exist_ok=True)
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize database: {type(e).__name__}: {e}", exc_info=True)
@@ -45,6 +46,7 @@ app = FastAPI(
         {"name": "Model", "description": "3D model file serving and metadata endpoints"},
         {"name": "Users", "description": "User management and authentication"},
         {"name": "Locations", "description": "Location domain and model object endpoints"},
+        {"name": "Events", "description": "Event management and location-bound event endpoints"},
         {"name": "Devices", "description": "Device management endpoints"},
         {"name": "Sessions", "description": "Session management and performance metrics endpoints"},
         {"name": "Auth", "description": "Authentication and authorization endpoints"},
@@ -67,6 +69,10 @@ app.add_middleware(
 os.makedirs(settings.avatars_directory, exist_ok=True)
 app.mount("/static/avatars", StaticFiles(directory=settings.avatars_directory), name="avatars")
 
+# Static event image files
+os.makedirs(settings.events_directory, exist_ok=True)
+app.mount("/static/events", StaticFiles(directory=settings.events_directory), name="events")
+
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(model.router, tags=["Model"])
@@ -75,6 +81,7 @@ app.include_router(auth_router.router, tags=["Auth"])
 app.include_router(session_router.router, tags=["Sessions"])
 app.include_router(device_router, tags=["Devices"])
 app.include_router(location_router.router, tags=["Locations"])
+app.include_router(event_router.router, tags=["Events"])
 app.include_router(info_panels_router.router, tags=["Info Panels"])
 
 

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
@@ -12,6 +12,7 @@ import 'swiper/css/effect-coverflow';
 export default function LocationsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role_id === 2;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const getObjectName = (obj) => (typeof obj === "string" ? obj : obj?.object_name || "");
 
@@ -96,6 +97,26 @@ export default function LocationsPage() {
   useEffect(() => {
     fetchLocations();
   }, [fetchLocations]);
+
+  useEffect(() => {
+    if (!locations.length) return;
+
+    const requestedLocIdRaw = searchParams.get("loc_id");
+    if (!requestedLocIdRaw) return;
+
+    const requestedLocId = Number(requestedLocIdRaw);
+    if (!Number.isInteger(requestedLocId)) return;
+
+    const targetLocation = locations.find((loc) => loc.loc_id === requestedLocId);
+    if (!targetLocation) return;
+
+    setSelectedLocation(targetLocation);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("loc_id");
+      return next;
+    }, { replace: true });
+  }, [locations, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -216,39 +237,57 @@ export default function LocationsPage() {
       </section>
 
       {isAdmin && (
-        <section className="loc-admin-create">
-          <h2>Új helyszín létrehozása</h2>
-          <form onSubmit={handleCreateLocation} className="loc-create-form">
-            <input type="text" placeholder="Név" value={newName} onChange={(e) => setNewName(e.target.value)} />
-            <select
-              value={newButtonLocation}
-              onChange={(e) => setNewButtonLocation(e.target.value)}
-              disabled={objectsLoading || locationObjects.length === 0}
-            >
-              <option value="">
-                {objectsLoading ? "Location objectek betöltése..." : "Válassz location objectet"}
-              </option>
-              {locationObjects.map((obj) => {
-                const objectName = getObjectName(obj);
-                if (!objectName) return null;
+        <section className="loc-admin-layout">
+          <section className="loc-admin-objects">
+            <h2>Location objectek</h2>
+            {objectsLoading && <p>Betöltés...</p>}
+            {objectsError && <p className="loc-error">{objectsError}</p>}
+            {!objectsLoading && !objectsError && (
+              <ul>
+                {locationObjects.map((obj) => {
+                  const objectName = getObjectName(obj);
+                  if (!objectName) return null;
 
-                return (
-                  <option key={objectName} value={objectName}>
-                    {objectName}
-                  </option>
-                );
-              })}
-            </select>
-            <textarea placeholder="Leírás" value={newInformation} onChange={(e) => setNewInformation(e.target.value)} rows={4} />
-            <button type="submit" disabled={createLoading} className="loc-btn-create">
-              {createLoading ? "Mentés..." : "Helyszín létrehozása"}
-            </button>
-          </form>
-          {!objectsLoading && locationObjects.length === 0 && (
-            <p className="loc-error">Nincs elérhető location object a választáshoz.</p>
-          )}
-          {createError && <p className="loc-error">{createError}</p>}
-          {createSuccess && <p className="loc-success">{createSuccess}</p>}
+                  return <li key={objectName}>{objectName}</li>;
+                })}
+              </ul>
+            )}
+          </section>
+
+          <section className="loc-admin-create">
+            <h2>Új helyszín létrehozása</h2>
+            <form onSubmit={handleCreateLocation} className="loc-create-form">
+              <input type="text" placeholder="Név" value={newName} onChange={(e) => setNewName(e.target.value)} />
+              <select
+                value={newButtonLocation}
+                onChange={(e) => setNewButtonLocation(e.target.value)}
+                disabled={objectsLoading || locationObjects.length === 0}
+              >
+                <option value="">
+                  {objectsLoading ? "Location objectek betöltése..." : "Válassz location objectet"}
+                </option>
+                {locationObjects.map((obj) => {
+                  const objectName = getObjectName(obj);
+                  if (!objectName) return null;
+
+                  return (
+                    <option key={objectName} value={objectName}>
+                      {objectName}
+                    </option>
+                  );
+                })}
+              </select>
+              <textarea placeholder="Leírás" value={newInformation} onChange={(e) => setNewInformation(e.target.value)} rows={4} />
+              <button type="submit" disabled={createLoading} className="loc-btn-create">
+                {createLoading ? "Mentés..." : "Helyszín létrehozása"}
+              </button>
+            </form>
+            {!objectsLoading && locationObjects.length === 0 && (
+              <p className="loc-error">Nincs elérhető location object a választáshoz.</p>
+            )}
+            {createError && <p className="loc-error">{createError}</p>}
+            {createSuccess && <p className="loc-success">{createSuccess}</p>}
+          </section>
         </section>
       )}
 
@@ -398,24 +437,6 @@ export default function LocationsPage() {
           <p>Még nincsenek feltöltött helyszínek.</p>
         )}
       </section>
-
-      {isAdmin && (
-        <section className="loc-admin-objects">
-          <h2>Location objectek</h2>
-          {objectsLoading && <p>Betöltés...</p>}
-          {objectsError && <p className="loc-error">{objectsError}</p>}
-          {!objectsLoading && !objectsError && (
-            <ul>
-              {locationObjects.map((obj) => {
-                const objectName = getObjectName(obj);
-                if (!objectName) return null;
-
-                return <li key={objectName}>{objectName}</li>;
-              })}
-            </ul>
-          )}
-        </section>
-      )}
     </div>
   );
 }
