@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     avatar_max_size_bytes: int = 3 * 1024 * 1024  # 3MB
     avatar_allowed_mime_types: List[str] = ["image/jpeg", "image/png"]
     avatar_allowed_extensions: List[str] = ["jpg", "png"]
+
+    # Event Image Upload Settings
+    events_directory: str = "static/events"
+    event_image_max_size_bytes: int = 5 * 1024 * 1024  # 5MB
+    event_image_allowed_mime_types: List[str] = ["image/jpeg", "image/png"]
+    event_image_allowed_extensions: List[str] = ["jpg", "png"]
     
     # Database Settings
     database_url: str = "postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d"
