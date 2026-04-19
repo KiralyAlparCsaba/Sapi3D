@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -6,14 +6,24 @@ import * as THREE from "three";
 import Metrics from "./Metrics";
 import { metricsCollector } from "./metricsCollector";
 import { measureLatency } from "./Latency";
+import HologramPanel from "./HologramPanel";
+import InteractiveDoor from "./InteractiveDoor";
 
 export default function Building({
   controlsRef,
   onInsideChange,
   onWorldReady,
   sessionId,
+  infoPanelsData,
+  locationsData
 }) {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  // IMPORTANT (production): never default to "http://localhost:8000".
+  // In the user's browser, "localhost" points to their own device and is often blocked
+  // (loopback protection) when your site is served over HTTPS.
+  //
+  // Our production nginx proxies the backend under the same origin at /api.
+  // So the model endpoint becomes: /api/model
+  const API_URL = import.meta.env.VITE_API_URL || "/api";
   const gltf = useGLTF(`${API_URL}/model`);
 
   const roofRef = useRef();
@@ -21,19 +31,24 @@ export default function Building({
   const triggerBoxes = useRef([]);
   const isInsideRef = useRef(false);
 
+  const hoveredDoorRef = useRef(null);
+  const [hoveredDoor, setHoveredDoor] = useState(null);
+  const [hologramMarkers, setHologramMarkers] = useState([]);
+
   const { camera, gl } = useThree();
 
-  // --- INITIAL SPAWN POINT ---
-  // ONLY for first-load snap
   const SPAWN_POS = new THREE.Vector3(-0.017955, -0.099324 + 1.7, 6.3213);
   const didSnapRef = useRef(false);
-  // ---------------------------
 
   const avgFps = useRef(60);
   const metricsRef = useRef();
   if (!metricsRef.current) metricsRef.current = new Metrics(gl);
 
-  const camWorldPosRef = useRef(new THREE.Vector3());
+  const raycaster = new THREE.Raycaster();
+  const centerScreen = new THREE.Vector2(0, 0);
+
+  // ✅ PROXIMITY LIMIT
+  const MAX_DISTANCE = 3;
 
   useEffect(() => {
     if (sessionId) metricsCollector.setSession(sessionId);
@@ -44,13 +59,10 @@ export default function Building({
     return () => metricsRef.current.detach();
   }, []);
 
-  //
-  // Load model + gather triggers and colliders
-  //
   useEffect(() => {
-    triggerBoxes.current = []; // reset
+    triggerBoxes.current = [];
+    const foundHolograms = [];
 
-    // Snap camera only once on first load
     if (!didSnapRef.current) {
       camera.position.copy(SPAWN_POS);
       didSnapRef.current = true;
@@ -60,80 +72,126 @@ export default function Building({
       if (child.name === "Roof") roofRef.current = child;
       if (child.name === "Interior") interiorRef.current = child;
 
-      // Collect all TriggerZone_* meshes
       if (child.name.startsWith("TriggerZone")) {
         const box = new THREE.Box3().setFromObject(child);
         triggerBoxes.current.push(box);
         child.visible = false;
       }
 
-      // Hide all Collision meshes
       if (child.name.startsWith("COL")) {
         child.visible = false;
-        child.castShadow = false;
-        child.receiveShadow = false;
+      }
+
+      if (child.name.toLowerCase().includes("door")) {
+        child.userData.isDoor = true;
+        child.userData.doorRoot = child;
+
+        child.traverse((descendant) => {
+          if (descendant === child) return;
+          descendant.userData.isDoor = true;
+          descendant.userData.doorRoot = child;
+        });
+      }
+
+      if (child.name.toLowerCase().includes("marker")) {
+        child.visible = false;
+
+        const box = new THREE.Box3().setFromObject(child);
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+
+        const normalizedChildName = child.name.toLowerCase();
+        const dbEntry = locationsData?.find((item) => {
+          const dbName = item.name ? item.name.toLowerCase() : "";
+          const dbButtonLoc = item.button_location ? item.button_location.toLowerCase() : "";
+          return dbName === normalizedChildName || dbButtonLoc === normalizedChildName;
+        });
+
+        const displayText = dbEntry?.information || `Nincs DB infó:\n${child.name}`;
+
+        foundHolograms.push({
+          id: child.uuid,
+          name: child.name,
+          position: center,
+          text: displayText,
+        });
       }
     });
 
-    if (onWorldReady) onWorldReady(gltf.scene);
-  }, [gltf.scene, onWorldReady, camera]);
+    setHologramMarkers(foundHolograms);
+    onWorldReady?.(gltf.scene);
+  }, [gltf.scene, camera, onWorldReady, locationsData]);
 
-  //
-  // MAIN LOOP
-  //
   useFrame(async (_, delta) => {
     const metrics = metricsRef.current;
     metrics.begin();
 
-    camera.getWorldPosition(camWorldPosRef.current);
+    // 🎯 RAYCAST
+    raycaster.setFromCamera(centerScreen, camera);
+    const intersects = raycaster.intersectObjects(gltf.scene.children, true);
 
-    //
-    // 1. Check camera inside ANY of the trigger boxes
-    //
-    if (
-      roofRef.current &&
-      interiorRef.current &&
-      triggerBoxes.current.length > 0
-    ) {
-      let inside = false;
+    let hoveredRoot = null;
 
-      for (const box of triggerBoxes.current) {
-        if (box.containsPoint(camWorldPosRef.current)) {
-          inside = true;
+    for (const hit of intersects) {
+      if (hit.object.userData.isDoor) {
+        const root = hit.object.userData.doorRoot || hit.object;
+
+        // ✅ CORRECT PROXIMITY CHECK
+        if (hit.distance <= MAX_DISTANCE) {
+          hoveredRoot = root;
           break;
         }
       }
+    }
 
-      if (inside !== isInsideRef.current) {
-        isInsideRef.current = inside;
-        roofRef.current.visible = !inside;
-        interiorRef.current.visible = inside;
-        onInsideChange?.(inside);
+    if (hoveredRoot !== hoveredDoorRef.current) {
+      hoveredDoorRef.current = hoveredRoot;
+      setHoveredDoor(hoveredRoot);
+    }
+
+    // ✨ HIGHLIGHT
+    gltf.scene.traverse((obj) => {
+      if (obj.userData.isDoor && obj.material) {
+        const sameRoot = hoveredRoot && obj.userData.doorRoot === hoveredRoot;
+
+        if (sameRoot) {
+          obj.material.emissive = new THREE.Color("#4da6ff");
+          obj.material.emissiveIntensity = 0.5;
+        } else {
+          obj.material.emissive = new THREE.Color("#000000");
+          obj.material.emissiveIntensity = 0;
+        }
+      }
+    });
+
+    // 🏠 INSIDE CHECK
+    const camPos = camera.position;
+    let inside = false;
+    for (const box of triggerBoxes.current) {
+      if (box.containsPoint(camPos)) {
+        inside = true;
+        break;
       }
     }
 
-    //
-    // 2. FPS
-    //
+    if (inside !== isInsideRef.current) {
+      isInsideRef.current = inside;
+      if (roofRef.current) roofRef.current.visible = !inside;
+      if (interiorRef.current) interiorRef.current.visible = inside;
+      onInsideChange?.(inside);
+    }
+
+    // 📊 METRICS
     const fps = 1 / delta;
     avgFps.current = avgFps.current * 0.9 + fps * 0.1;
 
-    //
-    // 3. Latency
-    //
     const latency = await measureLatency();
 
-    //
-    // 4. Memory
-    //
     let memoryMB = 0;
     if (performance?.memory) {
       memoryMB = performance.memory.usedJSHeapSize / 1024 / 1024;
     }
 
-    //
-    // 5. Store metrics
-    //
     metricsCollector.addSample({
       fps,
       memory_mb: memoryMB,
@@ -141,9 +199,6 @@ export default function Building({
       timestamp: performance.now(),
     });
 
-    //
-    // 6. Dynamic resolution scaling
-    //
     const ratio = gl.getPixelRatio();
     const deviceRatio = window.devicePixelRatio;
 
@@ -156,5 +211,23 @@ export default function Building({
     metrics.end();
   });
 
-  return <primitive object={gltf.scene} />;
+  return (
+    <>
+      <primitive object={gltf.scene} />
+
+      <InteractiveDoor
+        mesh={hoveredDoor}
+        databaseInfo={infoPanelsData}
+        isHovered={!!hoveredDoor}
+      />
+
+      {hologramMarkers.map((marker) => (
+        <HologramPanel
+          key={marker.id}
+          position={marker.position}
+          text={marker.text}
+        />
+      ))}
+    </>
+  );
 }

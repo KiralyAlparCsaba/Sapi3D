@@ -8,7 +8,7 @@ import * as THREE from "three";
 import MobilePointerLockControls from "./MobilePointerLockControls";
 
 // SCENE CONTENT
-function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport }) {
+function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, infoPanelsData, locationsData }) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
   const playerRootRef = useRef(new THREE.Object3D());
@@ -88,6 +88,8 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport }) {
     <Suspense fallback={null}>
       <Building
         sessionId={sessionId}
+        infoPanelsData={infoPanelsData}  // Ajtókhoz
+        locationsData={locationsData}    // Hologramokhoz
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
 
@@ -111,7 +113,6 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport }) {
           // ---- TELEPORT LOGIKA ----
 
           // 1. Kiszámoljuk a marker VALÓS térbeli közepét (Befoglaló doboz)
-          // Ez kiküszöböli a Blenderben elcsúszott Origin (középpont) hibákat.
           const box = new THREE.Box3().setFromObject(markerObj);
           const markerTrueCenter = new THREE.Vector3();
           box.getCenter(markerTrueCenter);
@@ -120,21 +121,19 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport }) {
           playerRootRef.current.position.x = markerTrueCenter.x;
           playerRootRef.current.position.z = markerTrueCenter.z;
 
-          // 3. Y tengely beállítása Raycasttal (picit a valós középpont felettről lőjük a sugarat lefelé)
+          // 3. Y tengely beállítása Raycasttal
           const downOrigin = markerTrueCenter.clone();
-          downOrigin.y += 0.5; // Fél méterrel a marker közepe felett kezdünk, nehogy a plafont találja el
+          downOrigin.y += 0.5;
 
           const downRay = new THREE.Raycaster(
             downOrigin,
             new THREE.Vector3(0, -1, 0)
           );
-          // Csak a mesh gyerekeit vizsgáljuk, de kihagyjuk a rejtett objektumokat
           const groundHits = downRay.intersectObjects(mesh.children, true);
 
           if (groundHits.length > 0) {
             playerRootRef.current.position.y = groundHits[0].point.y;
           } else {
-            // Ha valamiért nem talál padlót, használja a marker valós magasságát fallbackként
             playerRootRef.current.position.y = markerTrueCenter.y;
           }
 
@@ -143,13 +142,8 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport }) {
           markerObj.getWorldQuaternion(markerQuaternion);
           playerRootRef.current.quaternion.copy(markerQuaternion);
 
-          // 5. BIZTOSÍTÉK: Kamera lokális nullázása (nehogy el legyen csúszva a Root-hoz képest)
+          // 5. BIZTOSÍTÉK: Kamera lokális nullázása
           camera.position.set(0, 1.7, 0);
-
-          // 6. FIZIKA JAVÍTÁS: Elrejtjük a markert, hogy a PlayerMovement (collision) NE lökjön ki belőle!
-          markerObj.visible = false;
-          // Kiemeljük a játéktérből is, biztos ami tuti
-          markerObj.position.y -= 100;
 
           // 7. Kontrollerek frissítése az új pozíción
           if (controlsRef.current?.update) controlsRef.current.update(0);
@@ -166,11 +160,44 @@ export default function ThreeScene() {
   const controlsRef = useRef();
   const [PointerLock, setPointerLock] = useState(null);
 
+  // ÚJ: Két külön állapot a két különböző adatforráshoz
+  const [infoPanelsData, setInfoPanelsData] = useState([]);  // Ajtókhoz
+  const [locationsData, setLocationsData] = useState([]);    // Hologramokhoz
+
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   // Marker kiolvasása a router state-ből
   const routeLocation = useLocation();
-  const markerToTeleport = routeLocation.state?.marker; // pl. "Marker.003" vagy "Marker003"
+  const markerToTeleport = routeLocation.state?.marker;
+
+  // FETCH: Info Panels (ajtókhoz)
+  useEffect(() => {
+    fetch(`${API_URL}/info-panels/`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Hiba a hálózati válaszban");
+        return res.json();
+      })
+      .then((data) => {
+        console.log("✅ Info Panels betöltve (ajtókhoz):", data);
+        setInfoPanelsData(data);
+      })
+      .catch((err) => console.error("❌ Hiba az info panels lekérésekor:", err));
+  }, [API_URL]);
+
+  // FETCH: Locations (hologramokhoz)
+  useEffect(() => {
+    fetch(`${API_URL}/locations/`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Hiba a hálózati válaszban");
+        return res.json();
+      })
+      .then((data) => {
+        console.log("✅ Locations betöltve (hologramokhoz):", data);
+        setLocationsData(data);
+      })
+      .catch((err) => console.error("❌ Hiba a locations lekérésekor:", err));
+  }, [API_URL]);
 
   useEffect(() => {
     if (!isMobile) {
@@ -207,7 +234,6 @@ export default function ThreeScene() {
         ← Vissza a főoldalra
       </button>
 
-      {/* ITT IS JAVÍTVA A KAMERA POZÍCIÓ: [0, 1.7, 0] */}
       <Canvas
         camera={{ position: [0, 1.7, 0], fov: 75 }}
         style={{ width: "100vw", height: "100vh" }}
@@ -220,6 +246,8 @@ export default function ThreeScene() {
           sessionId={sessionId}
           isMobile={isMobile}
           markerToTeleport={markerToTeleport}
+          infoPanelsData={infoPanelsData}  // Ajtókhoz
+          locationsData={locationsData}    // Hologramokhoz
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}

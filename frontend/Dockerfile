@@ -20,6 +20,12 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Inject production API base URL at build time.
+# This ensures the built frontend calls the same-origin reverse proxy (/api)
+# instead of attempting to call localhost.
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=${VITE_API_URL}
+
 # Build the application
 RUN npm run build
 
