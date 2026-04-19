@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api.js";
 import "../../styles/Register.css";
@@ -36,6 +36,24 @@ export default function Register() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const containerRef = useRef(null);
+
+  const handleMouseMove = (event) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+    el.style.setProperty("--mx", x.toFixed(3));
+    el.style.setProperty("--my", y.toFixed(3));
+  };
+
+  const handleMouseLeave = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.style.setProperty("--mx", "0");
+    el.style.setProperty("--my", "0");
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -74,7 +92,18 @@ export default function Register() {
   };
 
   return (
-    <div className="register-container">
+    <div 
+      className="register-container"
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Háttér dekoráció - Blobok */}
+      <div className="blob blob-1" aria-hidden="true" />
+      <div className="blob blob-2" aria-hidden="true" />
+      <div className="blob blob-3" aria-hidden="true" />
+      <div className="blob blob-4" aria-hidden="true" />
+
       <div className="register-card">
         <h1>Regisztráció</h1>
         <form className="register-form" onSubmit={handleSubmit}>
@@ -106,13 +135,13 @@ export default function Register() {
             onChange={handleChange}
             required
           />
-          <button type="submit">Regisztráció</button>
+          <button type="submit" className="register-btn">Regisztráció</button>
         </form>
 
-        {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
-        {success && <p style={{ color: "limegreen", marginTop: "10px" }}>{success}</p>}
+        {error && <p className="error-text">{error}</p>}
+        {success && <p className="success-text">{success}</p>}
 
-        <p>
+        <p className="login-link-text">
           Már van fiókod? <Link to="/login">Jelentkezz be</Link>
         </p>
       </div>
