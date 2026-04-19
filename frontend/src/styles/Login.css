@@ -1,73 +1,165 @@
 .login-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  --mx: 0;
+  --my: 0;
+  --auth-green: #155015;
+  --auth-green-rgb: 21, 80, 21;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   height: 100vh;
-  background: #0f1115; 
-  color: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(var(--auth-green-rgb), 0.14), transparent 40%),
+    radial-gradient(circle at 86% 78%, rgba(var(--auth-green-rgb), 0.12), transparent 42%),
+    radial-gradient(ellipse at 50% 40%, rgba(4, 26, 10, 0.98) 0%, #010805 60%, #000 100%);
+  color: #fff;
   font-family: "Inter", Arial, sans-serif;
 }
 
 .login-card {
-  background: #181b22;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 400px;
   padding: 40px;
-  border-radius: 16px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-  width: 350px;
-  text-align: center;
+  border-radius: 24px;
+  background: rgba(4, 14, 11, 0.6);
+  border: 1px solid rgba(var(--auth-green-rgb), 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  animation: cardFadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.login-card h1 {
-  font-size: 24px;
-  margin-bottom: 20px;
-  color: #00b37e;
+.login-form h2 {
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: color-mix(in srgb, var(--auth-green) 58%, #a8d8a8);
+  text-align: center;
+  text-shadow: 0 0 15px rgba(var(--auth-green-rgb), 0.35);
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
 }
 
 .login-form input {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #333;
-  background: #22252d;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   color: #fff;
-  outline: none;
-  transition: border 0.2s ease;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
 }
 
 .login-form input:focus {
-  border-color: #00b37e;
+  outline: none;
+  border-color: rgba(var(--auth-green-rgb), 0.8);
+  background: rgba(var(--auth-green-rgb), 0.08);
+  box-shadow: 0 0 15px rgba(var(--auth-green-rgb), 0.24);
 }
 
-.login-form button {
-  background: #00b37e;
+.login-btn {
+  background: var(--auth-green);
   color: white;
   border: none;
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 14px;
   font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.3s ease;
+  margin-top: 10px;
 }
 
-.login-form button:hover {
-  background: #00c98c;
+.login-btn:hover {
+  background: color-mix(in srgb, var(--auth-green) 82%, #4b954b);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(var(--auth-green-rgb), 0.4);
 }
 
-.login-card p {
-  margin-top: 15px;
+.login-btn:active {
+  transform: translateY(0);
+}
+
+.error-text {
+  color: #ff4d4d;
   font-size: 14px;
+  text-align: center;
+  background: rgba(255, 77, 77, 0.1);
+  padding: 10px;
+  border-radius: 8px;
 }
 
-.login-form a {
-  color: #00b37e;
+.register-text {
+  text-align: center;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.register-text a {
+  color: color-mix(in srgb, var(--auth-green) 56%, #c8e6c8);
   text-decoration: none;
+  font-weight: 600;
 }
 
-.login-form a:hover {
+.register-text a:hover {
   text-decoration: underline;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  z-index: 0;
+  will-change: transform;
+  animation: blobFloatLogin 10s ease-in-out infinite;
+}
+
+.blob-1 {
+  width: 300px; height: 300px;
+  top: -140px; left: 50%;
+  margin-left: -150px;
+  background: radial-gradient(circle, rgba(var(--auth-green-rgb), 0.42) 0%, transparent 70%);
+  --px: 8px; --py: 8px;
+}
+
+.blob-2 {
+  width: 290px; height: 290px;
+  top: 30%; left: -120px;
+  background: radial-gradient(circle, rgba(var(--auth-green-rgb), 0.32) 0%, transparent 70%);
+  --px: 16px; --py: 8px;
+  animation-delay: -3s;
+}
+
+.blob-3 {
+  width: 250px; height: 250px;
+  top: 32%; right: 6%;
+  background: radial-gradient(circle, rgba(var(--auth-green-rgb), 0.24) 0%, transparent 70%);
+  --px: -12px; --py: -6px;
+}
+
+.blob-4 {
+  width: 280px; height: 280px;
+  bottom: -120px; right: 10%;
+  background: radial-gradient(circle, rgba(var(--auth-green-rgb), 0.28) 0%, transparent 70%);
+  --px: 8px; --py: -12px;
+  animation-delay: -5s;
+}
+
+@keyframes blobFloatLogin {
+  0%, 100% { transform: translate3d(calc(var(--mx) * var(--px)), calc(var(--my) * var(--py)), 0); }
+  50% { transform: translate3d(calc(var(--mx) * var(--px) + 20px), calc(var(--my) * var(--py) - 20px), 0); }
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }

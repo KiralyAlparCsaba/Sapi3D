@@ -19,7 +19,6 @@
   text-align: center;
 }
 
-/* ── 3D Sphere Blobs ── */
 .blob {
   position: absolute;
   z-index: 0;
@@ -29,7 +28,6 @@
   animation: blobFloat 9s ease-in-out infinite;
 }
 
-/* Large sphere – top center */
 .blob-1 {
   width: 340px;
   height: 340px;
@@ -57,7 +55,6 @@
   --py: 8px;
 }
 
-/* Specular highlight – blob-1 */
 .blob-1::before {
   content: "";
   position: absolute;
@@ -70,7 +67,6 @@
   filter: blur(4px);
 }
 
-/* Medium sphere – right side */
 .blob-2 {
   width: 260px;
   height: 260px;
@@ -110,7 +106,6 @@
   filter: blur(3px);
 }
 
-/* Large sphere – bottom left */
 .blob-3 {
   width: 300px;
   height: 300px;
@@ -149,7 +144,6 @@
   filter: blur(4px);
 }
 
-/* Medium sphere – bottom right */
 .blob-4 {
   width: 240px;
   height: 240px;
@@ -188,7 +182,6 @@
   filter: blur(3px);
 }
 
-/* Medium sphere – top left */
 .blob-5 {
   width: 280px;
   height: 280px;
@@ -227,7 +220,6 @@
   filter: blur(3px);
 }
 
-/* ── Card ── */
 .landing-content {
   position: relative;
   z-index: 2;
@@ -285,7 +277,6 @@
   transform: scale(1.02);
 }
 
-/* ── Animations ── */
 @keyframes cardReveal {
   from {
     opacity: 0;
@@ -311,7 +302,6 @@
   }
 }
 
-/* ── Responsive ── */
 @media (max-width: 768px) {
   .blob-1 {
     width: 240px;
