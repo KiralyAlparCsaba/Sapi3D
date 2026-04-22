@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
+import "../../styles/InteractiveDoor.css";
 
 export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
   const [showPanel, setShowPanel] = useState(false);
@@ -84,78 +85,48 @@ export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
   return (
     <group position={worldPosition}>
       <Html position={[0, 1.2, 0]} center zIndexRange={[100, 0]}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", pointerEvents: "none" }}>
+        <div className="door-panel-container">
 
           {!showPanel && (
-            <div style={{
-              background: "rgba(0,0,0,0.7)",
-              color: "white",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              fontFamily: "sans-serif",
-              fontSize: "14px",
-              whiteSpace: "nowrap",
-              textAlign: "center",
-            }}>
+            <div className="door-hint">
               {/* Objektum neve */}
-              <div style={{ fontSize: "11px", color: "#aaaaaa", marginBottom: "4px" }}>
+              <div className="door-hint-name">
                 {meshName}
               </div>
-              Nyomd meg az <strong style={{ color: "#ffcc00" }}>E</strong> gombot
+              Nyomd meg az <strong className="door-hint-key">E</strong> gombot
             </div>
           )}
 
           {showPanel && (
-            <div style={{
-              background: "rgba(20,20,20,0.95)",
-              color: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              border: "1px solid #444",
-              fontFamily: "sans-serif",
-              width: "300px",
-              maxHeight: "400px",
-              overflowY: "auto",
-              textAlign: "center",
-              boxShadow: "0px 10px 30px rgba(0,0,0,0.5)",
-            }}>
-              <h3 style={{ margin: "0 0 4px 0", color: "#4da6ff" }}>{title}</h3>
+            <div className="door-info-panel">
+              <h3 className="door-info-title">{title}</h3>
 
               {/* Objektum neve a cím alatt kis betűvel */}
-              <div style={{ fontSize: "11px", color: "#777777", marginBottom: "12px" }}>
+              <div className="door-info-name">
                 {meshName}
               </div>
 
               {/* Media (image or video) if available */}
               {mediaUrl && (
-                <div style={{ marginBottom: "12px" }}>
+                <div className="door-media-container">
                   {mediaUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                     <img
                       src={mediaUrl}
                       alt={title}
-                      style={{
-                        width: "100%",
-                        borderRadius: "4px",
-                        maxHeight: "150px",
-                        objectFit: "cover"
-                      }}
+                      className="door-media-image"
                     />
                   ) : mediaUrl.match(/\.(mp4|webm|ogg)$/i) ? (
                     <video
                       src={mediaUrl}
                       controls
-                      style={{
-                        width: "100%",
-                        borderRadius: "4px",
-                        maxHeight: "150px"
-                      }}
+                      className="door-media-video"
                     />
                   ) : (
                     <a
                       href={mediaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: "#4da6ff", fontSize: "12px" }}
+                      className="door-media-link"
                     >
                       View Media
                     </a>
@@ -164,21 +135,13 @@ export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
               )}
 
               {/* Information text */}
-              <p style={{ margin: 0, fontSize: "14px", lineHeight: "1.4", textAlign: "left" }}>
+              <p className="door-info-text">
                 {infoText}
               </p>
 
               {/* Debug info - remove in production */}
               {!dbEntry && (
-                <div style={{
-                  marginTop: "12px",
-                  padding: "8px",
-                  background: "rgba(255,0,0,0.1)",
-                  border: "1px solid rgba(255,0,0,0.3)",
-                  borderRadius: "4px",
-                  fontSize: "11px",
-                  color: "#ff6b6b"
-                }}>
+                <div className="door-debug-info">
                   ⚠️ Debug: No DB match for "{meshName}"
                 </div>
               )}

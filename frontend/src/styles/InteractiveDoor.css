@@ -1,0 +1,95 @@
+/* Interactive Door Panel Styles */
+
+.door-panel-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.door-hint {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: sans-serif;
+  font-size: 14px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.door-hint-name {
+  font-size: 11px;
+  color: #aaaaaa;
+  margin-bottom: 4px;
+}
+
+.door-hint-key {
+  color: #ffcc00;
+  font-weight: bold;
+}
+
+.door-info-panel {
+  background: rgba(20, 20, 20, 0.95);
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  font-family: sans-serif;
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  text-align: center;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.door-info-title {
+  margin: 0 0 4px 0;
+  color: #4da6ff;
+}
+
+.door-info-name {
+  font-size: 11px;
+  color: #777777;
+  margin-bottom: 12px;
+}
+
+.door-media-container {
+  margin-bottom: 12px;
+}
+
+.door-media-image {
+  width: 100%;
+  border-radius: 4px;
+  max-height: 150px;
+  object-fit: cover;
+}
+
+.door-media-video {
+  width: 100%;
+  border-radius: 4px;
+  max-height: 150px;
+}
+
+.door-media-link {
+  color: #4da6ff;
+  font-size: 12px;
+}
+
+.door-info-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.door-debug-info {
+  margin-top: 12px;
+  padding: 8px;
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 4px;
+  font-size: 11px;
+  color: #ff6b6b;
+}
