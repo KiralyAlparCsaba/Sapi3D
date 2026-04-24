@@ -1,12 +1,20 @@
-from fastapi import HTTPException
+from datetime import datetime, timedelta, timezone
+
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 import os
 
 from repositories.user_repository import UserRepository, RoleRepository
-from core.security import hash_password
+from services.email_service import EmailService
+from core.config import settings
+from core.security import (
+    hash_password,
+    generate_email_verification_code,
+    is_verification_code_expired,
+)
 from schemas.user import UserCreate, UserUpdate, UserResponse
 from core.logging import logger
-from core.config import settings
 
 class UserService:
     """Service layer for user management (CRUD)."""
@@ -15,6 +23,7 @@ class UserService:
         self.db = db
         self.user_repo = UserRepository(db)
         self.role_repo = RoleRepository(db)
+        self.email_service = EmailService()
 
     # -----------------------
     # CREATE USER
@@ -87,17 +96,159 @@ class UserService:
     # -----------------------
     # UPDATE USER
     # -----------------------
-    async def update_user(self, user_id: int, data: UserUpdate) -> UserResponse:
+    async def update_user(self, user_id: int, data: UserUpdate, current_user) -> UserResponse:
         user = await self.user_repo.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        updated_user = await self.user_repo.update(user_id, **data.model_dump(exclude_unset=True))
-        await self.db.commit()
+        updates = data.model_dump(exclude_unset=True)
+
+        is_admin = getattr(current_user, "role_id", None) == 2
+        is_self = getattr(current_user, "user_id", None) == user_id
+
+        # Self-update: email change must go through pending verification flow.
+        # Also prevent self role change.
+        if is_self and not is_admin:
+            updates.pop("email", None)
+            updates.pop("role_id", None)
+
+        # Admin email update: explicit uniqueness check for nicer error message.
+        if is_admin and "email" in updates:
+            existing = await self.user_repo.get_by_email(updates["email"])
+            if existing and existing.user_id != user_id:
+                raise HTTPException(status_code=400, detail="Már szerepel ez az email")
+
+        updated_user = await self.user_repo.update(user_id, **updates)
+        try:
+            await self.db.commit()
+        except IntegrityError as exc:
+            await self.db.rollback()
+            raise HTTPException(status_code=400, detail="Username vagy e-mail már létezik") from exc
+
         await self.db.refresh(updated_user)
         logger.info(f"Updated user ID {user_id}")
 
         return UserResponse.model_validate(updated_user, from_attributes=True)
+
+    async def request_email_change(self, user_id: int, new_email: str):
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        existing = await self.user_repo.get_by_email(new_email)
+        if existing and existing.user_id != user_id:
+            raise HTTPException(status_code=400, detail="Már szerepel ez az email")
+
+        code = generate_email_verification_code()
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES
+        )
+        now = datetime.now(timezone.utc)
+
+        await self.user_repo.update(
+            user_id,
+            pending_email=new_email,
+            pending_email_verification_code=code,
+            pending_email_expires_at=expires_at,
+            pending_email_sent_at=now,
+        )
+
+        try:
+            await self.email_service.send_verification_code(new_email, code)
+        except RuntimeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Failed to send verification email"
+            ) from exc
+
+        return {"message": "Verification code sent"}
+
+    async def resend_email_change_code(self, user_id: int):
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if not user.pending_email:
+            raise HTTPException(status_code=400, detail="No pending email change")
+
+        if user.pending_email_sent_at:
+            seconds_since = (datetime.now(timezone.utc) - user.pending_email_sent_at).total_seconds()
+            if seconds_since < 180:
+                raise HTTPException(status_code=429, detail="Please wait before resending the code")
+
+        new_code = generate_email_verification_code()
+        new_expires_at = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES
+        )
+        now = datetime.now(timezone.utc)
+
+        await self.user_repo.update(
+            user_id,
+            pending_email_verification_code=new_code,
+            pending_email_expires_at=new_expires_at,
+            pending_email_sent_at=now,
+        )
+
+        try:
+            await self.email_service.send_verification_code(user.pending_email, new_code)
+        except RuntimeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Failed to resend verification email"
+            ) from exc
+
+        return {"message": "Verification code sent"}
+
+    async def verify_email_change(self, user_id: int, code: str) -> UserResponse:
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if not user.pending_email:
+            raise HTTPException(status_code=400, detail="No pending email change")
+
+        if user.pending_email_verification_code != code:
+            raise HTTPException(status_code=400, detail="Invalid verification code")
+
+        if is_verification_code_expired(user.pending_email_expires_at):
+            raise HTTPException(status_code=400, detail="Verification code has expired")
+
+        existing = await self.user_repo.get_by_email(user.pending_email)
+        if existing and existing.user_id != user_id:
+            raise HTTPException(status_code=400, detail="Már szerepel ez az email")
+
+        updated = await self.user_repo.update(
+            user_id,
+            email=user.pending_email,
+            pending_email=None,
+            pending_email_verification_code=None,
+            pending_email_expires_at=None,
+            pending_email_sent_at=None,
+        )
+
+        try:
+            await self.db.commit()
+        except IntegrityError as exc:
+            await self.db.rollback()
+            raise HTTPException(status_code=400, detail="Már szerepel ez az email") from exc
+
+        await self.db.refresh(updated)
+        return UserResponse.model_validate(updated, from_attributes=True)
+
+    async def cancel_email_change(self, user_id: int):
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        await self.user_repo.update(
+            user_id,
+            pending_email=None,
+            pending_email_verification_code=None,
+            pending_email_expires_at=None,
+            pending_email_sent_at=None,
+        )
+        await self.db.commit()
+        return {"message": "Cancelled"}
 
     # -----------------------
     # UPLOAD AVATAR

@@ -35,6 +35,12 @@ class User(Base, TimestampMixin):
     is_email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
     email_verification_code: Mapped[Optional[str]] = mapped_column(String(6), nullable=True, index=True)
     email_verification_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Pending email change (verified via code sent to pending_email)
+    pending_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    pending_email_verification_code: Mapped[Optional[str]] = mapped_column(String(6), nullable=True)
+    pending_email_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    pending_email_sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Relationships
     role: Mapped["Role"] = relationship("Role", back_populates="users")

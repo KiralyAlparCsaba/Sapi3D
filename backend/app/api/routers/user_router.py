@@ -3,7 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from core.database import get_db  
-from schemas.user import UserCreate, UserUpdate, UserResponse, UserLogin, Token
+from schemas.user import (
+    UserCreate,
+    UserUpdate,
+    UserResponse,
+    UserLogin,
+    Token,
+    ChangeEmailRequest,
+    ChangeEmailVerifyRequest,
+    MessageResponse,
+)
 from services.user_service import UserService
 from core.security import get_current_user, create_access_token
 
@@ -80,7 +89,7 @@ async def update_user(
         )
     
     service = UserService(db)
-    updated_user = await service.update_user(user_id, user_data)
+    updated_user = await service.update_user(user_id=user_id, data=user_data, current_user=current_user)
     
     # Generate new token with updated data
     new_token = create_access_token({
@@ -94,6 +103,82 @@ async def update_user(
         "user": updated_user,
         "token": new_token
     }
+
+
+# ---- CHANGE EMAIL (SELF: REQUEST / VERIFY / CANCEL / RESEND) ----
+@router.post("/{user_id}/change-email/request", response_model=MessageResponse)
+async def request_change_email(
+    user_id: int,
+    payload: ChangeEmailRequest,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if current_user.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only change your own email"
+        )
+
+    service = UserService(db)
+    return await service.request_email_change(user_id=user_id, new_email=str(payload.new_email))
+
+
+@router.post("/{user_id}/change-email/verify", response_model=dict)
+async def verify_change_email(
+    user_id: int,
+    payload: ChangeEmailVerifyRequest,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if current_user.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only change your own email"
+        )
+
+    service = UserService(db)
+    updated_user = await service.verify_email_change(user_id=user_id, code=payload.code)
+
+    new_token = create_access_token({
+        "sub": str(updated_user.user_id),
+        "username": updated_user.username,
+        "role_id": updated_user.role_id,
+        "session_id": current_user.session_id
+    })
+
+    return {"user": updated_user, "token": new_token}
+
+
+@router.post("/{user_id}/change-email/cancel", response_model=MessageResponse)
+async def cancel_change_email(
+    user_id: int,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if current_user.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only change your own email"
+        )
+
+    service = UserService(db)
+    return await service.cancel_email_change(user_id=user_id)
+
+
+@router.post("/{user_id}/change-email/resend", response_model=MessageResponse)
+async def resend_change_email(
+    user_id: int,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if current_user.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only change your own email"
+        )
+
+    service = UserService(db)
+    return await service.resend_email_change_code(user_id=user_id)
 
 
 # ---- UPLOAD USER AVATAR ----

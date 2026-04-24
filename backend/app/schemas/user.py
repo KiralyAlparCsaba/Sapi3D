@@ -62,6 +62,8 @@ class UserResponse(UserBase):
     user_id: int
     avatar_url: Optional[str] = None
     role_id: int
+    pending_email: Optional[EmailStr] = None
+    pending_email_expires_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
     
@@ -120,3 +122,20 @@ class ResendVerificationCodeRequest(BaseModel):
 class MessageResponse(BaseModel):
     """Simple message response schema."""
     message: str
+
+
+class ChangeEmailRequest(BaseModel):
+    """Request a verification code to change email to a new address."""
+    new_email: EmailStr
+
+
+class ChangeEmailVerifyRequest(BaseModel):
+    """Verify code for pending email change."""
+    code: str = Field(..., min_length=6, max_length=6)
+
+    @field_validator("code")
+    @classmethod
+    def validate_code_digits(cls, value: str) -> str:
+        if not value.isdigit():
+            raise ValueError("Verification code must contain only digits")
+        return value

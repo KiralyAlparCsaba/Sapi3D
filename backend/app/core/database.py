@@ -111,6 +111,47 @@ async def init_db() -> None:
                     ADD COLUMN email_verification_expires_at TIMESTAMPTZ;
                 END IF;
 
+                -- Pending email change fields (verified on new email before applying)
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'users'
+                      AND column_name = 'pending_email'
+                ) THEN
+                    ALTER TABLE users
+                    ADD COLUMN pending_email VARCHAR(255);
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'users'
+                      AND column_name = 'pending_email_verification_code'
+                ) THEN
+                    ALTER TABLE users
+                    ADD COLUMN pending_email_verification_code VARCHAR(6);
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'users'
+                      AND column_name = 'pending_email_expires_at'
+                ) THEN
+                    ALTER TABLE users
+                    ADD COLUMN pending_email_expires_at TIMESTAMPTZ;
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'users'
+                      AND column_name = 'pending_email_sent_at'
+                ) THEN
+                    ALTER TABLE users
+                    ADD COLUMN pending_email_sent_at TIMESTAMPTZ;
+                END IF;
+
                 IF NOT EXISTS (
                     SELECT 1
                     FROM pg_indexes
