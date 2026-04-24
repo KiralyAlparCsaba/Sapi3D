@@ -11,9 +11,22 @@
   justify-content: center;
   align-items: center;
   background:
-    radial-gradient(circle at 16% 24%, rgba(var(--auth-green-rgb), 0.14), transparent 40%),
-    radial-gradient(circle at 84% 80%, rgba(var(--auth-green-rgb), 0.12), transparent 42%),
-    radial-gradient(ellipse at 50% 40%, rgba(4, 26, 10, 0.98) 0%, #010805 60%, #000 100%);
+    radial-gradient(
+      circle at 16% 24%,
+      rgba(var(--auth-green-rgb), 0.14),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 84% 80%,
+      rgba(var(--auth-green-rgb), 0.12),
+      transparent 42%
+    ),
+    radial-gradient(
+      ellipse at 50% 40%,
+      rgba(4, 26, 10, 0.98) 0%,
+      #010805 60%,
+      #000 100%
+    );
   color: #fff;
   font-family: "Inter", Arial, sans-serif;
 }
@@ -89,6 +102,61 @@
   transform: translateY(0);
 }
 
+.register-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+  box-shadow: none;
+}
+
+.verification-hint {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.code-input {
+  text-align: center;
+  letter-spacing: 6px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.resend-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.secondary-btn {
+  width: 100%;
+  border: 1px solid rgba(var(--auth-green-rgb), 0.5);
+  background: rgba(var(--auth-green-rgb), 0.12);
+  color: #d8f0d8;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.secondary-btn:hover:not(:disabled) {
+  background: rgba(var(--auth-green-rgb), 0.2);
+}
+
+.secondary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.cooldown-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.62);
+}
+
 .error-text {
   color: #ff4d4d;
   font-size: 14px;
@@ -126,7 +194,6 @@
   text-decoration: underline;
 }
 
-
 .blob {
   position: absolute;
   border-radius: 50%;
@@ -136,45 +203,91 @@
   animation: blobFloatRegister 10s ease-in-out infinite;
 }
 
-
 .blob-1 {
-  width: 320px; height: 320px;
-  top: -120px; left: 50%;
+  width: 320px;
+  height: 320px;
+  top: -120px;
+  left: 50%;
   margin-left: -160px;
-  background: radial-gradient(circle, rgba(var(--auth-green-rgb), 0.4) 0%, transparent 70%);
-  --px: 8px; --py: 8px;
+  background: radial-gradient(
+    circle,
+    rgba(var(--auth-green-rgb), 0.4) 0%,
+    transparent 70%
+  );
+  --px: 8px;
+  --py: 8px;
 }
 
 .blob-2 {
-  width: 380px; height: 380px;
-  bottom: -80px; left: -80px;
-  background: radial-gradient(circle, rgba(var(--auth-green-rgb), 0.3) 0%, transparent 70%);
-  --px: 25px; --py: -15px;
+  width: 380px;
+  height: 380px;
+  bottom: -80px;
+  left: -80px;
+  background: radial-gradient(
+    circle,
+    rgba(var(--auth-green-rgb), 0.3) 0%,
+    transparent 70%
+  );
+  --px: 25px;
+  --py: -15px;
   animation-delay: -4s;
 }
 
 .blob-3 {
-  width: 220px; height: 220px;
-  top: 30%; right: 8%;
-  background: radial-gradient(circle, rgba(var(--auth-green-rgb), 0.24) 0%, transparent 70%);
-  --px: -15px; --py: -25px;
+  width: 220px;
+  height: 220px;
+  top: 30%;
+  right: 8%;
+  background: radial-gradient(
+    circle,
+    rgba(var(--auth-green-rgb), 0.24) 0%,
+    transparent 70%
+  );
+  --px: -15px;
+  --py: -25px;
   animation-delay: -7s;
 }
 
 .blob-4 {
-  width: 250px; height: 250px;
-  bottom: -110px; right: 12%;
-  background: radial-gradient(circle, rgba(var(--auth-green-rgb), 0.28) 0%, transparent 70%);
-  --px: 10px; --py: -10px;
+  width: 250px;
+  height: 250px;
+  bottom: -110px;
+  right: 12%;
+  background: radial-gradient(
+    circle,
+    rgba(var(--auth-green-rgb), 0.28) 0%,
+    transparent 70%
+  );
+  --px: 10px;
+  --py: -10px;
   animation-delay: -5s;
 }
 
 @keyframes blobFloatRegister {
-  0%, 100% { transform: translate3d(calc(var(--mx) * var(--px)), calc(var(--my) * var(--py)), 0); }
-  50% { transform: translate3d(calc(var(--mx) * var(--px) + 25px), calc(var(--my) * var(--py) - 15px), 0); }
+  0%,
+  100% {
+    transform: translate3d(
+      calc(var(--mx) * var(--px)),
+      calc(var(--my) * var(--py)),
+      0
+    );
+  }
+  50% {
+    transform: translate3d(
+      calc(var(--mx) * var(--px) + 25px),
+      calc(var(--my) * var(--py) - 15px),
+      0
+    );
+  }
 }
 
 @keyframes cardFadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
