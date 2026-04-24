@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sapi3D Email Verifikáció</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background: #f8fafc;
+      font-family: &quot;Segoe UI&quot;, Arial, sans-serif;
+      color: #1e293b;
+    "
+  >
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      style="padding: 40px 12px"
+    >
+      <tr>
+        <td align="center">
+          <table
+            role="presentation"
+            width="100%"
+            cellspacing="0"
+            cellpadding="0"
+            style="
+              max-width: 520px;
+              background: #ffffff;
+              border: 1px solid #e2e8f0;
+              border-radius: 12px;
+              overflow: hidden;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            "
+          >
+            <tr>
+              <td style="background-color: #11482a; height: 6px"></td>
+            </tr>
+
+            <tr>
+              <td style="padding: 32px 32px 24px">
+                <h2
+                  style="
+                    margin: 0 0 20px;
+                    font-size: 22px;
+                    color: #11482a;
+                    font-weight: 600;
+                  "
+                >
+                  Üdvözöljük a Sapi3D felületén!
+                </h2>
+
+                <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6">
+                  Köszönjük, hogy regisztrált a Sapi3D alkalmazásba. A
+                  regisztrációs folyamat befejezéséhez és fiókja megerősítéséhez
+                  kérjük, használja az alábbi egyszeri ellenőrző kódot:
+                </p>
+
+                <div
+                  style="
+                    margin: 24px 0;
+                    padding: 20px;
+                    border-radius: 8px;
+                    background: #f0f7f2;
+                    border: 1px solid #d1e7d8;
+                    text-align: center;
+                  "
+                >
+                  <span
+                    style="
+                      font-size: 36px;
+                      letter-spacing: 0.4em;
+                      font-weight: 700;
+                      color: #11482a;
+                      font-family: monospace;
+                    "
+                    >{{ code }}</span
+                  >
+                </div>
+
+                <p style="margin: 0 0 24px; font-size: 14px; color: #64748b">
+                  Ez a kód biztonsági okokból
+                  <strong>{{ expires_in }} percig</strong> érvényes.
+                </p>
+
+                <p
+                  style="
+                    margin: 0;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    color: #475569;
+                  "
+                >
+                  Amennyiben nem Ön kezdeményezte a regisztrációt, kérjük,
+                  tekintse tárgytalannak ezt az üzenetet.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td
+                style="
+                  padding: 24px 32px;
+                  background: #f8fafc;
+                  border-top: 1px solid #e2e8f0;
+                  text-align: center;
+                "
+              >
+                <p
+                  style="
+                    margin: 0;
+                    font-size: 12px;
+                    color: #94a3b8;
+                    line-height: 1.5;
+                  "
+                >
+                  <strong>Sapi3D projekt</strong><br />
+                  Sapientia Erdélyi Magyar Tudományegyetem
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

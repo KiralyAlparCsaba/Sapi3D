@@ -39,6 +39,9 @@ class UserService:
             email=user_data.email,
             pasw_hash=hashed_pw,
             role_id=role.role_id if role else None,
+            is_email_verified=True,
+            email_verification_code=None,
+            email_verification_expires_at=None,
         )
 
         await self.db.commit()
