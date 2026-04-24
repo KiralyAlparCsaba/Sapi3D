@@ -77,6 +77,59 @@ async def init_db() -> None:
             END
             $$;
         """))
+        # Backward-compatibility patch for email verification fields.
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'users'
+                      AND column_name = 'is_email_verified'
+                ) THEN
+                    ALTER TABLE users
+                    ADD COLUMN is_email_verified BOOLEAN NOT NULL DEFAULT FALSE;
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'users'
+                      AND column_name = 'email_verification_code'
+                ) THEN
+                    ALTER TABLE users
+                    ADD COLUMN email_verification_code VARCHAR(6);
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'users'
+                      AND column_name = 'email_verification_expires_at'
+                ) THEN
+                    ALTER TABLE users
+                    ADD COLUMN email_verification_expires_at TIMESTAMPTZ;
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_indexes
+                    WHERE tablename = 'users'
+                      AND indexname = 'ix_users_email_verification_code'
+                ) THEN
+                    CREATE INDEX ix_users_email_verification_code
+                    ON users (email_verification_code);
+                END IF;
+            END
+            $$;
+        """))
+        await conn.execute(text("""
+            UPDATE users
+            SET is_email_verified = TRUE
+            WHERE is_email_verified = FALSE
+              AND email_verification_code IS NULL
+              AND email_verification_expires_at IS NULL;
+        """))
     logger.info("Database tables created successfully")
     
     # Seed initial roles if they don't exist

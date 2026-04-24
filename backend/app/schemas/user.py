@@ -91,3 +91,32 @@ class TokenData(BaseModel):
     """Schema for token data."""
     user_id: Optional[int] = None
     username: Optional[str] = None
+
+
+class RegisterPendingResponse(BaseModel):
+    """Response returned when registration requires email verification."""
+    message: str
+    email: EmailStr
+
+
+class VerifyEmailCodeRequest(BaseModel):
+    """Schema for verifying the 6-digit email code."""
+    email: EmailStr
+    code: str = Field(..., min_length=6, max_length=6)
+
+    @field_validator("code")
+    @classmethod
+    def validate_code_digits(cls, value: str) -> str:
+        if not value.isdigit():
+            raise ValueError("Verification code must contain only digits")
+        return value
+
+
+class ResendVerificationCodeRequest(BaseModel):
+    """Schema for resending verification code."""
+    email: EmailStr
+
+
+class MessageResponse(BaseModel):
+    """Simple message response schema."""
+    message: str

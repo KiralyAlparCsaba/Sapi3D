@@ -1,5 +1,6 @@
 import bcrypt
 from datetime import datetime, timedelta
+from secrets import randbelow
 from jose import JWTError, jwt
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -28,6 +29,18 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 SECRET_KEY = settings.JWT_SECRET_KEY
 ALGORITHM = settings.JWT_ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+
+
+def generate_email_verification_code(length: int = 6) -> str:
+    """Generate a numeric verification code."""
+    return "".join(str(randbelow(10)) for _ in range(length))
+
+
+def is_verification_code_expired(expires_at: datetime | None) -> bool:
+    """Return True when verification code expiration has passed."""
+    if expires_at is None:
+        return True
+    return datetime.now(expires_at.tzinfo) > expires_at
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:

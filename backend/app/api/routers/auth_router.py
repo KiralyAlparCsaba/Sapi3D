@@ -3,18 +3,47 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from services.auth_service import AuthService
-from schemas.user import UserLogin, UserCreate, Token, UserResponse
+from schemas.user import (
+    UserLogin,
+    UserCreate,
+    Token,
+    UserResponse,
+    RegisterPendingResponse,
+    VerifyEmailCodeRequest,
+    ResendVerificationCodeRequest,
+    MessageResponse,
+)
 from core.security import get_current_user, create_access_token
 
 
 router = APIRouter(prefix="/auth")
 
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register", response_model=RegisterPendingResponse)
 async def register_user(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """Register a new user."""
     service = AuthService(db)
     return await service.register(user_data)
+
+
+@router.post("/verify-email-code", response_model=MessageResponse)
+async def verify_email_code(
+    payload: VerifyEmailCodeRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Verify newly registered email with a 6-digit code."""
+    service = AuthService(db)
+    return await service.verify_email_code(payload)
+
+
+@router.post("/resend-verification-code", response_model=MessageResponse)
+async def resend_verification_code(
+    payload: ResendVerificationCodeRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Resend a fresh 6-digit verification code."""
+    service = AuthService(db)
+    return await service.resend_verification_code(payload)
 
 
 @router.post("/login", response_model=Token)

@@ -45,6 +45,15 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int
+
+    # Email / SMTP settings
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    MAIL_FROM: str = ""
+    FRONTEND_URL: str = "http://localhost:3000"
+    EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES: int = 3
     
     @property
     def model_file_path(self) -> str:
