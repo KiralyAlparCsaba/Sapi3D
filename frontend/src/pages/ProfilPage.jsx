@@ -3,14 +3,104 @@ import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import "../styles/ProfilPage.css";
 
+const STATIC_ACHIEVEMENTS = [
+  {
+    id: 1,
+    name: "Első lépések",
+    description: "Megnyitottad a 3D modellt legalább egyszer.",
+    condition: "Modell megtekintése 1x",
+    current: 1,
+    target: 1,
+    unlocked: true,
+    category: "3D",
+  },
+  {
+    id: 2,
+    name: "Helyszínvadász I",
+    description: "Felfedeztél legalább 3 fontos helyszínt.",
+    condition: "3 helyszín megtekintése",
+    current: 3,
+    target: 3,
+    unlocked: true,
+    category: "Helyszín",
+  },
+  {
+    id: 3,
+    name: "Helyszínvadász II",
+    description: "Felfedeztél legalább 5 fontos helyszínt.",
+    condition: "5 helyszín megtekintése",
+    current: 4,
+    target: 5,
+    unlocked: false,
+    category: "Helyszín",
+  },
+  {
+    id: 4,
+    name: "Panelfelfedező",
+    description: "Információs panelek böngészése a modellben.",
+    condition: "5 panel megnyitása",
+    current: 5,
+    target: 5,
+    unlocked: true,
+    category: "Infó",
+  },
+  {
+    id: 5,
+    name: "Terepszemle",
+    description: "Összesen legalább 10 percet töltöttél bejárással.",
+    condition: "10 perc aktív bejárás",
+    current: 8,
+    target: 10,
+    unlocked: false,
+    category: "Idő",
+  },
+  {
+    id: 6,
+    name: "Egyetem turista",
+    description: "Ránéztél a legfontosabb egyetemi pontokra.",
+    condition: "Aula, Könyvtár és tanszékek megtekintése",
+    current: 3,
+    target: 3,
+    unlocked: true,
+    category: "Főbb pontok",
+  },
+];
+
+const BADGE_TIERS = [
+  {
+    id: "badge-bronze",
+    name: "Bronz Felfedező",
+    threshold: 2,
+    icon: "🥉",
+    flavor: "Megkezdted az utat az egyetem titkai felé.",
+  },
+  {
+    id: "badge-silver",
+    name: "Ezüst Navigátor",
+    threshold: 4,
+    icon: "🥈",
+    flavor: "Már rutinosan mozogsz a fontos helyszínek között.",
+  },
+  {
+    id: "badge-gold",
+    name: "Arany Legendás",
+    threshold: 6,
+    icon: "🏆",
+    flavor: "A teljes 3D egyetem felfedezés mesterfokon.",
+  },
+];
+
 function resolveAvatarUrl(avatarUrl) {
   if (!avatarUrl) return "";
   if (/^https?:\/\//i.test(avatarUrl)) return avatarUrl;
 
   const envBase = (import.meta.env.VITE_API_URL || "").trim();
-  const base = envBase || `${window.location.protocol}//${window.location.hostname}:8000`;
+  const base =
+    envBase || `${window.location.protocol}//${window.location.hostname}:8000`;
   const normalizedBase = base.replace(/\/$/, "");
-  const normalizedPath = avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`;
+  const normalizedPath = avatarUrl.startsWith("/")
+    ? avatarUrl
+    : `/${avatarUrl}`;
   return `${normalizedBase}${normalizedPath}`;
 }
 
@@ -38,6 +128,16 @@ export default function ProfilPage() {
   const [form, setForm] = useState({ username: "", email: "" });
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const avatarInputRef = useRef(null);
+  const unlockedAchievements = STATIC_ACHIEVEMENTS.filter(
+    (item) => item.unlocked,
+  );
+  const unlockedCount = unlockedAchievements.length;
+  const earnedBadges = BADGE_TIERS.filter(
+    (tier) => unlockedCount >= tier.threshold,
+  );
+  const currentBadge = earnedBadges.length
+    ? earnedBadges[earnedBadges.length - 1]
+    : null;
 
   const loadMe = async () => {
     setLoading(true);
@@ -69,7 +169,9 @@ export default function ProfilPage() {
   })();
 
   const avatarUrl = resolveAvatarUrl(me?.avatar_url || "");
-  const avatarSrc = avatarUrl ? `${avatarUrl}${avatarUrl.includes("?") ? "&" : "?"}v=${avatarVersion}` : "";
+  const avatarSrc = avatarUrl
+    ? `${avatarUrl}${avatarUrl.includes("?") ? "&" : "?"}v=${avatarVersion}`
+    : "";
 
   useEffect(() => {
     setAvatarLoadFailed(false);
@@ -131,7 +233,7 @@ export default function ProfilPage() {
         username: nextUsername,
         email: nextEmail,
         avatar_url: me.avatar_url || "",
-        role_id: me.role_id, 
+        role_id: me.role_id,
       };
 
       const res = await api.put(`/users/${me.user_id}`, payload);
@@ -204,14 +306,16 @@ export default function ProfilPage() {
               userId: me.user_id,
               avatarUrl: res.data.user.avatar_url || "",
             },
-          })
+          }),
         );
       }
       setAvatarLoadFailed(false);
       setAvatarVersion(Date.now());
       setSuccess("Profilkép sikeresen frissítve.");
     } catch (e) {
-      setError(e?.response?.data?.detail || "A profilkép feltöltése sikertelen.");
+      setError(
+        e?.response?.data?.detail || "A profilkép feltöltése sikertelen.",
+      );
     } finally {
       setAvatarUploading(false);
       event.target.value = "";
@@ -241,7 +345,7 @@ export default function ProfilPage() {
             userId: me.user_id,
             avatarUrl: "",
           },
-        })
+        }),
       );
       setSuccess("Profilkép törölve.");
     } catch (e) {
@@ -254,7 +358,11 @@ export default function ProfilPage() {
   return (
     <div className="profil-page">
       <div className="profil-header-row">
-        <button className="profil-refresh" onClick={loadMe} disabled={loading || saving}>
+        <button
+          className="profil-refresh"
+          onClick={loadMe}
+          disabled={loading || saving}
+        >
           Frissítés
         </button>
 
@@ -266,10 +374,18 @@ export default function ProfilPage() {
 
         {isEditing && (
           <div className="profil-edit-actions">
-            <button className="profil-cancel" onClick={cancelEdit} disabled={saving}>
+            <button
+              className="profil-cancel"
+              onClick={cancelEdit}
+              disabled={saving}
+            >
               Mégse
             </button>
-            <button className="profil-save" onClick={saveEdit} disabled={saving}>
+            <button
+              className="profil-save"
+              onClick={saveEdit}
+              disabled={saving}
+            >
               {saving ? "Mentés..." : "Mentés"}
             </button>
           </div>
@@ -291,7 +407,9 @@ export default function ProfilPage() {
                 onError={() => setAvatarLoadFailed(true)}
               />
             ) : (
-              <div className="profil-avatar profil-avatar--fallback">{initials}</div>
+              <div className="profil-avatar profil-avatar--fallback">
+                {initials}
+              </div>
             )}
           </div>
 
@@ -312,7 +430,9 @@ export default function ProfilPage() {
               >
                 {avatarUploading
                   ? "Feltöltés..."
-                  : (me?.avatar_url ? "Profilkép módosítása" : "Profilkép feltöltése")}
+                  : me?.avatar_url
+                    ? "Profilkép módosítása"
+                    : "Profilkép feltöltése"}
               </button>
               {isEditing && me?.avatar_url && (
                 <button
@@ -336,7 +456,9 @@ export default function ProfilPage() {
                 <input
                   className="profil-input"
                   value={form.username}
-                  onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, username: e.target.value }))
+                  }
                   disabled={saving}
                 />
               )}
@@ -350,7 +472,9 @@ export default function ProfilPage() {
                 <input
                   className="profil-input"
                   value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, email: e.target.value }))
+                  }
                   disabled={saving}
                 />
               )}
@@ -365,9 +489,125 @@ export default function ProfilPage() {
 
             <div className="profil-meta-item">
               <span className="profil-meta-label">Csatlakozás ideje</span>
-              <strong className="profil-meta-value">{fmtDate(me.created_at)}</strong>
+              <strong className="profil-meta-value">
+                {fmtDate(me.created_at)}
+              </strong>
             </div>
           </div>
+
+          <section className="profil-achievements" aria-label="Kihívás lista">
+            <div className="profil-achievements-head">
+              <h3>Kihívások</h3>
+              <span className="profil-achievements-count">
+                {unlockedCount}/{STATIC_ACHIEVEMENTS.length}
+              </span>
+            </div>
+
+            <div className="profil-current-badge" aria-label="Jelenlegi kitűző">
+              <span className="profil-current-badge-label">
+                Jelenlegi kitűző
+              </span>
+              {currentBadge ? (
+                <div className="profil-current-badge-card">
+                  <span
+                    className="profil-current-badge-icon"
+                    aria-hidden="true"
+                  >
+                    {currentBadge.icon}
+                  </span>
+                  <div className="profil-current-badge-copy">
+                    <strong>{currentBadge.name}</strong>
+                    <span>{currentBadge.flavor}</span>
+                    <small>{unlockedCount} teljesített kihívás alapján</small>
+                  </div>
+                </div>
+              ) : (
+                <div className="profil-current-badge-empty">
+                  Még nincs kitűződ. Teljesíts legalább{" "}
+                  {BADGE_TIERS[0].threshold} kihívást.
+                </div>
+              )}
+            </div>
+
+            <div className="profil-badges" aria-label="Kitűzők">
+              <div className="profil-badges-head">
+                <h4>Kitűzők</h4>
+                <span className="profil-badges-subtitle">
+                  {earnedBadges.length > 0
+                    ? `${earnedBadges.length} megszerzett kitűző`
+                    : "Teljesíts kihívásokat a kitűzőkért"}
+                </span>
+              </div>
+
+              <div className="profil-badges-grid">
+                {BADGE_TIERS.map((tier) => {
+                  const unlocked = unlockedCount >= tier.threshold;
+
+                  return (
+                    <article
+                      key={tier.id}
+                      className={`profil-badge-card ${unlocked ? "is-unlocked" : "is-locked"}`}
+                    >
+                      <span className="profil-badge-icon" aria-hidden="true">
+                        {tier.icon}
+                      </span>
+                      <div className="profil-badge-copy">
+                        <strong>{tier.name}</strong>
+                        <span>{tier.flavor}</span>
+                        <small>{tier.threshold} kihívás szükséges</small>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="profil-achievements-grid">
+              {STATIC_ACHIEVEMENTS.map((item) => {
+                const progress = Math.min(
+                  100,
+                  Math.round((item.current / item.target) * 100),
+                );
+
+                return (
+                  <article
+                    key={item.id}
+                    className={`profil-achievement-card ${item.unlocked ? "is-unlocked" : "is-locked"}`}
+                  >
+                    <div className="profil-achievement-top">
+                      <span className="profil-achievement-category">
+                        {item.category}
+                      </span>
+                      <span className="profil-achievement-state">
+                        {item.unlocked ? "Teljesítve" : "Folyamatban"}
+                      </span>
+                    </div>
+
+                    <h4>{item.name}</h4>
+                    <p>{item.description}</p>
+                    <small>{item.condition}</small>
+
+                    <div
+                      className="profil-achievement-progress"
+                      role="progressbar"
+                      aria-valuemin={0}
+                      aria-valuemax={item.target}
+                      aria-valuenow={item.current}
+                    >
+                      <div
+                        className="profil-achievement-progress-fill"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+
+                    <span className="profil-achievement-progress-text">
+                      {item.current}/{item.target}
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
         </div>
       )}
     </div>
