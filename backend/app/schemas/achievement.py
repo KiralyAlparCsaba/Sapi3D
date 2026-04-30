@@ -62,8 +62,7 @@ class AchvProgressBase(BaseModel):
     """Base schema for AchvProgress."""
     user_id: int
     achv_id: int
-    panel_count: int = Field(default=0, ge=0)
-    loc_count: int = Field(default=0, ge=0)
+    model_view_count: int = Field(default=0, ge=0)  # model megtekintések száma
     time_spent: int = Field(default=0, ge=0)  # in seconds
     distance_walked: int = Field(default=0, ge=0)  # in meters
 
@@ -75,8 +74,7 @@ class AchvProgressCreate(AchvProgressBase):
 
 class AchvProgressUpdate(BaseModel):
     """Schema for updating AchvProgress."""
-    panel_count: Optional[int] = Field(None, ge=0)
-    loc_count: Optional[int] = Field(None, ge=0)
+    model_view_count: Optional[int] = Field(None, ge=0)
     time_spent: Optional[int] = Field(None, ge=0)
     distance_walked: Optional[int] = Field(None, ge=0)
 
@@ -91,5 +89,43 @@ class AchvProgressResponse(AchvProgressBase):
 class AchvProgressWithDetails(AchvProgressResponse):
     """Schema for AchvProgress response with achievement details."""
     achievement: AchievementResponse
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+# AchvProgressPanel Schemas
+class AchvProgressPanelBase(BaseModel):
+    """Base schema for AchvProgressPanel."""
+    progress_id: int
+    panel_id: int
+
+
+class AchvProgressPanelCreate(AchvProgressPanelBase):
+    """Schema for creating AchvProgressPanel."""
+    pass
+
+
+class AchvProgressPanelResponse(AchvProgressPanelBase):
+    """Schema for AchvProgressPanel response."""
+    id: int
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+# AchvProgressLocation Schemas
+class AchvProgressLocationBase(BaseModel):
+    """Base schema for AchvProgressLocation."""
+    progress_id: int
+    location_id: int
+
+
+class AchvProgressLocationCreate(AchvProgressLocationBase):
+    """Schema for creating AchvProgressLocation."""
+    pass
+
+
+class AchvProgressLocationResponse(AchvProgressLocationBase):
+    """Schema for AchvProgressLocation response."""
+    id: int
     
     model_config = ConfigDict(from_attributes=True)

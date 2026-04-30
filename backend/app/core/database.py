@@ -52,7 +52,7 @@ async def init_db() -> None:
     # Import all models to ensure they are registered with Base
     from models.user import User, Role
     from models.session import Session, Device
-    from models.achievement import Achievement, UserAchievement, AchvProgress
+    from models.achievement import Achievement, UserAchievement, AchvProgress, AchvProgressPanel, AchvProgressLocation
     from models.location import Location, Event, InfoPanel
     from models.metrics import PerfMetrics
     
