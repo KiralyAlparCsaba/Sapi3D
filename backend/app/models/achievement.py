@@ -14,7 +14,6 @@ class Achievement(Base):
     achv_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(500), nullable=False)
-    condition: Mapped[str] = mapped_column(String(500), nullable=False)
     
     # Relationships
     user_achievements: Mapped[List["UserAchievement"]] = relationship("UserAchievement", back_populates="achievement", cascade="all, delete-orphan")
@@ -53,6 +52,7 @@ class AchvProgress(Base):
     model_view_count: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)  # model megtekintések száma
     time_spent: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)  # in seconds
     distance_walked: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)  # in meters
+    session_start: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)  # Model nyitás ideje
     
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="achievement_progress")
@@ -96,3 +96,24 @@ class AchvProgressLocation(Base):
     
     def __repr__(self) -> str:
         return f"<AchvProgressLocation(progress_id={self.progress_id}, location_id={self.location_id})>"
+
+
+class AchievementRequirement(Base):
+    """AchievementRequirement model for specifying conditions/requirements for achievements."""
+    
+    __tablename__ = "achievement_requirements"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    achv_id: Mapped[int] = mapped_column(Integer, ForeignKey("achievements.achv_id"), nullable=False, index=True)
+    req_type: Mapped[str] = mapped_column(String(50), nullable=False)  # "model_view_count", "location_count", "panel_count", "time_spent", "location", "panel"
+    value: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # Numeric value (1, 3, 5, 600, etc.)
+    location_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("locations.loc_id"), nullable=True, index=True)
+    panel_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("info_panels.panel_id"), nullable=True, index=True)
+    
+    # Relationships
+    achievement: Mapped["Achievement"] = relationship("Achievement")
+    location: Mapped[Optional["Location"]] = relationship("Location")
+    panel: Mapped[Optional["InfoPanel"]] = relationship("InfoPanel")
+    
+    def __repr__(self) -> str:
+        return f"<AchievementRequirement(achv_id={self.achv_id}, req_type='{self.req_type}', value={self.value})>"
