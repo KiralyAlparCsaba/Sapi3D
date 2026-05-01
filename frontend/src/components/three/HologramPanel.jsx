@@ -25,7 +25,7 @@ export default function HologramPanel({ position, text }) {
 
       {/* 1. HOLOGRAM HÁTTÉR */}
       <mesh position={[0, 0, -0.02]}>
-        <planeGeometry args={[2.2, 0.8]} />
+        <planeGeometry args={[2.2, 2.2]} />
         <meshBasicMaterial
           ref={materialRef}
           color="#39ff14"
@@ -39,7 +39,7 @@ export default function HologramPanel({ position, text }) {
 
       {/* 2. VÉKONY NEON KERET (nem tömör) */}
       <lineSegments>
-        <edgesGeometry args={[new THREE.PlaneGeometry(2.3, 0.9)]} />
+        <edgesGeometry args={[new THREE.PlaneGeometry(2.3, 2.3)]} />
         <lineBasicMaterial
           color="#39ff14"
           transparent
