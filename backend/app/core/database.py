@@ -77,6 +77,21 @@ async def init_db() -> None:
             END
             $$;
         """))
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'perf_metrics'
+                      AND column_name = 'samples'
+                ) THEN
+                    ALTER TABLE perf_metrics
+                    ADD COLUMN samples JSONB;
+                END IF;
+            END
+            $$;
+        """))
     logger.info("Database tables created successfully")
     
     # Seed initial roles if they don't exist

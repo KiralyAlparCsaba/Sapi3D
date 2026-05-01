@@ -1,5 +1,7 @@
 from datetime import datetime
+from typing import Optional, List
 from sqlalchemy import Integer, ForeignKey, DateTime, BigInteger
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.base import Base
@@ -16,6 +18,7 @@ class PerfMetrics(Base):
     fps: Mapped[int] = mapped_column(Integer, nullable=False)
     memory_mb: Mapped[int] = mapped_column(Integer, nullable=False)
     latency_ms: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    samples: Mapped[Optional[List]] = mapped_column(JSONB, nullable=True)
     
     # Relationships
     session: Mapped["Session"] = relationship("Session", back_populates="perf_metrics")

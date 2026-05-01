@@ -1,6 +1,13 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, List, Any
 from pydantic import BaseModel, Field, ConfigDict
+
+
+class PerformanceSample(BaseModel):
+    """A single timestamped performance sample."""
+    t: int = Field(..., ge=0, description="Seconds since session start")
+    fps: int = Field(..., ge=0)
+    memory_mb: int = Field(..., ge=0)
 
 
 # PerfMetrics Schemas
@@ -11,6 +18,7 @@ class PerfMetricsBase(BaseModel):
     fps: int = Field(..., ge=0)
     memory_mb: int = Field(..., ge=0)
     latency_ms: int = Field(..., ge=0)
+    samples: Optional[List[PerformanceSample]] = Field(None, description="Time-series samples collected during the session")
 
 
 class PerfMetricsCreate(PerfMetricsBase):
