@@ -35,8 +35,6 @@ export default function Building({
   const [hoveredDoor, setHoveredDoor] = useState(null);
   const doorObjects = useRef([]);
 
-  const COLOR_HIGHLIGHT = new THREE.Color("#4da6ff");
-  const COLOR_DEFAULT = new THREE.Color("#000000");
   const [hologramMarkers, setHologramMarkers] = useState([]);
 
   const { camera, gl } = useThree();
@@ -168,14 +166,6 @@ export default function Building({
       setHoveredDoor(hoveredRoot);
     }
 
-    // ✨ HIGHLIGHT
-    for (const obj of doorObjects.current) {
-      if (obj.material) {
-        const sameRoot = hoveredRoot && obj.userData.doorRoot === hoveredRoot;
-        obj.material.emissive = sameRoot ? COLOR_HIGHLIGHT : COLOR_DEFAULT;
-        obj.material.emissiveIntensity = sameRoot ? 0.5 : 0;
-      }
-    }
 
     // 🏠 INSIDE CHECK
     const camPos = camera.position;
