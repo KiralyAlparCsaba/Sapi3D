@@ -137,13 +137,17 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
             playerRootRef.current.position.y = markerTrueCenter.y;
           }
 
-          // 4. Forgatás (Quaternion) átvétele
+          // 4. Forgatás (Quaternion) átvétele - csak Y tengely (yaw), pitch/roll nullázva
           const markerQuaternion = new THREE.Quaternion();
           markerObj.getWorldQuaternion(markerQuaternion);
-          playerRootRef.current.quaternion.copy(markerQuaternion);
+          const euler = new THREE.Euler().setFromQuaternion(markerQuaternion, 'YXZ');
+          euler.x = 0;
+          euler.z = 0;
+          playerRootRef.current.quaternion.setFromEuler(euler);
 
           // 5. BIZTOSÍTÉK: Kamera lokális nullázása
           camera.position.set(0, 1.7, 0);
+          camera.rotation.set(0, 0, 0);
 
           // 7. Kontrollerek frissítése az új pozíción
           if (controlsRef.current?.update) controlsRef.current.update(0);
