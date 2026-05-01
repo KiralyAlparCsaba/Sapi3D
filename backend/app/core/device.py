@@ -24,11 +24,13 @@ def extract_device_from_user_agent(user_agent: str) -> dict:
     else:
         device_type = "desktop"
 
-    device_name = ua.browser.family or "unknown"
+    browser = ua.browser.family or "unknown"
+    browser_version = ua.browser.version_string or None
     os_name = ua.os.family or "unknown"
 
     return {
         "device_type": device_type,
-        "device_name": device_name,
+        "browser": browser,
+        "browser_version": browser_version,
         "os_name": os_name,
     }

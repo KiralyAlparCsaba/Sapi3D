@@ -8,12 +8,13 @@ from models.base import Base
 
 class Device(Base):
     """Device model for tracking user devices."""
-    
+
     __tablename__ = "devices"
-    
+
     device_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     device_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    device_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    browser: Mapped[str] = mapped_column(String(100), nullable=False)
+    browser_version: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     os_name: Mapped[str] = mapped_column(String(100), nullable=False)
     
     # Relationships

@@ -7,6 +7,7 @@ from repositories.session_repository import SessionRepository, DeviceRepository
 from services.user_service import UserService
 from core.security import verify_password, create_access_token
 from core.device import extract_device_from_user_agent
+from core.config import settings
 from schemas.user import UserLogin, UserCreate, Token, UserResponse
 from schemas.session import SessionCreate
 
@@ -38,15 +39,15 @@ class AuthService:
         user_agent = request.headers.get("user-agent")
         device_data = extract_device_from_user_agent(user_agent)
 
-        # 🔹 Create Device (always new)
-        device = await self.device_repo.create(**device_data)
+        # 🔹 Get or create device (deduplicates identical devices)
+        device = await self.device_repo.get_or_create(**device_data)
 
         # 🔹 Create Session
         session_data = SessionCreate(
             user_id=user.user_id,
             device_id=device.device_id,
             device_type=device_data["device_type"],  # optional, legacy
-            app_version="1.3.0",
+            app_version=settings.app_version,
             started_at=datetime.now(timezone.utc)
         )
         session = await self.session_repo.create(**session_data.dict())

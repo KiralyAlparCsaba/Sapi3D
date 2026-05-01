@@ -81,6 +81,27 @@ async def init_db() -> None:
             DO $$
             BEGIN
                 IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'devices' AND column_name = 'browser'
+                ) THEN
+                    ALTER TABLE devices ADD COLUMN browser VARCHAR(100);
+                    UPDATE devices SET browser = device_name WHERE browser IS NULL;
+                    ALTER TABLE devices ALTER COLUMN browser SET NOT NULL;
+                END IF;
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'devices' AND column_name = 'browser_version'
+                ) THEN
+                    ALTER TABLE devices ADD COLUMN browser_version VARCHAR(50);
+                END IF;
+                ALTER TABLE devices ALTER COLUMN device_name DROP NOT NULL;
+            END
+            $$;
+        """))
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
                     SELECT 1
                     FROM information_schema.columns
                     WHERE table_name = 'perf_metrics'

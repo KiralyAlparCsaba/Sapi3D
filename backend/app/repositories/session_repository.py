@@ -104,6 +104,28 @@ class DeviceRepository(BaseRepository[Device]):
         )
         return result.scalar_one_or_none()
 
+    async def get_or_create(self, device_type: str, browser: str, browser_version: Optional[str], os_name: str) -> Device:
+        """
+        Return an existing device matching all fields, or create a new one.
+        """
+        result = await self.db.execute(
+            select(Device).where(
+                Device.device_type == device_type,
+                Device.browser == browser,
+                Device.browser_version == browser_version,
+                Device.os_name == os_name,
+            ).limit(1)
+        )
+        existing = result.scalar_one_or_none()
+        if existing:
+            return existing
+        return await self.create(
+            device_type=device_type,
+            browser=browser,
+            browser_version=browser_version,
+            os_name=os_name,
+        )
+
     async def get_by_type(self, device_type: str) -> List[Device]:
         """
         Get all devices by type.
