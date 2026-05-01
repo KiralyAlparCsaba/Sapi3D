@@ -69,7 +69,10 @@ export default function Building({
 
   useEffect(() => {
     metricsRef.current.attach();
-    return () => metricsRef.current.detach();
+    return () => {
+      metricsCollector.setPeakMemory(metricsRef.current.getPeakMemory());
+      metricsRef.current.detach();
+    };
   }, []);
 
   useEffect(() => {
@@ -212,6 +215,7 @@ export default function Building({
 
     if (avgFps.current < 18 && ratio > 0.5) {
       gl.setPixelRatio(ratio * 0.9);
+      metricsCollector.incrementQualityReductions();
     } else if (avgFps.current > 28 && ratio < deviceRatio) {
       gl.setPixelRatio(ratio * 1.05);
     }

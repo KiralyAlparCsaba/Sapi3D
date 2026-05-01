@@ -89,6 +89,8 @@ export default function App() {
           timestamp: new Date().toISOString(),
           samples: buildSamplesArray(samples),
           load_time_s: metricsCollector.getLoadTime(),
+          peak_memory_mb: metricsCollector.getPeakMemory(),
+          quality_reductions: metricsCollector.getQualityReductions(),
         };
 
         // sendBeacon is perfect for metrics (POST)

@@ -3,6 +3,8 @@ class MetricsCollector {
     this.samples = [];
     this.sessionId = null;
     this.loadTimeS = null;
+    this.peakMemoryMB = null;
+    this.qualityReductions = 0;
   }
 
   setSession(id) {
@@ -25,10 +27,28 @@ class MetricsCollector {
     return this.loadTimeS;
   }
 
+  setPeakMemory(mb) {
+    this.peakMemoryMB = mb;
+  }
+
+  getPeakMemory() {
+    return this.peakMemoryMB;
+  }
+
+  incrementQualityReductions() {
+    this.qualityReductions += 1;
+  }
+
+  getQualityReductions() {
+    return this.qualityReductions;
+  }
+
   clear() {
     this.samples = [];
     this.sessionId = null;
     this.loadTimeS = null;
+    this.peakMemoryMB = null;
+    this.qualityReductions = 0;
   }
 }
 
