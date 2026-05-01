@@ -47,6 +47,26 @@ export default function App() {
 
   // 3. Fixed Session Cleanup Logic
   useEffect(() => {
+    function buildSamplesArray(rawSamples) {
+      if (!rawSamples.length) return [];
+      const startTime = rawSamples[0].timestamp;
+      const BUCKET_MS = 3000;
+      const buckets = {};
+      for (const s of rawSamples) {
+        const t = Math.floor((s.timestamp - startTime) / BUCKET_MS) * 3;
+        if (!buckets[t]) buckets[t] = { fps: [], memory_mb: [] };
+        buckets[t].fps.push(s.fps);
+        buckets[t].memory_mb.push(s.memory_mb);
+      }
+      return Object.entries(buckets)
+        .map(([t, data]) => ({
+          t: parseInt(t),
+          fps: Math.round(data.fps.reduce((a, b) => a + b, 0) / data.fps.length),
+          memory_mb: Math.round(data.memory_mb.reduce((a, b) => a + b, 0) / data.memory_mb.length),
+        }))
+        .sort((a, b) => a.t - b.t);
+    }
+
     function flushMetricsAndEndSession() {
       const sessionId =
         metricsCollector.sessionId || sessionStorage.getItem("session_id");
@@ -67,6 +87,10 @@ export default function App() {
           memory_mb: Math.round(avgMem),
           latency_ms: Math.round(avgLat),
           timestamp: new Date().toISOString(),
+          samples: buildSamplesArray(samples),
+          load_time_s: metricsCollector.getLoadTime(),
+          peak_memory_mb: metricsCollector.getPeakMemory(),
+          quality_reductions: metricsCollector.getQualityReductions(),
         };
 
         // sendBeacon is perfect for metrics (POST)

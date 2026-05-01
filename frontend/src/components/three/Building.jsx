@@ -33,6 +33,8 @@ export default function Building({
 
   const hoveredDoorRef = useRef(null);
   const [hoveredDoor, setHoveredDoor] = useState(null);
+  const doorObjects = useRef([]);
+
   const [hologramMarkers, setHologramMarkers] = useState([]);
 
   const { camera, gl } = useThree();
@@ -44,8 +46,17 @@ export default function Building({
   const metricsRef = useRef();
   if (!metricsRef.current) metricsRef.current = new Metrics(gl);
 
-  const raycaster = new THREE.Raycaster();
-  const centerScreen = new THREE.Vector2(0, 0);
+  const latencyRef = useRef(0);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      latencyRef.current = await measureLatency(`${API_URL}/health`);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [API_URL]);
+
+  const raycaster = useRef(new THREE.Raycaster());
+  const centerScreen = useRef(new THREE.Vector2(0, 0));
 
   // ✅ PROXIMITY LIMIT
   const MAX_DISTANCE = 3;
@@ -56,11 +67,15 @@ export default function Building({
 
   useEffect(() => {
     metricsRef.current.attach();
-    return () => metricsRef.current.detach();
+    return () => {
+      metricsCollector.setPeakMemory(metricsRef.current.getPeakMemory());
+      metricsRef.current.detach();
+    };
   }, []);
 
   useEffect(() => {
     triggerBoxes.current = [];
+    doorObjects.current = [];
     const foundHolograms = [];
 
     if (!didSnapRef.current) {
@@ -85,11 +100,13 @@ export default function Building({
       if (child.name.toLowerCase().includes("door")) {
         child.userData.isDoor = true;
         child.userData.doorRoot = child;
+        doorObjects.current.push(child);
 
         child.traverse((descendant) => {
           if (descendant === child) return;
           descendant.userData.isDoor = true;
           descendant.userData.doorRoot = child;
+          doorObjects.current.push(descendant);
         });
       }
 
@@ -122,13 +139,13 @@ export default function Building({
     onWorldReady?.(gltf.scene);
   }, [gltf.scene, camera, onWorldReady, locationsData]);
 
-  useFrame(async (_, delta) => {
+  useFrame((_, delta) => {
     const metrics = metricsRef.current;
     metrics.begin();
 
     // 🎯 RAYCAST
-    raycaster.setFromCamera(centerScreen, camera);
-    const intersects = raycaster.intersectObjects(gltf.scene.children, true);
+    raycaster.current.setFromCamera(centerScreen.current, camera);
+    const intersects = raycaster.current.intersectObjects(gltf.scene.children, true);
 
     let hoveredRoot = null;
 
@@ -149,20 +166,6 @@ export default function Building({
       setHoveredDoor(hoveredRoot);
     }
 
-    // ✨ HIGHLIGHT
-    gltf.scene.traverse((obj) => {
-      if (obj.userData.isDoor && obj.material) {
-        const sameRoot = hoveredRoot && obj.userData.doorRoot === hoveredRoot;
-
-        if (sameRoot) {
-          obj.material.emissive = new THREE.Color("#4da6ff");
-          obj.material.emissiveIntensity = 0.5;
-        } else {
-          obj.material.emissive = new THREE.Color("#000000");
-          obj.material.emissiveIntensity = 0;
-        }
-      }
-    });
 
     // 🏠 INSIDE CHECK
     const camPos = camera.position;
@@ -185,8 +188,6 @@ export default function Building({
     const fps = 1 / delta;
     avgFps.current = avgFps.current * 0.9 + fps * 0.1;
 
-    const latency = await measureLatency();
-
     let memoryMB = 0;
     if (performance?.memory) {
       memoryMB = performance.memory.usedJSHeapSize / 1024 / 1024;
@@ -195,7 +196,7 @@ export default function Building({
     metricsCollector.addSample({
       fps,
       memory_mb: memoryMB,
-      latency_ms: latency,
+      latency_ms: latencyRef.current,
       timestamp: performance.now(),
     });
 
@@ -204,6 +205,7 @@ export default function Building({
 
     if (avgFps.current < 18 && ratio > 0.5) {
       gl.setPixelRatio(ratio * 0.9);
+      metricsCollector.incrementQualityReductions();
     } else if (avgFps.current > 28 && ratio < deviceRatio) {
       gl.setPixelRatio(ratio * 1.05);
     }
