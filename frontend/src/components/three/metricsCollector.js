@@ -2,6 +2,7 @@ class MetricsCollector {
   constructor() {
     this.samples = [];
     this.sessionId = null;
+    this.loadTimeS = null;
   }
 
   setSession(id) {
@@ -16,9 +17,18 @@ class MetricsCollector {
     return this.samples;
   }
 
+  setLoadTime(seconds) {
+    this.loadTimeS = seconds;
+  }
+
+  getLoadTime() {
+    return this.loadTimeS;
+  }
+
   clear() {
     this.samples = [];
     this.sessionId = null;
+    this.loadTimeS = null;
   }
 }
 

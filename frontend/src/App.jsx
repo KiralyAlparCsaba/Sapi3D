@@ -88,6 +88,7 @@ export default function App() {
           latency_ms: Math.round(avgLat),
           timestamp: new Date().toISOString(),
           samples: buildSamplesArray(samples),
+          load_time_s: metricsCollector.getLoadTime(),
         };
 
         // sendBeacon is perfect for metrics (POST)

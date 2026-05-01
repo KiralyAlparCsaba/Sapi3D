@@ -6,9 +6,10 @@ import { createMobileJoystick } from "./MobileJoystick";
 import Building from "./Building";
 import * as THREE from "three";
 import MobilePointerLockControls from "./MobilePointerLockControls";
+import { metricsCollector } from "./metricsCollector";
 
 // SCENE CONTENT
-function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, infoPanelsData, locationsData }) {
+function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, infoPanelsData, locationsData, loadStartRef }) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
   const playerRootRef = useRef(new THREE.Object3D());
@@ -93,6 +94,12 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
 
+          // Record load time
+          if (loadStartRef?.current) {
+            const loadTimeS = parseFloat(((performance.now() - loadStartRef.current) / 1000).toFixed(2));
+            metricsCollector.setLoadTime(loadTimeS);
+          }
+
           // Ha már teleportáltunk, ne csináljuk újra
           if (didTeleportRef.current) return;
 
@@ -163,6 +170,7 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
 export default function ThreeScene() {
   const controlsRef = useRef();
   const [PointerLock, setPointerLock] = useState(null);
+  const loadStartRef = useRef(performance.now());
 
   // ÚJ: Két külön állapot a két különböző adatforráshoz
   const [infoPanelsData, setInfoPanelsData] = useState([]);  // Ajtókhoz
@@ -252,6 +260,7 @@ export default function ThreeScene() {
           markerToTeleport={markerToTeleport}
           infoPanelsData={infoPanelsData}  // Ajtókhoz
           locationsData={locationsData}    // Hologramokhoz
+          loadStartRef={loadStartRef}
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}
