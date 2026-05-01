@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from sqlalchemy import Integer, ForeignKey, DateTime, BigInteger
+from sqlalchemy import Integer, ForeignKey, DateTime, BigInteger, Float
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -19,6 +19,7 @@ class PerfMetrics(Base):
     memory_mb: Mapped[int] = mapped_column(Integer, nullable=False)
     latency_ms: Mapped[int] = mapped_column(BigInteger, nullable=False)
     samples: Mapped[Optional[List]] = mapped_column(JSONB, nullable=True)
+    load_time_s: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     
     # Relationships
     session: Mapped["Session"] = relationship("Session", back_populates="perf_metrics")

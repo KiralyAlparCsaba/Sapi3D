@@ -92,6 +92,21 @@ async def init_db() -> None:
             END
             $$;
         """))
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'perf_metrics'
+                      AND column_name = 'load_time_s'
+                ) THEN
+                    ALTER TABLE perf_metrics
+                    ADD COLUMN load_time_s FLOAT;
+                END IF;
+            END
+            $$;
+        """))
     logger.info("Database tables created successfully")
     
     # Seed initial roles if they don't exist
