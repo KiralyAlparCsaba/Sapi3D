@@ -202,9 +202,9 @@ export default function Building({
     const ratio = gl.getPixelRatio();
     const deviceRatio = window.devicePixelRatio;
 
-    if (avgFps.current < 28 && ratio > 0.5) {
+    if (avgFps.current < 18 && ratio > 0.5) {
       gl.setPixelRatio(ratio * 0.9);
-    } else if (avgFps.current > 40 && ratio < deviceRatio) {
+    } else if (avgFps.current > 28 && ratio < deviceRatio) {
       gl.setPixelRatio(ratio * 1.05);
     }
 

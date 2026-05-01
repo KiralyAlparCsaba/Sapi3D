@@ -47,7 +47,7 @@ async def get_model_info():
         filename=filename,
         file_size=file_stat.st_size,
         content_type="model/gltf-binary",
-        model_version="1.4.2",  # From filename sapi3D_V1.4.2.glb
+        model_version="1.5",  # From filename sapi3D_V1.4.2.glb
         last_modified=datetime.fromtimestamp(file_stat.st_mtime),
         file_path=model_path
     )
