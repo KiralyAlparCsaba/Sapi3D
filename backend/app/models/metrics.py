@@ -20,6 +20,8 @@ class PerfMetrics(Base):
     latency_ms: Mapped[int] = mapped_column(BigInteger, nullable=False)
     samples: Mapped[Optional[List]] = mapped_column(JSONB, nullable=True)
     load_time_s: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    peak_memory_mb: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    quality_reductions: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     
     # Relationships
     session: Mapped["Session"] = relationship("Session", back_populates="perf_metrics")

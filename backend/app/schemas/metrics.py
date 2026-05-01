@@ -20,6 +20,8 @@ class PerfMetricsBase(BaseModel):
     latency_ms: int = Field(..., ge=0)
     samples: Optional[List[PerformanceSample]] = Field(None, description="Time-series samples collected during the session")
     load_time_s: Optional[float] = Field(None, ge=0, description="Time in seconds from page load to model ready")
+    peak_memory_mb: Optional[float] = Field(None, ge=0, description="Peak JS heap memory usage in MB during the session")
+    quality_reductions: Optional[int] = Field(None, ge=0, description="Number of times the dynamic quality scaler reduced pixel ratio")
 
 
 class PerfMetricsCreate(PerfMetricsBase):
