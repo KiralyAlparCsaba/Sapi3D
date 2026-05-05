@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../services/api";
 import "../styles/AdminPage.css";
-import AchievementsAdminPanel from "../components/admin/AchievementsAdminPanel";
 
 function resolveAvatarUrl(avatarUrl) {
   if (!avatarUrl) return "";
@@ -817,11 +816,6 @@ export default function AdminPage() {
             )}
           </section>
         </div>
-      </div>
-
-      {/* ───────── ACHIEVEMENTS ADMIN PANEL ───────── */}
-      <div style={{ marginTop: "2rem", padding: "0 1rem" }}>
-        <AchievementsAdminPanel />
       </div>
 
       {editOpen && (

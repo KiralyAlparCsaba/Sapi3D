@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -138,10 +138,11 @@ class AchvProgressLocationResponse(AchvProgressLocationBase):
 class AchievementRequirementBase(BaseModel):
     """Base schema for AchievementRequirement."""
     achv_id: int
-    req_type: str = Field(..., description="Type: 'model_view_count', 'location_count', 'panel_count', 'time_spent', 'location', 'panel'")
+    req_type: str = Field(..., description="Type: 'model_view_count', 'location_count', 'panel_count', 'time_spent', 'location', 'panel', 'location_any_of', 'panel_any_of'")
     value: Optional[int] = Field(None, ge=0, description="Numeric value for requirements")
     location_id: Optional[int] = None
     panel_id: Optional[int] = None
+    requirement_data: Optional[Dict[str, Any]] = Field(None, description="JSON data for flexible requirements (e.g., location_ids, panel_ids)")
 
 
 class AchievementRequirementCreate(AchievementRequirementBase):
@@ -155,6 +156,7 @@ class AchievementRequirementUpdate(BaseModel):
     value: Optional[int] = Field(None, ge=0)
     location_id: Optional[int] = None
     panel_id: Optional[int] = None
+    requirement_data: Optional[Dict[str, Any]] = None
 
 
 class AchievementRequirementResponse(AchievementRequirementBase):

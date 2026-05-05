@@ -184,6 +184,26 @@ class AchievementService:
                 if not all(pid in visited_panel_ids for pid in required_panel_ids):
                     return False
         
+        # ─── location_any_of requirement (at least 1 of the specified locations) ───
+        if "location_any_of" in by_type:
+            req = by_type["location_any_of"][0]
+            location_ids = req.requirement_data.get("location_ids", []) if req.requirement_data else []
+            if location_ids:
+                visited_locations = await self.location_repo.get_all_by_progress(progress.id)
+                visited_location_ids = [loc.location_id for loc in visited_locations]
+                if not any(loc_id in visited_location_ids for loc_id in location_ids):
+                    return False
+        
+        # ─── panel_any_of requirement (at least 1 of the specified panels) ───
+        if "panel_any_of" in by_type:
+            req = by_type["panel_any_of"][0]
+            panel_ids = req.requirement_data.get("panel_ids", []) if req.requirement_data else []
+            if panel_ids:
+                visited_panels = await self.panel_repo.get_all_by_progress(progress.id)
+                visited_panel_ids = [p.panel_id for p in visited_panels]
+                if not any(panel_id in visited_panel_ids for panel_id in panel_ids):
+                    return False
+        
         # All requirements met!
         return True
     

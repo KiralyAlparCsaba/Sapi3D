@@ -1,7 +1,7 @@
 from datetime import datetime
-from sqlalchemy import String, Integer, ForeignKey, DateTime, BigInteger
+from sqlalchemy import String, Integer, ForeignKey, DateTime, BigInteger, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from models.base import Base
 
@@ -105,10 +105,11 @@ class AchievementRequirement(Base):
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     achv_id: Mapped[int] = mapped_column(Integer, ForeignKey("achievements.achv_id"), nullable=False, index=True)
-    req_type: Mapped[str] = mapped_column(String(50), nullable=False)  # "model_view_count", "location_count", "panel_count", "time_spent", "location", "panel"
+    req_type: Mapped[str] = mapped_column(String(50), nullable=False)  # "model_view_count", "location_count", "panel_count", "time_spent", "location", "panel", "location_any_of", "panel_any_of"
     value: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # Numeric value (1, 3, 5, 600, etc.)
     location_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("locations.loc_id"), nullable=True, index=True)
     panel_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("info_panels.panel_id"), nullable=True, index=True)
+    requirement_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)  # JSON for flexible data (location_ids, panel_ids, etc.)
     
     # Relationships
     achievement: Mapped["Achievement"] = relationship("Achievement")
