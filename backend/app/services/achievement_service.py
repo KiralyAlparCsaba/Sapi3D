@@ -214,29 +214,33 @@ class AchievementService:
     async def track_model_open(self, user_id: int) -> List[int]:
         """
         Track model open event.
-        - Finds achievements requiring model_view_count tracking
-        - Creates/updates session_start
+        - Increments model_view_count for all achievements
+        - Creates/updates session_start for time tracking
+        - Checks if any achievement is newly unlocked
         - Returns: List of newly unlocked achievement IDs
         """
         unlocked = []
-        
-        # Find achievements that track model views
-        all_requirements = await self.db.execute(
-            self.db.query(AchievementRequirement).filter(
-                AchievementRequirement.req_type.in_(["model_view_count"])
-            ).statement
-        )
-        
-        # For now, just ensure progress exists for achievement 1 (if it exists)
-        # This will be expanded when we have more requirements
-        for achv_id in range(1, 7):  # Assuming max 6 achievements for now
-            progress = await self.progress_repo.get_or_create_progress(user_id, achv_id)
-            
-            # Set session start if not already set
+
+        all_achievements = await self.achievement_repo.get_all_achievements()
+
+        for achievement in all_achievements:
+            progress = await self.progress_repo.get_or_create_progress(user_id, achievement.achv_id)
+
+            # Increment model_view_count
+            new_count = (progress.model_view_count or 0) + 1
+            await self.progress_repo.update(progress.id, model_view_count=new_count)
+
+            # Set session_start if not already set (for time tracking)
             if progress.session_start is None:
-                progress.session_start = datetime.now(timezone.utc)
-                await self.progress_repo.update(progress.id, session_start=progress.session_start)
-        
+                await self.progress_repo.update(
+                    progress.id,
+                    session_start=datetime.now(timezone.utc)
+                )
+
+            # Check if model_view_count unlock condition is now met
+            if await self.check_and_unlock_achievement(user_id, achievement.achv_id):
+                unlocked.append(achievement.achv_id)
+
         return unlocked
     
     async def track_model_close(self, user_id: int) -> List[int]:

@@ -11,7 +11,6 @@ from pathlib import Path
 # Set environment variables BEFORE importing app modules
 os.environ.setdefault("JWT_SECRET_KEY", "seed_secret_key_for_development_only")
 os.environ.setdefault("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
-os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./app/database.db")
 
 # Add app directory to path so imports work correctly
 app_dir = Path(__file__).parent / "app"
@@ -21,13 +20,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-from app.models.achievement import Achievement, AchievementRequirement
-from app.models.location import Location, InfoPanel
-from app.core.database import Base
+from models.achievement import Achievement, AchievementRequirement
+from models.location import Location, InfoPanel
+from core.config import settings
 
 
-# Database configuration
-DATABASE_URL = "sqlite+aiosqlite:///./app/database.db"
+# Database configuration — use the same URL as the rest of the app
+DATABASE_URL = settings.database_url
 
 # Create async engine and session
 engine = create_async_engine(DATABASE_URL, echo=False)
@@ -66,15 +65,27 @@ async def get_or_create_achievement(
 
 
 async def requirement_exists(
-    session: AsyncSession, achievement_id: int, requirement_type: str, requirement_data: dict
+    session: AsyncSession,
+    achv_id: int,
+    req_type: str,
+    value: int = None,
+    location_id: int = None,
+    panel_id: int = None,
 ) -> bool:
     """Check if a requirement already exists for this achievement."""
+    filters = [
+        AchievementRequirement.achv_id == achv_id,
+        AchievementRequirement.req_type == req_type,
+    ]
+    if value is not None:
+        filters.append(AchievementRequirement.value == value)
+    if location_id is not None:
+        filters.append(AchievementRequirement.location_id == location_id)
+    if panel_id is not None:
+        filters.append(AchievementRequirement.panel_id == panel_id)
+
     result = await session.execute(
-        select(AchievementRequirement).filter(
-            AchievementRequirement.achievement_id == achievement_id,
-            AchievementRequirement.requirement_type == requirement_type,
-            AchievementRequirement.requirement_data == requirement_data,
-        )
+        select(AchievementRequirement).filter(*filters)
     )
     return result.scalars().first() is not None
 
@@ -89,13 +100,12 @@ async def seed_achievements():
                 "Első lépések",
                 "Megnyitottad a 3D modellt legalább egyszer"
             )
-            if not await requirement_exists(session, achv1.achv_id, "model_view_count", {"count": 1}):
-                req1 = AchievementRequirement(
-                    achievement_id=achv1.achv_id,
-                    requirement_type="model_view_count",
-                    requirement_data={"count": 1}
-                )
-                session.add(req1)
+            if not await requirement_exists(session, achv1.achv_id, "model_view_count", value=1):
+                session.add(AchievementRequirement(
+                    achv_id=achv1.achv_id,
+                    req_type="model_view_count",
+                    value=1
+                ))
             print("✅ Első lépések")
 
             # 2. Helyszínvadász I - Visit 3 locations
@@ -104,13 +114,12 @@ async def seed_achievements():
                 "Helyszínvadász I",
                 "Felfedeztél legalább 3 fontos helyszínt"
             )
-            if not await requirement_exists(session, achv2.achv_id, "location_count", {"count": 3}):
-                req2 = AchievementRequirement(
-                    achievement_id=achv2.achv_id,
-                    requirement_type="location_count",
-                    requirement_data={"count": 3}
-                )
-                session.add(req2)
+            if not await requirement_exists(session, achv2.achv_id, "location_count", value=3):
+                session.add(AchievementRequirement(
+                    achv_id=achv2.achv_id,
+                    req_type="location_count",
+                    value=3
+                ))
             print("✅ Helyszínvadász I")
 
             # 3. Helyszínvadász II - Visit 5 locations
@@ -119,13 +128,12 @@ async def seed_achievements():
                 "Helyszínvadász II",
                 "Felfedeztél legalább 5 fontos helyszínt"
             )
-            if not await requirement_exists(session, achv3.achv_id, "location_count", {"count": 5}):
-                req3 = AchievementRequirement(
-                    achievement_id=achv3.achv_id,
-                    requirement_type="location_count",
-                    requirement_data={"count": 5}
-                )
-                session.add(req3)
+            if not await requirement_exists(session, achv3.achv_id, "location_count", value=5):
+                session.add(AchievementRequirement(
+                    achv_id=achv3.achv_id,
+                    req_type="location_count",
+                    value=5
+                ))
             print("✅ Helyszínvadász II")
 
             # 4. Panelfelfedező - View 5 panels
@@ -134,64 +142,61 @@ async def seed_achievements():
                 "Panelfelfedező",
                 "Információs panelek böngészése a modellben"
             )
-            if not await requirement_exists(session, achv4.achv_id, "panel_count", {"count": 5}):
-                req4 = AchievementRequirement(
-                    achievement_id=achv4.achv_id,
-                    requirement_type="panel_count",
-                    requirement_data={"count": 5}
-                )
-                session.add(req4)
+            if not await requirement_exists(session, achv4.achv_id, "panel_count", value=5):
+                session.add(AchievementRequirement(
+                    achv_id=achv4.achv_id,
+                    req_type="panel_count",
+                    value=5
+                ))
             print("✅ Panelfelfedező")
 
-            # 5. Terepszemle - Spend 10 minutes exploring
+            # 5. Terepszemle - Spend 10 minutes exploring (600 seconds)
             achv5 = await get_or_create_achievement(
                 session,
                 "Terepszemle",
                 "Összesen legalább 10 percet töltöttél bejárással"
             )
-            if not await requirement_exists(session, achv5.achv_id, "time_spent", {"milliseconds": 600000}):
-                req5 = AchievementRequirement(
-                    achievement_id=achv5.achv_id,
-                    requirement_type="time_spent",
-                    requirement_data={"milliseconds": 600000}
-                )
-                session.add(req5)
+            if not await requirement_exists(session, achv5.achv_id, "time_spent", value=600):
+                session.add(AchievementRequirement(
+                    achv_id=achv5.achv_id,
+                    req_type="time_spent",
+                    value=600  # seconds — AchvProgress.time_spent is stored in seconds
+                ))
             print("✅ Terepszemle")
 
-            # 6. Egyetem turista - Complex achievement with location_any_of
+            # 6. Egyetem turista - Visit key university locations
             achv6 = await get_or_create_achievement(
                 session,
                 "Egyetem turista",
                 "Ránéztél a legfontosabb egyetemi pontokra"
             )
-            
-            # First, find all required locations by name
+
+            # Find all required locations by name
             aula = await get_location_by_name(session, "Aula")
             konyvtar = await get_location_by_name(session, "Könyvtár")
             informatika = await get_location_by_name(session, "Informatika tanszék")
             gepesz = await get_location_by_name(session, "Gépészmérnöki tanszék")
             villamos = await get_location_by_name(session, "Villamosmérnöki tanszék")
-            
-            # Add requirements for each location (individual requirements)
+
+            # Require visiting Aula specifically
             if aula:
-                if not await requirement_exists(session, achv6.achv_id, "location", {"location_id": aula.location_id}):
-                    req6a = AchievementRequirement(
-                        achievement_id=achv6.achv_id,
-                        requirement_type="location",
-                        requirement_data={"location_id": aula.location_id}
-                    )
-                    session.add(req6a)
-            
+                if not await requirement_exists(session, achv6.achv_id, "location", location_id=aula.location_id):
+                    session.add(AchievementRequirement(
+                        achv_id=achv6.achv_id,
+                        req_type="location",
+                        location_id=aula.location_id
+                    ))
+
+            # Require visiting Könyvtár specifically
             if konyvtar:
-                if not await requirement_exists(session, achv6.achv_id, "location", {"location_id": konyvtar.location_id}):
-                    req6b = AchievementRequirement(
-                        achievement_id=achv6.achv_id,
-                        requirement_type="location",
-                        requirement_data={"location_id": konyvtar.location_id}
-                    )
-                    session.add(req6b)
-            
-            # Add location_any_of requirement for tanszéks
+                if not await requirement_exists(session, achv6.achv_id, "location", location_id=konyvtar.location_id):
+                    session.add(AchievementRequirement(
+                        achv_id=achv6.achv_id,
+                        req_type="location",
+                        location_id=konyvtar.location_id
+                    ))
+
+            # Require visiting at least one tanszék (location_any_of stored as JSON)
             tanszek_ids = []
             if informatika:
                 tanszek_ids.append(informatika.location_id)
@@ -199,16 +204,22 @@ async def seed_achievements():
                 tanszek_ids.append(gepesz.location_id)
             if villamos:
                 tanszek_ids.append(villamos.location_id)
-            
+
             if tanszek_ids:
-                if not await requirement_exists(session, achv6.achv_id, "location_any_of", {"location_ids": tanszek_ids}):
-                    req6c = AchievementRequirement(
-                        achievement_id=achv6.achv_id,
-                        requirement_type="location_any_of",
-                        requirement_data={"location_ids": tanszek_ids}
+                # location_any_of uses requirement_data JSON — check by req_type only
+                existing = await session.execute(
+                    select(AchievementRequirement).filter(
+                        AchievementRequirement.achv_id == achv6.achv_id,
+                        AchievementRequirement.req_type == "location_any_of"
                     )
-                    session.add(req6c)
-            
+                )
+                if not existing.scalars().first():
+                    session.add(AchievementRequirement(
+                        achv_id=achv6.achv_id,
+                        req_type="location_any_of",
+                        requirement_data={"location_ids": tanszek_ids}
+                    ))
+
             print("✅ Egyetem turista")
 
             # Commit all changes
