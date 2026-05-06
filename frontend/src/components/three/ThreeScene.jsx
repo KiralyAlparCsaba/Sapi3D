@@ -146,7 +146,7 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
 export default function ThreeScene() {
   const controlsRef = useRef();
   const modelOpenTrackedRef = useRef(false);
-  const modelCloseTrackedRef = useRef(false);
+  const modelCloseLastSentRef = useRef(0);
   const navigate = useNavigate();
   const [PointerLock, setPointerLock] = useState(null);
   const loadStartRef = useRef(performance.now());
@@ -217,8 +217,9 @@ export default function ThreeScene() {
   }, []);
 
   const sendModelClose = () => {
-    if (modelCloseTrackedRef.current) return;
-    modelCloseTrackedRef.current = true;
+    const now = Date.now();
+    if (now - modelCloseLastSentRef.current < 2000) return;
+    modelCloseLastSentRef.current = now;
 
     const token = sessionStorage.getItem("token");
     fetch(`${API_URL}/achievements/track/model-close`, {
@@ -233,9 +234,19 @@ export default function ThreeScene() {
   };
 
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        sendModelClose();
+      }
+    };
+
     window.addEventListener("beforeunload", sendModelClose);
+    window.addEventListener("pagehide", sendModelClose);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       window.removeEventListener("beforeunload", sendModelClose);
+      window.removeEventListener("pagehide", sendModelClose);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
 
       sendModelClose();
     };
@@ -246,7 +257,10 @@ export default function ThreeScene() {
   return (
     <>
       <button
-        onClick={() => navigate("/app")}
+        onClick={() => {
+          sendModelClose();
+          navigate("/app");
+        }}
         style={{
           position: "absolute",
           top: "20px",
