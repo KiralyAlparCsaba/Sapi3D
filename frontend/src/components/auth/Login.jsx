@@ -6,7 +6,7 @@ import "../../styles/Login.css";
 import { metricsCollector } from "../three/metricsCollector.js";
 
 function Login() {
-  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [formData, setFormData] = useState({ username: "tdkUser", password: "Erosj123" });
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
