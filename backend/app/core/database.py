@@ -152,6 +152,51 @@ async def init_db() -> None:
             END
             $$;
         """))
+        # Achievement schema backward-compat patches
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                -- achievement_requirements.requirement_data (JSONB) — added in achievement system v2
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_name = 'achievement_requirements'
+                ) AND NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'achievement_requirements'
+                      AND column_name = 'requirement_data'
+                ) THEN
+                    ALTER TABLE achievement_requirements
+                    ADD COLUMN requirement_data JSONB;
+                END IF;
+
+                -- achv_progress.session_start — added for time tracking
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_name = 'achv_progress'
+                ) AND NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'achv_progress'
+                      AND column_name = 'session_start'
+                ) THEN
+                    ALTER TABLE achv_progress
+                    ADD COLUMN session_start TIMESTAMPTZ;
+                END IF;
+
+                -- achv_progress.distance_walked — added for distance tracking
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_name = 'achv_progress'
+                ) AND NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'achv_progress'
+                      AND column_name = 'distance_walked'
+                ) THEN
+                    ALTER TABLE achv_progress
+                    ADD COLUMN distance_walked BIGINT NOT NULL DEFAULT 0;
+                END IF;
+            END
+            $$;
+        """))
     logger.info("Database tables created successfully")
     
     # Seed initial roles if they don't exist

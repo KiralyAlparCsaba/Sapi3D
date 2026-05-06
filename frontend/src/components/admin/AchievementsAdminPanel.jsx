@@ -462,7 +462,7 @@ export default function AchievementsAdminPanel() {
                   <option value="panel_count">
                     Bármelyik N panel megtekintése
                   </option>
-                  <option value="time_spent">Időtöltés (ms)</option>
+                  <option value="time_spent">Időtöltés (másodperc)</option>
                   <option value="location">
                     Specifikus helyszínek meglátogatása
                   </option>
@@ -483,7 +483,7 @@ export default function AchievementsAdminPanel() {
                     "Helyszínek száma"}
                   {newRequirementForm.req_type === "panel_count" &&
                     "Panelok száma"}
-                  {newRequirementForm.req_type === "time_spent" && "Idő (ms)"}
+                  {newRequirementForm.req_type === "time_spent" && "Idő (mp)"}
                   <input
                     type="number"
                     min="0"

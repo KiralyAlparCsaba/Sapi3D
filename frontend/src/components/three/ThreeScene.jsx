@@ -7,6 +7,7 @@ import Building from "./Building";
 import * as THREE from "three";
 import MobilePointerLockControls from "./MobilePointerLockControls";
 import { metricsCollector } from "./metricsCollector";
+import api from "../../services/api";
 
 // SCENE CONTENT
 function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, infoPanelsData, locationsData, loadStartRef }) {
@@ -219,8 +220,8 @@ export default function ThreeScene() {
     if (modelCloseTrackedRef.current) return;
     modelCloseTrackedRef.current = true;
 
-    const token = sessionStorage.getItem("token");
-    fetch("/api/achievements/track/model-close", {
+    const token = localStorage.getItem("access_token");
+    fetch(`${API_URL}/achievements/track/model-close`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       keepalive: true,
