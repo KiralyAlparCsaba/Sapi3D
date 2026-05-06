@@ -5,9 +5,13 @@ import "../../styles/InteractiveDoor.css";
 
 export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
   const [showPanel, setShowPanel] = useState(false);
+  const [activeTab, setActiveTab] = useState("subjects");
 
   useEffect(() => {
-    if (!isHovered) setShowPanel(false);
+    if (!isHovered) {
+      setShowPanel(false);
+      setActiveTab("subjects");
+    }
   }, [isHovered]);
 
   const worldPosition = useMemo(() => {
@@ -66,9 +70,29 @@ export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
     return found || null;
   }, [mesh, databaseInfo, meshName]);
 
-  const title = dbEntry?.coordinates_obj_name || "Szoba Info";
-  const infoText = dbEntry?.information || "Nincs adatbázis infó ehhez az ajtóhoz.";
   const mediaUrl = dbEntry?.media_url || null;
+
+  // Parse structured information string into sections
+  const parsedInfo = useMemo(() => {
+    const raw = dbEntry?.information || "";
+    if (!raw) return { header: meshName, subjects: [], teachers: [] };
+
+    const lines = raw.split("\n");
+    const header = lines[0] || meshName;
+    let subjects = [];
+    let teachers = [];
+
+    lines.forEach((line) => {
+      if (line.startsWith("Tárgyak: ")) {
+        subjects = line.replace("Tárgyak: ", "").split(", ").filter(Boolean);
+      }
+      if (line.startsWith("Oktatók: ")) {
+        teachers = line.replace("Oktatók: ", "").split(", ").filter(Boolean);
+      }
+    });
+
+    return { header, subjects, teachers };
+  }, [dbEntry, meshName]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -98,53 +122,66 @@ export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
           )}
 
           {showPanel && (
-            <div className="door-info-panel">
-              <h3 className="door-info-title">{title}</h3>
+            <div
+              className="door-info-panel"
+              onWheel={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="door-info-title">{parsedInfo.header}</h3>
 
-              {/* Objektum neve a cím alatt kis betűvel */}
-              <div className="door-info-name">
-                {meshName}
-              </div>
-
-              {/* Media (image or video) if available */}
               {mediaUrl && (
                 <div className="door-media-container">
                   {mediaUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                    <img
-                      src={mediaUrl}
-                      alt={title}
-                      className="door-media-image"
-                    />
+                    <img src={mediaUrl} alt={parsedInfo.header} className="door-media-image" />
                   ) : mediaUrl.match(/\.(mp4|webm|ogg)$/i) ? (
-                    <video
-                      src={mediaUrl}
-                      controls
-                      className="door-media-video"
-                    />
+                    <video src={mediaUrl} controls className="door-media-video" />
                   ) : (
-                    <a
-                      href={mediaUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="door-media-link"
-                    >
-                      View Media
+                    <a href={mediaUrl} target="_blank" rel="noopener noreferrer" className="door-media-link">
+                      Média megtekintése
                     </a>
                   )}
                 </div>
               )}
 
-              {/* Information text */}
-              <p className="door-info-text">
-                {infoText}
-              </p>
+              {/* Tab bar */}
+              <div className="door-tabs">
+                {parsedInfo.subjects.length > 0 && (
+                  <button
+                    className={`door-tab ${activeTab === "subjects" ? "door-tab-active" : ""}`}
+                    onClick={() => setActiveTab("subjects")}
+                  >
+                    Tárgyak
+                    <span className="door-tab-count">{parsedInfo.subjects.length}</span>
+                  </button>
+                )}
+                {parsedInfo.teachers.length > 0 && (
+                  <button
+                    className={`door-tab ${activeTab === "teachers" ? "door-tab-active" : ""}`}
+                    onClick={() => setActiveTab("teachers")}
+                  >
+                    Oktatók
+                    <span className="door-tab-count">{parsedInfo.teachers.length}</span>
+                  </button>
+                )}
+              </div>
 
-              {/* Debug info - remove in production */}
-              {!dbEntry && (
-                <div className="door-debug-info">
-                  ⚠️ Debug: No DB match for "{meshName}"
-                </div>
-              )}
+              {/* Tab content */}
+              <div className="door-tab-content" onWheel={(e) => e.stopPropagation()}>
+                {activeTab === "subjects" && parsedInfo.subjects.length > 0 && (
+                  <div className="door-info-tags">
+                    {parsedInfo.subjects.map((s, i) => (
+                      <span key={i} className="door-tag door-tag-subject">{s}</span>
+                    ))}
+                  </div>
+                )}
+                {activeTab === "teachers" && parsedInfo.teachers.length > 0 && (
+                  <div className="door-info-tags">
+                    {parsedInfo.teachers.map((t, i) => (
+                      <span key={i} className="door-tag door-tag-teacher">{t}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
