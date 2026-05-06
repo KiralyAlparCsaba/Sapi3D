@@ -172,6 +172,24 @@ async def init_db() -> None:
         await conn.execute(text("""
             DO $$
             BEGIN
+                -- achv_progress.model_view_count
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_name = 'achv_progress'
+                ) AND NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'achv_progress'
+                      AND column_name = 'model_view_count'
+                ) THEN
+                    ALTER TABLE achv_progress
+                    ADD COLUMN model_view_count BIGINT NOT NULL DEFAULT 0;
+                END IF;
+            END
+            $$;
+        """))
+        await conn.execute(text("""
+            DO $$
+            BEGIN
                 -- achievement_requirements.requirement_data (JSONB) — added in achievement system v2
                 IF EXISTS (
                     SELECT 1 FROM information_schema.tables

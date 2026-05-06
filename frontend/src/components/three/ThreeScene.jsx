@@ -220,7 +220,7 @@ export default function ThreeScene() {
     if (modelCloseTrackedRef.current) return;
     modelCloseTrackedRef.current = true;
 
-    const token = localStorage.getItem("access_token");
+    const token = sessionStorage.getItem("token");
     fetch(`${API_URL}/achievements/track/model-close`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
