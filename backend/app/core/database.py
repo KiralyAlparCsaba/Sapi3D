@@ -94,7 +94,12 @@ async def init_db() -> None:
                 ) THEN
                     ALTER TABLE devices ADD COLUMN browser_version VARCHAR(50);
                 END IF;
-                ALTER TABLE devices ALTER COLUMN device_name DROP NOT NULL;
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'devices' AND column_name = 'device_name'
+                ) THEN
+                    ALTER TABLE devices ALTER COLUMN device_name DROP NOT NULL;
+                END IF;
             END
             $$;
         """))
