@@ -215,6 +215,8 @@ class AchievementService:
         """
         Track model open event.
         - Increments model_view_count for all achievements
+        - If session_start was already set (previous model-close was missed),
+          flushes the accumulated time first to avoid losing it
         - Creates/updates session_start for time tracking
         - Checks if any achievement is newly unlocked
         - Returns: List of newly unlocked achievement IDs
@@ -230,8 +232,21 @@ class AchievementService:
             new_count = (progress.model_view_count or 0) + 1
             await self.progress_repo.update(progress.id, model_view_count=new_count)
 
-            # Set session_start if not already set (for time tracking)
-            if progress.session_start is None:
+            # Handle time_spent achievements
+            time_requirement = await self.requirement_repo.get_requirement_value(
+                achievement.achv_id,
+                "time_spent"
+            )
+            if time_requirement is not None:
+                # Ha maradt nyitott session_start (pl. a model-close nem érkezett meg),
+                # akkor először flush-oljuk az előző session idejét, hogy ne vesszen el
+                progress = await self.progress_repo.get_by_id(progress.id)
+                if progress.session_start is not None:
+                    elapsed = (datetime.now(timezone.utc) - progress.session_start).total_seconds()
+                    flushed_time = (progress.time_spent or 0) + int(elapsed)
+                    await self.progress_repo.update(progress.id, time_spent=flushed_time)
+
+                # Új session_start beállítása
                 await self.progress_repo.update(
                     progress.id,
                     session_start=datetime.now(timezone.utc)
@@ -257,16 +272,23 @@ class AchievementService:
         user_progress_list = await self.progress_repo.get_all_by_user(user_id)
         
         for progress in user_progress_list:
+            time_requirement = await self.requirement_repo.get_requirement_value(
+                progress.achv_id,
+                "time_spent"
+            )
+            if time_requirement is None:
+                continue
+
             if progress.session_start is not None:
                 elapsed = (datetime.now(timezone.utc) - progress.session_start).total_seconds()
                 new_time_spent = (progress.time_spent or 0) + int(elapsed)
-                
+
                 await self.progress_repo.update(
                     progress.id,
                     time_spent=new_time_spent,
                     session_start=None
                 )
-                
+
                 # Check if unlock
                 updated_progress = await self.progress_repo.get_by_id(progress.id)
                 if await self.check_and_unlock_achievement(user_id, progress.achv_id):

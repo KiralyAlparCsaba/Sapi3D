@@ -1,28 +1,32 @@
 import { useRef, useState, Suspense, useEffect } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import UsePlayerMovement from "./PlayerMovement";
 import { createMobileJoystick } from "./MobileJoystick";
 import Building from "./Building";
 import * as THREE from "three";
 import MobilePointerLockControls from "./MobilePointerLockControls";
+import api from "../../services/api";
 
-// SCENE CONTENT
-function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, infoPanelsData, locationsData }) {
+function SceneContent({
+  controlsRef,
+  sessionId,
+  isMobile,
+  markerToTeleport,
+  infoPanelsData,
+  locationsData,
+}) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
   const playerRootRef = useRef(new THREE.Object3D());
 
-  // FONTOS: megakadályozza a dupla teleportálást (StrictMode / re-mount miatt)
   const didTeleportRef = useRef(false);
 
   useEffect(() => {
     scene.add(playerRootRef.current);
 
-    // root world start - ITT JAVÍTVA 0, 0, 0-RA
     playerRootRef.current.position.set(0, 0, 0);
 
-    // attach camera to player root
     playerRootRef.current.add(camera);
     camera.position.set(0, 1.7, 0);
 
@@ -34,7 +38,6 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
     };
   }, [camera, scene]);
 
-  // Mobile controls init
   useEffect(() => {
     if (isMobile) {
       controlsRef.current = new MobilePointerLockControls(camera);
@@ -45,7 +48,7 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
     controlsRef,
     collisionRef,
     playerRootRef,
-    isMobile ? 7.0 : 10.0
+    isMobile ? 7.0 : 10.0,
   );
 
   useFrame((_, delta) => {
@@ -56,11 +59,8 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
     }
   });
 
-  // Segéd: nevek normalizálása
-  const normalize = (s) =>
-    (s || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+  const normalize = (s) => (s || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
 
-  // Segéd: marker keresése név alapján
   const findMarkerObject = (mesh, wantedName) => {
     const wanted = normalize(wantedName);
 
@@ -70,12 +70,10 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
     mesh.traverse((child) => {
       const n = normalize(child.name);
 
-      // fallback az első "marker" szót tartalmazó objektumra
       if (!firstAny && n.includes("marker")) {
         firstAny = child;
       }
 
-      // pontos egyezés
       if (!exact && wanted && n === wanted) {
         exact = child;
       }
@@ -88,12 +86,11 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
     <Suspense fallback={null}>
       <Building
         sessionId={sessionId}
-        infoPanelsData={infoPanelsData}  // Ajtókhoz
-        locationsData={locationsData}    // Hologramokhoz
+        infoPanelsData={infoPanelsData}
+        locationsData={locationsData}
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
 
-          // Ha már teleportáltunk, ne csináljuk újra
           if (didTeleportRef.current) return;
 
           const markerObj = findMarkerObject(mesh, markerToTeleport);
@@ -107,27 +104,22 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
             "Teleport target:",
             markerToTeleport || "(nincs marker átadva)",
             "-> használatban:",
-            markerObj.name
+            markerObj.name,
           );
 
-          // ---- TELEPORT LOGIKA ----
-
-          // 1. Kiszámoljuk a marker VALÓS térbeli közepét (Befoglaló doboz)
           const box = new THREE.Box3().setFromObject(markerObj);
           const markerTrueCenter = new THREE.Vector3();
           box.getCenter(markerTrueCenter);
 
-          // 2. Beállítjuk a játékos X és Z pozícióját a valós középpontra
           playerRootRef.current.position.x = markerTrueCenter.x;
           playerRootRef.current.position.z = markerTrueCenter.z;
 
-          // 3. Y tengely beállítása Raycasttal
           const downOrigin = markerTrueCenter.clone();
           downOrigin.y += 0.5;
 
           const downRay = new THREE.Raycaster(
             downOrigin,
-            new THREE.Vector3(0, -1, 0)
+            new THREE.Vector3(0, -1, 0),
           );
           const groundHits = downRay.intersectObjects(mesh.children, true);
 
@@ -137,18 +129,14 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
             playerRootRef.current.position.y = markerTrueCenter.y;
           }
 
-          // 4. Forgatás (Quaternion) átvétele
           const markerQuaternion = new THREE.Quaternion();
           markerObj.getWorldQuaternion(markerQuaternion);
           playerRootRef.current.quaternion.copy(markerQuaternion);
 
-          // 5. BIZTOSÍTÉK: Kamera lokális nullázása
           camera.position.set(0, 1.7, 0);
 
-          // 7. Kontrollerek frissítése az új pozíción
           if (controlsRef.current?.update) controlsRef.current.update(0);
 
-          // Mark teleport done
           didTeleportRef.current = true;
         }}
       />
@@ -158,20 +146,20 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
 
 export default function ThreeScene() {
   const controlsRef = useRef();
+  const modelOpenTrackedRef = useRef(false);
+  const modelCloseTrackedRef = useRef(false);
+  const navigate = useNavigate();
   const [PointerLock, setPointerLock] = useState(null);
 
-  // ÚJ: Két külön állapot a két különböző adatforráshoz
-  const [infoPanelsData, setInfoPanelsData] = useState([]);  // Ajtókhoz
-  const [locationsData, setLocationsData] = useState([]);    // Hologramokhoz
+  const [infoPanelsData, setInfoPanelsData] = useState([]);
+  const [locationsData, setLocationsData] = useState([]);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // Marker kiolvasása a router state-ből
   const routeLocation = useLocation();
   const markerToTeleport = routeLocation.state?.marker;
 
-  // FETCH: Info Panels (ajtókhoz)
   useEffect(() => {
     fetch(`${API_URL}/info-panels/`)
       .then((res) => {
@@ -182,10 +170,11 @@ export default function ThreeScene() {
         console.log("✅ Info Panels betöltve (ajtókhoz):", data);
         setInfoPanelsData(data);
       })
-      .catch((err) => console.error("❌ Hiba az info panels lekérésekor:", err));
+      .catch((err) =>
+        console.error("❌ Hiba az info panels lekérésekor:", err),
+      );
   }, [API_URL]);
 
-  // FETCH: Locations (hologramokhoz)
   useEffect(() => {
     fetch(`${API_URL}/locations/`)
       .then((res) => {
@@ -207,18 +196,57 @@ export default function ThreeScene() {
     } else {
       const cleanup = createMobileJoystick(
         (x, y) => (window.joystickMove = { x, y }),
-        (lx, ly) => (window.joystickLook = { lx, ly })
+        (lx, ly) => (window.joystickLook = { lx, ly }),
       );
       return cleanup;
     }
   }, [isMobile]);
+
+  useEffect(() => {
+    if (modelOpenTrackedRef.current) return;
+    modelOpenTrackedRef.current = true;
+
+    api
+      .post("/achievements/track/model-open")
+      .then(() => {
+        window.dispatchEvent(new CustomEvent("achievements-updated"));
+      })
+      .catch((err) => {
+        console.error("Model-open achievement tracking failed:", err);
+      });
+  }, []);
+
+  const sendModelClose = () => {
+    if (modelCloseTrackedRef.current) return;
+    modelCloseTrackedRef.current = true;
+
+    const token = sessionStorage.getItem("token");
+    fetch("/api/achievements/track/model-close", {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      keepalive: true,
+    })
+      .then(() => window.dispatchEvent(new CustomEvent("achievements-updated")))
+      .catch((err) =>
+        console.error("Model-close achievement tracking failed:", err),
+      );
+  };
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", sendModelClose);
+    return () => {
+      window.removeEventListener("beforeunload", sendModelClose);
+
+      sendModelClose();
+    };
+  }, []);
 
   const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
 
   return (
     <>
       <button
-        onClick={() => (window.location.href = "/app")}
+        onClick={() => navigate("/app")}
         style={{
           position: "absolute",
           top: "20px",
@@ -246,8 +274,8 @@ export default function ThreeScene() {
           sessionId={sessionId}
           isMobile={isMobile}
           markerToTeleport={markerToTeleport}
-          infoPanelsData={infoPanelsData}  // Ajtókhoz
-          locationsData={locationsData}    // Hologramokhoz
+          infoPanelsData={infoPanelsData} // Ajtókhoz
+          locationsData={locationsData} // Hologramokhoz
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}

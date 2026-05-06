@@ -7,6 +7,7 @@ import asyncio
 import sys
 import os
 from pathlib import Path
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 
 # Set environment variables BEFORE importing app modules
 os.environ.setdefault("JWT_SECRET_KEY", "seed_secret_key_for_development_only")
@@ -22,14 +23,33 @@ from sqlalchemy.orm import sessionmaker
 
 from models.achievement import Achievement, AchievementRequirement
 from models.location import Location, InfoPanel
+from models.user import User
+from models.session import Session
+from models.metrics import PerfMetrics
 from core.config import settings
 
 
 # Database configuration — use the same URL as the rest of the app
-DATABASE_URL = settings.database_url
+DATABASE_URL = os.environ.get("SEED_DATABASE_URL", settings.database_url)
+
+# Try to use localhost if db hostname doesn't resolve (for local seed execution)
+if "@db:" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("@db:", "@localhost:")
+
+# Remove SSL-related query params that asyncpg does not accept
+parsed_url = urlparse(DATABASE_URL)
+if parsed_url.query:
+    filtered_query = [
+        (key, value)
+        for key, value in parse_qsl(parsed_url.query, keep_blank_values=True)
+        if key not in ("ssl", "sslmode")
+    ]
+    if len(filtered_query) != len(parse_qsl(parsed_url.query, keep_blank_values=True)):
+        DATABASE_URL = urlunparse(parsed_url._replace(query=urlencode(filtered_query)))
 
 # Create async engine and session
-engine = create_async_engine(DATABASE_URL, echo=False)
+connect_args = {"ssl": False} if DATABASE_URL.startswith("postgresql+asyncpg://") else {}
+engine = create_async_engine(DATABASE_URL, echo=False, connect_args=connect_args)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -77,8 +97,6 @@ async def requirement_exists(
         AchievementRequirement.achv_id == achv_id,
         AchievementRequirement.req_type == req_type,
     ]
-    if value is not None:
-        filters.append(AchievementRequirement.value == value)
     if location_id is not None:
         filters.append(AchievementRequirement.location_id == location_id)
     if panel_id is not None:
@@ -88,6 +106,42 @@ async def requirement_exists(
         select(AchievementRequirement).filter(*filters)
     )
     return result.scalars().first() is not None
+
+
+async def upsert_numeric_requirement(
+    session: AsyncSession,
+    achv_id: int,
+    req_type: str,
+    value: int,
+) -> None:
+    """
+    Upsert egy numerikus requirement-et req_type szerint.
+    Ha már létezik ilyen típusú requirement (bármilyen value-val), frissíti.
+    Ha nem létezik, létrehozza.
+    Így elkerüljük a duplikált requirement-eket, ha a seed többször fut.
+    """
+    result = await session.execute(
+        select(AchievementRequirement).filter(
+            AchievementRequirement.achv_id == achv_id,
+            AchievementRequirement.req_type == req_type,
+        )
+    )
+    existing_reqs = result.scalars().all()
+
+    if existing_reqs:
+        # Frissítjük az első, töröljük a duplikáltakat
+        first = existing_reqs[0]
+        first.value = value
+        for duplicate in existing_reqs[1:]:
+            await session.delete(duplicate)
+        print(f"  [UPSERT] {req_type}={value} (frissítve, {len(existing_reqs)-1} duplikált törölve)")
+    else:
+        session.add(AchievementRequirement(
+            achv_id=achv_id,
+            req_type=req_type,
+            value=value,
+        ))
+        print(f"  [CREATE] {req_type}={value}")
 
 
 async def seed_achievements():
@@ -100,13 +154,8 @@ async def seed_achievements():
                 "Első lépések",
                 "Megnyitottad a 3D modellt legalább egyszer"
             )
-            if not await requirement_exists(session, achv1.achv_id, "model_view_count", value=1):
-                session.add(AchievementRequirement(
-                    achv_id=achv1.achv_id,
-                    req_type="model_view_count",
-                    value=1
-                ))
-            print("✅ Első lépések")
+            await upsert_numeric_requirement(session, achv1.achv_id, "model_view_count", 1)
+            print("[OK] Elso lepesek")
 
             # 2. Helyszínvadász I - Visit 3 locations
             achv2 = await get_or_create_achievement(
@@ -114,13 +163,8 @@ async def seed_achievements():
                 "Helyszínvadász I",
                 "Felfedeztél legalább 3 fontos helyszínt"
             )
-            if not await requirement_exists(session, achv2.achv_id, "location_count", value=3):
-                session.add(AchievementRequirement(
-                    achv_id=achv2.achv_id,
-                    req_type="location_count",
-                    value=3
-                ))
-            print("✅ Helyszínvadász I")
+            await upsert_numeric_requirement(session, achv2.achv_id, "location_count", 3)
+            print("[OK] Helyszinvadasz I")
 
             # 3. Helyszínvadász II - Visit 5 locations
             achv3 = await get_or_create_achievement(
@@ -128,13 +172,8 @@ async def seed_achievements():
                 "Helyszínvadász II",
                 "Felfedeztél legalább 5 fontos helyszínt"
             )
-            if not await requirement_exists(session, achv3.achv_id, "location_count", value=5):
-                session.add(AchievementRequirement(
-                    achv_id=achv3.achv_id,
-                    req_type="location_count",
-                    value=5
-                ))
-            print("✅ Helyszínvadász II")
+            await upsert_numeric_requirement(session, achv3.achv_id, "location_count", 5)
+            print("[OK] Helyszinvadasz II")
 
             # 4. Panelfelfedező - View 5 panels
             achv4 = await get_or_create_achievement(
@@ -142,13 +181,8 @@ async def seed_achievements():
                 "Panelfelfedező",
                 "Információs panelek böngészése a modellben"
             )
-            if not await requirement_exists(session, achv4.achv_id, "panel_count", value=5):
-                session.add(AchievementRequirement(
-                    achv_id=achv4.achv_id,
-                    req_type="panel_count",
-                    value=5
-                ))
-            print("✅ Panelfelfedező")
+            await upsert_numeric_requirement(session, achv4.achv_id, "panel_count", 5)
+            print("[OK] Panelfelfedezo")
 
             # 5. Terepszemle - Spend 10 minutes exploring (600 seconds)
             achv5 = await get_or_create_achievement(
@@ -156,13 +190,10 @@ async def seed_achievements():
                 "Terepszemle",
                 "Összesen legalább 10 percet töltöttél bejárással"
             )
-            if not await requirement_exists(session, achv5.achv_id, "time_spent", value=600):
-                session.add(AchievementRequirement(
-                    achv_id=achv5.achv_id,
-                    req_type="time_spent",
-                    value=600  # seconds — AchvProgress.time_spent is stored in seconds
-                ))
-            print("✅ Terepszemle")
+            # upsert: ha volt régi value=10 vagy bármilyen más érték, felülírja 600-ra
+            # és törli a duplikáltakat
+            await upsert_numeric_requirement(session, achv5.achv_id, "time_spent", 600)
+            print("[OK] Terepszemle")
 
             # 6. Egyetem turista - Visit key university locations
             achv6 = await get_or_create_achievement(
@@ -180,30 +211,30 @@ async def seed_achievements():
 
             # Require visiting Aula specifically
             if aula:
-                if not await requirement_exists(session, achv6.achv_id, "location", location_id=aula.location_id):
+                if not await requirement_exists(session, achv6.achv_id, "location", location_id=aula.loc_id):
                     session.add(AchievementRequirement(
                         achv_id=achv6.achv_id,
                         req_type="location",
-                        location_id=aula.location_id
+                        location_id=aula.loc_id
                     ))
 
             # Require visiting Könyvtár specifically
             if konyvtar:
-                if not await requirement_exists(session, achv6.achv_id, "location", location_id=konyvtar.location_id):
+                if not await requirement_exists(session, achv6.achv_id, "location", location_id=konyvtar.loc_id):
                     session.add(AchievementRequirement(
                         achv_id=achv6.achv_id,
                         req_type="location",
-                        location_id=konyvtar.location_id
+                        location_id=konyvtar.loc_id
                     ))
 
             # Require visiting at least one tanszék (location_any_of stored as JSON)
             tanszek_ids = []
             if informatika:
-                tanszek_ids.append(informatika.location_id)
+                tanszek_ids.append(informatika.loc_id)
             if gepesz:
-                tanszek_ids.append(gepesz.location_id)
+                tanszek_ids.append(gepesz.loc_id)
             if villamos:
-                tanszek_ids.append(villamos.location_id)
+                tanszek_ids.append(villamos.loc_id)
 
             if tanszek_ids:
                 # location_any_of uses requirement_data JSON — check by req_type only
@@ -220,11 +251,11 @@ async def seed_achievements():
                         requirement_data={"location_ids": tanszek_ids}
                     ))
 
-            print("✅ Egyetem turista")
+            print("[OK] Egyetem turista")
 
             # Commit all changes
             await session.commit()
-            print("\n✅ Seeding completed successfully!")
+            print("\n[OK] Seeding completed successfully!")
 
         except Exception as e:
             await session.rollback()
