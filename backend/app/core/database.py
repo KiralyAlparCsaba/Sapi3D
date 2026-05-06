@@ -46,13 +46,13 @@ async def init_db() -> None:
     """
     Initialize database tables and seed initial data.
     Should be called on application startup.
-    """
+    """ 
     from core.logging import logger
     
     # Import all models to ensure they are registered with Base
     from models.user import User, Role
     from models.session import Session, Device
-    from models.achievement import Achievement, UserAchievement, AchvProgress
+    from models.achievement import Achievement, UserAchievement, AchvProgress, AchvProgressPanel, AchvProgressLocation, AchievementRequirement
     from models.location import Location, Event, InfoPanel
     from models.metrics import PerfMetrics
     

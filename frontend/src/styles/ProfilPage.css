@@ -16,9 +16,21 @@
   z-index: 0;
 
   background:
-    radial-gradient(900px 520px at 22% 14%, rgba(0, 120, 0, 0.22), transparent 62%),
-    radial-gradient(900px 520px at 82% 18%, rgba(159, 209, 159, 0.28), transparent 62%),
-    radial-gradient(900px 520px at 50% 92%, rgba(0, 120, 0, 0.14), transparent 65%);
+    radial-gradient(
+      900px 520px at 22% 14%,
+      rgba(0, 120, 0, 0.22),
+      transparent 62%
+    ),
+    radial-gradient(
+      900px 520px at 82% 18%,
+      rgba(159, 209, 159, 0.28),
+      transparent 62%
+    ),
+    radial-gradient(
+      900px 520px at 50% 92%,
+      rgba(0, 120, 0, 0.14),
+      transparent 65%
+    );
   opacity: 0.42;
 }
 
@@ -50,16 +62,18 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
-  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 
-  box-shadow:
-    0 14px 28px rgba(0, 120, 0, 0.12);
+  box-shadow: 0 14px 28px rgba(0, 120, 0, 0.12);
 }
 
 .profil-refresh:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow:
-    0 20px 40px rgba(0, 120, 0, 0.16);
+  box-shadow: 0 20px 40px rgba(0, 120, 0, 0.16);
 }
 
 .profil-refresh:disabled {
@@ -73,8 +87,11 @@
   padding: 26px 22px 22px;
   text-align: center;
 
-  background:
-    linear-gradient(180deg, rgba(210, 238, 210, 0.72), rgba(210, 238, 210, 0.50));
+  background: linear-gradient(
+    180deg,
+    rgba(210, 238, 210, 0.72),
+    rgba(210, 238, 210, 0.5)
+  );
   border: 1px solid rgba(0, 120, 0, 0.18);
 
   backdrop-filter: blur(10px);
@@ -89,9 +106,17 @@
 }
 
 @keyframes profilFadeUp {
-  from { opacity: 0; transform: translateY(10px) scale(0.99); }
-  to   { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
+
+/* ── Avatar ── */
 
 .profil-avatar-wrap {
   display: flex;
@@ -109,16 +134,18 @@
   box-shadow:
     0 0 0 7px rgba(159, 209, 159, 0.35),
     0 0 44px rgba(0, 120, 0, 0.22),
-    0 18px 45px rgba(0, 0, 0, 0.10);
+    0 18px 45px rgba(0, 0, 0, 0.1);
 
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
 .profil-avatar-wrap:hover .profil-avatar {
   transform: translateY(-3px) scale(1.02);
   box-shadow:
     0 0 0 8px rgba(159, 209, 159, 0.38),
-    0 0 55px rgba(159, 209, 159, 0.40),
+    0 0 55px rgba(159, 209, 159, 0.4),
     0 28px 70px rgba(0, 0, 0, 0.34);
 }
 
@@ -129,7 +156,7 @@
   font-size: 34px;
   font-weight: 900;
   color: var(--text-color);
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .profil-avatar-actions {
@@ -156,16 +183,18 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
-  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 
-  box-shadow:
-    0 14px 28px rgba(0, 120, 0, 0.12);
+  box-shadow: 0 14px 28px rgba(0, 120, 0, 0.12);
 }
 
 .profil-avatar-upload:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow:
-    0 20px 40px rgba(0, 120, 0, 0.16);
+  box-shadow: 0 20px 40px rgba(0, 120, 0, 0.16);
 }
 
 .profil-avatar-upload:disabled {
@@ -185,22 +214,26 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
-  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 
-  box-shadow:
-    0 10px 24px rgba(180, 30, 30, 0.10);
+  box-shadow: 0 10px 24px rgba(180, 30, 30, 0.1);
 }
 
 .profil-avatar-delete:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow:
-    0 16px 34px rgba(180, 30, 30, 0.16);
+  box-shadow: 0 16px 34px rgba(180, 30, 30, 0.16);
 }
 
 .profil-avatar-delete:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
+
+/* ── Meta adatok ── */
 
 .profil-meta {
   margin-top: 44px;
@@ -209,20 +242,16 @@
   gap: 24px;
 }
 
-@media (max-width: 560px) {
-  .profil-meta {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-}
-
 .profil-meta-item {
   text-align: left;
   border-radius: 18px;
   padding: 16px 16px;
 
-  background:
-    linear-gradient(180deg, rgba(210, 238, 210, 0.78), rgba(210, 238, 210, 0.58));
+  background: linear-gradient(
+    180deg,
+    rgba(210, 238, 210, 0.78),
+    rgba(210, 238, 210, 0.58)
+  );
   border: 1px solid rgba(0, 120, 0, 0.16);
 
   box-shadow:
@@ -232,7 +261,10 @@
   position: relative;
   overflow: hidden;
 
-  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
 }
 
 .profil-meta-item:hover {
@@ -260,57 +292,7 @@
   color: var(--text-color);
 }
 
-.profil-error {
-  width: min(720px, 100%);
-  margin-top: 12px;
-  border-radius: 14px;
-  padding: 12px 14px;
-
-  color: #ffd1d1;
-  background: rgba(255, 60, 60, 0.12);
-  border: 1px solid rgba(255, 60, 60, 0.22);
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-[data-theme="dark"] .profil-card {
-  background: rgba(0, 0, 0, 0.25);
-  border-color: rgba(255, 255, 255, 0.10);
-  box-shadow:
-    0 18px 55px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-[data-theme="dark"] .profil-meta-item {
-  background: rgba(0, 0, 0, 0.22);
-  border-color: rgba(255, 255, 255, 0.10);
-}
-
-[data-theme="dark"] .profil-refresh {
-  background: rgba(0, 0, 0, 0.20);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-[data-theme="dark"] .profil-avatar-upload {
-  background: rgba(0, 0, 0, 0.20);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-[data-theme="dark"] .profil-avatar-delete {
-  background: rgba(90, 18, 18, 0.34);
-  color: #ffd5d5;
-  border-color: rgba(255, 120, 120, 0.32);
-}
-
-[data-theme="dark"] .profil-meta-label {
-  color: rgba(160, 220, 170, 0.80);
-  opacity: 1;
-}
-
-[data-theme="dark"] .profil-meta-value {
-  color: var(--text-color);
-}
+/* ── Szerkesztő gombok ── */
 
 .profil-edit-actions {
   display: flex;
@@ -331,18 +313,20 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
-  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 
-  box-shadow:
-    0 14px 28px rgba(0, 120, 0, 0.12);
+  box-shadow: 0 14px 28px rgba(0, 120, 0, 0.12);
 }
 
 .profil-edit:hover:not(:disabled),
 .profil-save:hover:not(:disabled),
 .profil-cancel:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow:
-    0 20px 40px rgba(0, 120, 0, 0.16);
+  box-shadow: 0 20px 40px rgba(0, 120, 0, 0.16);
 }
 
 .profil-edit:disabled,
@@ -352,12 +336,7 @@
   opacity: 0.6;
 }
 
-[data-theme="dark"] .profil-edit,
-[data-theme="dark"] .profil-save,
-[data-theme="dark"] .profil-cancel {
-  background: rgba(0, 0, 0, 0.20);
-  border-color: rgba(255, 255, 255, 0.12);
-}
+/* ── Input ── */
 
 .profil-input {
   width: 100%;
@@ -369,7 +348,79 @@
   outline: none;
 }
 
+/* ── Üzenetek ── */
+
+.profil-error {
+  width: min(720px, 100%);
+  margin-top: 12px;
+  border-radius: 14px;
+  padding: 12px 14px;
+
+  color: #ffd1d1;
+  background: rgba(255, 60, 60, 0.12);
+  border: 1px solid rgba(255, 60, 60, 0.22);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
 .profil-success {
   margin-top: 10px;
   opacity: 0.9;
+}
+
+/* ── Reszponzív ── */
+
+@media (max-width: 560px) {
+  .profil-meta {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+/* ── Dark mode ── */
+
+[data-theme="dark"] .profil-card {
+  background: rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 18px 55px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .profil-meta-item {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .profil-refresh {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .profil-avatar-upload {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .profil-avatar-delete {
+  background: rgba(90, 18, 18, 0.34);
+  color: #ffd5d5;
+  border-color: rgba(255, 120, 120, 0.32);
+}
+
+[data-theme="dark"] .profil-meta-label {
+  color: rgba(160, 220, 170, 0.8);
+  opacity: 1;
+}
+
+[data-theme="dark"] .profil-meta-value {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .profil-edit,
+[data-theme="dark"] .profil-save,
+[data-theme="dark"] .profil-cancel {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.12);
 }

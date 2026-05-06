@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
 
-from api.routers import health, model, user_router, auth_router, session_router, location_router, event_router,info_panels_router
+from api.routers import health, model, user_router, auth_router, session_router, location_router, event_router, info_panels_router, achievement_router
 from core.config import settings
 from core.logging import logger
 from core.database import init_db, close_db
@@ -50,7 +50,8 @@ app = FastAPI(
         {"name": "Devices", "description": "Device management endpoints"},
         {"name": "Sessions", "description": "Session management and performance metrics endpoints"},
         {"name": "Auth", "description": "Authentication and authorization endpoints"},
-        {"name": "Info Panels", "description": "Info Panel management and endpoints"}
+        {"name": "Info Panels", "description": "Info Panel management and endpoints"},
+        {"name": "Achievements", "description": "Achievement system and progress tracking"}
     ],
     docs_url="/docs",  # Swagger UI
     redoc_url="/redoc",  # ReDoc alternative documentation
@@ -83,6 +84,7 @@ app.include_router(device_router, tags=["Devices"])
 app.include_router(location_router.router, tags=["Locations"])
 app.include_router(event_router.router, tags=["Events"])
 app.include_router(info_panels_router.router, tags=["Info Panels"])
+app.include_router(achievement_router.router, tags=["Achievements"])
 
 
 

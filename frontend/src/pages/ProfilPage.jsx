@@ -2,15 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import "../styles/ProfilPage.css";
+import AchievementsSection from "../components/achievements/AchievementsSection";
 
 function resolveAvatarUrl(avatarUrl) {
   if (!avatarUrl) return "";
   if (/^https?:\/\//i.test(avatarUrl)) return avatarUrl;
 
   const envBase = (import.meta.env.VITE_API_URL || "").trim();
-  const base = envBase || `${window.location.protocol}//${window.location.hostname}:8000`;
+  const base =
+    envBase || `${window.location.protocol}//${window.location.hostname}:8000`;
   const normalizedBase = base.replace(/\/$/, "");
-  const normalizedPath = avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`;
+  const normalizedPath = avatarUrl.startsWith("/")
+    ? avatarUrl
+    : `/${avatarUrl}`;
   return `${normalizedBase}${normalizedPath}`;
 }
 
@@ -62,37 +66,17 @@ export default function ProfilPage() {
     loadMe();
   }, []);
 
-  const initials = (() => {
-    const raw = (me?.username || "").trim();
-    if (!raw) return "?";
-    return raw.charAt(0).toUpperCase();
-  })();
-
-  const avatarUrl = resolveAvatarUrl(me?.avatar_url || "");
-  const avatarSrc = avatarUrl ? `${avatarUrl}${avatarUrl.includes("?") ? "&" : "?"}v=${avatarVersion}` : "";
-
-  useEffect(() => {
-    setAvatarLoadFailed(false);
-  }, [avatarUrl]);
-
   useEffect(() => {
     if (!success) return;
-    const timeoutId = window.setTimeout(() => {
-      setSuccess("");
-    }, 3000);
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
+    const timeoutId = window.setTimeout(() => setSuccess(""), 3000);
+    return () => window.clearTimeout(timeoutId);
   }, [success]);
 
   const startEdit = () => {
     if (!me) return;
     setError("");
     setSuccess("");
-    setForm({
-      username: me.username ?? "",
-      email: me.email ?? "",
-    });
+    setForm({ username: me.username ?? "", email: me.email ?? "" });
     setIsEditing(true);
   };
 
@@ -100,10 +84,7 @@ export default function ProfilPage() {
     if (!me) return;
     setError("");
     setSuccess("");
-    setForm({
-      username: me.username ?? "",
-      email: me.email ?? "",
-    });
+    setForm({ username: me.username ?? "", email: me.email ?? "" });
     setIsEditing(false);
   };
 
@@ -131,14 +112,12 @@ export default function ProfilPage() {
         username: nextUsername,
         email: nextEmail,
         avatar_url: me.avatar_url || "",
-        role_id: me.role_id, 
+        role_id: me.role_id,
       };
 
       const res = await api.put(`/users/${me.user_id}`, payload);
 
-      if (res.data?.token) {
-        updateToken(res.data.token);
-      }
+      if (res.data?.token) updateToken(res.data.token);
 
       if (res.data?.user) {
         setMe((prev) => (prev ? { ...prev, ...res.data.user } : prev));
@@ -191,9 +170,7 @@ export default function ProfilPage() {
         method: requestMethod,
         url: `/users/${me.user_id}/avatar`,
         data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       if (res.data?.user) {
@@ -204,14 +181,16 @@ export default function ProfilPage() {
               userId: me.user_id,
               avatarUrl: res.data.user.avatar_url || "",
             },
-          })
+          }),
         );
       }
       setAvatarLoadFailed(false);
       setAvatarVersion(Date.now());
       setSuccess("Profilkép sikeresen frissítve.");
     } catch (e) {
-      setError(e?.response?.data?.detail || "A profilkép feltöltése sikertelen.");
+      setError(
+        e?.response?.data?.detail || "A profilkép feltöltése sikertelen.",
+      );
     } finally {
       setAvatarUploading(false);
       event.target.value = "";
@@ -220,7 +199,6 @@ export default function ProfilPage() {
 
   const deleteAvatar = async () => {
     if (!me?.avatar_url || !me?.user_id) return;
-
     const ok = window.confirm("Biztosan törlöd a profilképedet?");
     if (!ok) return;
 
@@ -230,18 +208,14 @@ export default function ProfilPage() {
 
     try {
       const res = await api.delete(`/users/${me.user_id}/avatar`);
-      if (res.data?.user) {
+      if (res.data?.user)
         setMe((prev) => (prev ? { ...prev, ...res.data.user } : prev));
-      }
       setAvatarLoadFailed(false);
       setAvatarVersion(Date.now());
       window.dispatchEvent(
         new CustomEvent("avatar-updated", {
-          detail: {
-            userId: me.user_id,
-            avatarUrl: "",
-          },
-        })
+          detail: { userId: me.user_id, avatarUrl: "" },
+        }),
       );
       setSuccess("Profilkép törölve.");
     } catch (e) {
@@ -251,10 +225,30 @@ export default function ProfilPage() {
     }
   };
 
+  const initials = (() => {
+    const raw = (me?.username || "").trim();
+    if (!raw) return "?";
+    return raw.charAt(0).toUpperCase();
+  })();
+
+  const avatarUrl = resolveAvatarUrl(me?.avatar_url || "");
+  const avatarSrc = avatarUrl
+    ? `${avatarUrl}${avatarUrl.includes("?") ? "&" : "?"}v=${avatarVersion}`
+    : "";
+
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+  }, [avatarUrl]);
+
   return (
     <div className="profil-page">
+      {/* ── Fejléc gombok ── */}
       <div className="profil-header-row">
-        <button className="profil-refresh" onClick={loadMe} disabled={loading || saving}>
+        <button
+          className="profil-refresh"
+          onClick={loadMe}
+          disabled={loading || saving}
+        >
           Frissítés
         </button>
 
@@ -266,10 +260,18 @@ export default function ProfilPage() {
 
         {isEditing && (
           <div className="profil-edit-actions">
-            <button className="profil-cancel" onClick={cancelEdit} disabled={saving}>
+            <button
+              className="profil-cancel"
+              onClick={cancelEdit}
+              disabled={saving}
+            >
               Mégse
             </button>
-            <button className="profil-save" onClick={saveEdit} disabled={saving}>
+            <button
+              className="profil-save"
+              onClick={saveEdit}
+              disabled={saving}
+            >
               {saving ? "Mentés..." : "Mentés"}
             </button>
           </div>
@@ -282,6 +284,7 @@ export default function ProfilPage() {
 
       {!loading && !error && me && (
         <div className="profil-card">
+          {/* ── Avatar ── */}
           <div className="profil-avatar-wrap">
             {avatarSrc && !avatarLoadFailed ? (
               <img
@@ -291,7 +294,9 @@ export default function ProfilPage() {
                 onError={() => setAvatarLoadFailed(true)}
               />
             ) : (
-              <div className="profil-avatar profil-avatar--fallback">{initials}</div>
+              <div className="profil-avatar profil-avatar--fallback">
+                {initials}
+              </div>
             )}
           </div>
 
@@ -312,7 +317,9 @@ export default function ProfilPage() {
               >
                 {avatarUploading
                   ? "Feltöltés..."
-                  : (me?.avatar_url ? "Profilkép módosítása" : "Profilkép feltöltése")}
+                  : me?.avatar_url
+                    ? "Profilkép módosítása"
+                    : "Profilkép feltöltése"}
               </button>
               {isEditing && me?.avatar_url && (
                 <button
@@ -327,6 +334,7 @@ export default function ProfilPage() {
             </div>
           )}
 
+          {/* ── Profil meta adatok ── */}
           <div className="profil-meta">
             <div className="profil-meta-item">
               <span className="profil-meta-label">Felhasználónév</span>
@@ -336,7 +344,9 @@ export default function ProfilPage() {
                 <input
                   className="profil-input"
                   value={form.username}
-                  onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, username: e.target.value }))
+                  }
                   disabled={saving}
                 />
               )}
@@ -350,7 +360,9 @@ export default function ProfilPage() {
                 <input
                   className="profil-input"
                   value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, email: e.target.value }))
+                  }
                   disabled={saving}
                 />
               )}
@@ -365,9 +377,14 @@ export default function ProfilPage() {
 
             <div className="profil-meta-item">
               <span className="profil-meta-label">Csatlakozás ideje</span>
-              <strong className="profil-meta-value">{fmtDate(me.created_at)}</strong>
+              <strong className="profil-meta-value">
+                {fmtDate(me.created_at)}
+              </strong>
             </div>
           </div>
+
+          {/* ── Achievements szekció (külön komponens) ── */}
+          <AchievementsSection />
         </div>
       )}
     </div>
