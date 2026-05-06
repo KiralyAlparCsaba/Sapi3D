@@ -6,16 +6,10 @@ import { createMobileJoystick } from "./MobileJoystick";
 import Building from "./Building";
 import * as THREE from "three";
 import MobilePointerLockControls from "./MobilePointerLockControls";
-import api from "../../services/api";
+import { metricsCollector } from "./metricsCollector";
 
-function SceneContent({
-  controlsRef,
-  sessionId,
-  isMobile,
-  markerToTeleport,
-  infoPanelsData,
-  locationsData,
-}) {
+// SCENE CONTENT
+function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, infoPanelsData, locationsData, loadStartRef }) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
   const playerRootRef = useRef(new THREE.Object3D());
@@ -131,9 +125,13 @@ function SceneContent({
 
           const markerQuaternion = new THREE.Quaternion();
           markerObj.getWorldQuaternion(markerQuaternion);
-          playerRootRef.current.quaternion.copy(markerQuaternion);
+          const euler = new THREE.Euler().setFromQuaternion(markerQuaternion, 'YXZ');
+          euler.x = 0;
+          euler.z = 0;
+          playerRootRef.current.quaternion.setFromEuler(euler);
 
           camera.position.set(0, 1.7, 0);
+          camera.rotation.set(0, 0, 0);
 
           if (controlsRef.current?.update) controlsRef.current.update(0);
 
@@ -150,6 +148,7 @@ export default function ThreeScene() {
   const modelCloseTrackedRef = useRef(false);
   const navigate = useNavigate();
   const [PointerLock, setPointerLock] = useState(null);
+  const loadStartRef = useRef(performance.now());
 
   const [infoPanelsData, setInfoPanelsData] = useState([]);
   const [locationsData, setLocationsData] = useState([]);
@@ -274,8 +273,9 @@ export default function ThreeScene() {
           sessionId={sessionId}
           isMobile={isMobile}
           markerToTeleport={markerToTeleport}
-          infoPanelsData={infoPanelsData} // Ajtókhoz
-          locationsData={locationsData} // Hologramokhoz
+          infoPanelsData={infoPanelsData}  // Ajtókhoz
+          locationsData={locationsData}    // Hologramokhoz
+          loadStartRef={loadStartRef}
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}

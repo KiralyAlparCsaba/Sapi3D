@@ -1,6 +1,13 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, List, Any
 from pydantic import BaseModel, Field, ConfigDict
+
+
+class PerformanceSample(BaseModel):
+    """A single timestamped performance sample."""
+    t: int = Field(..., ge=0, description="Seconds since session start")
+    fps: int = Field(..., ge=0)
+    memory_mb: int = Field(..., ge=0)
 
 
 # PerfMetrics Schemas
@@ -11,6 +18,10 @@ class PerfMetricsBase(BaseModel):
     fps: int = Field(..., ge=0)
     memory_mb: int = Field(..., ge=0)
     latency_ms: int = Field(..., ge=0)
+    samples: Optional[List[PerformanceSample]] = Field(None, description="Time-series samples collected during the session")
+    load_time_s: Optional[float] = Field(None, ge=0, description="Time in seconds from page load to model ready")
+    peak_memory_mb: Optional[float] = Field(None, ge=0, description="Peak JS heap memory usage in MB during the session")
+    quality_reductions: Optional[int] = Field(None, ge=0, description="Number of times the dynamic quality scaler reduced pixel ratio")
 
 
 class PerfMetricsCreate(PerfMetricsBase):

@@ -64,6 +64,11 @@ export default class Metrics {
     return this.samples;
   }
 
+  // Return peak memory
+  getPeakMemory() {
+    return this.maxMemoryMB;
+  }
+
   // Allow updating latency from outside
   setLatency(ms) {
     if (this.samples.length > 0) {

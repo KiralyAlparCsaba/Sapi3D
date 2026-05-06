@@ -1,0 +1,197 @@
+/* Interactive Door Panel Styles */
+
+.door-panel-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+/* ── Hint bubble ── */
+.door-hint {
+  background: rgba(10, 10, 10, 0.82);
+  color: #e0e0e0;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: sans-serif;
+  font-size: 13px;
+  white-space: nowrap;
+  text-align: center;
+  backdrop-filter: blur(6px);
+}
+
+.door-hint-name {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 3px;
+  letter-spacing: 0.03em;
+}
+
+.door-hint-key {
+  display: inline-block;
+  background: rgba(255, 204, 0, 0.15);
+  color: #ffcc00;
+  border: 1px solid rgba(255, 204, 0, 0.4);
+  border-radius: 4px;
+  padding: 0 5px;
+  font-weight: bold;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ── Info panel ── */
+.door-info-panel {
+  background: rgba(15, 15, 20, 0.96);
+  color: #e8e8e8;
+  padding: 18px 20px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(77, 166, 255, 0.25);
+  font-family: sans-serif;
+  width: 340px;
+  max-height: 420px;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,0.04);
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+  pointer-events: auto;
+}
+
+.door-info-panel::-webkit-scrollbar {
+  width: 4px;
+}
+.door-info-panel::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+.door-info-title {
+  margin: 0 0 14px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #4da6ff;
+  line-height: 1.35;
+  border-bottom: 1px solid rgba(77, 166, 255, 0.2);
+  padding-bottom: 12px;
+}
+
+/* ── Tabs ── */
+.door-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 10px;
+}
+
+.door-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #999;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  pointer-events: auto;
+}
+
+.door-tab:hover {
+  border-color: rgba(77, 166, 255, 0.4);
+  color: #cce4ff;
+}
+
+.door-tab-active {
+  background: rgba(77, 166, 255, 0.15);
+  border-color: rgba(77, 166, 255, 0.5);
+  color: #4da6ff;
+}
+
+.door-tab-count {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  font-size: 10px;
+  padding: 1px 6px;
+  color: #777;
+}
+
+.door-tab-active .door-tab-count {
+  background: rgba(77, 166, 255, 0.2);
+  color: #4da6ff;
+}
+
+.door-tab-content {
+  overflow-y: auto;
+  max-height: 260px;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+
+.door-tab-content::-webkit-scrollbar {
+  width: 4px;
+}
+.door-tab-content::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+/* ── Tag chips ── */
+.door-info-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.door-tag {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.door-tag-subject {
+  background: rgba(77, 166, 255, 0.12);
+  color: #a8d4ff;
+  border: 1px solid rgba(77, 166, 255, 0.22);
+}
+
+.door-tag-teacher {
+  background: rgba(160, 120, 255, 0.1);
+  color: #c8aaff;
+  border: 1px solid rgba(160, 120, 255, 0.2);
+}
+
+/* ── Media ── */
+.door-media-container {
+  margin-bottom: 14px;
+}
+
+.door-media-image {
+  width: 100%;
+  border-radius: 6px;
+  max-height: 150px;
+  object-fit: cover;
+}
+
+.door-media-video {
+  width: 100%;
+  border-radius: 6px;
+  max-height: 150px;
+}
+
+.door-media-link {
+  color: #4da6ff;
+  font-size: 12px;
+  text-decoration: none;
+}
+.door-media-link:hover {
+  text-decoration: underline;
+}

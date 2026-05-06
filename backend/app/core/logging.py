@@ -20,7 +20,7 @@ def setup_logging(level: str = "INFO") -> logging.Logger:
     logging.getLogger("uvicorn.error").setLevel(logging.INFO)
     
     logging.getLogger("asyncio").setLevel(logging.WARNING)
-    logging.getLogger("pyscopg2").setLevel(logging.WARNING)
+    logging.getLogger("psycopg2").setLevel(logging.WARNING)
 
     # Return application-specific logger
     return logging.getLogger("sapi3d")

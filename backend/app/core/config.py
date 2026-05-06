@@ -7,12 +7,13 @@ class Settings(BaseSettings):
     
     # API Settings
     api_title: str = "Sapi3D Backend API"
-    api_version: str = "0.1.0"
+    api_version: str = "0.2.0"
     api_description: str = "FastAPI backend for Sapi3D application"
+    app_version: str = "1.3.0"
     
     # Model Settings
     models_directory: str = "static/models"
-    default_model_filename: str = "sapi3D_V1.4.2.glb"
+    default_model_filename: str = "sapi3D_V1.5.1.glb"
 
     # Avatar Upload Settings
     avatars_directory: str = "static/avatars"

@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
+import "../../styles/InteractiveDoor.css";
 
 export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
   const [showPanel, setShowPanel] = useState(false);
+  const [activeTab, setActiveTab] = useState("subjects");
 
   useEffect(() => {
-    if (!isHovered) setShowPanel(false);
+    if (!isHovered) {
+      setShowPanel(false);
+      setActiveTab("subjects");
+    }
   }, [isHovered]);
 
   const worldPosition = useMemo(() => {
@@ -65,9 +70,29 @@ export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
     return found || null;
   }, [mesh, databaseInfo, meshName]);
 
-  const title = dbEntry?.coordinates_obj_name || "Szoba Info";
-  const infoText = dbEntry?.information || "Nincs adatbázis infó ehhez az ajtóhoz.";
   const mediaUrl = dbEntry?.media_url || null;
+
+  // Parse structured information string into sections
+  const parsedInfo = useMemo(() => {
+    const raw = dbEntry?.information || "";
+    if (!raw) return { header: meshName, subjects: [], teachers: [] };
+
+    const lines = raw.split("\n");
+    const header = lines[0] || meshName;
+    let subjects = [];
+    let teachers = [];
+
+    lines.forEach((line) => {
+      if (line.startsWith("Tárgyak: ")) {
+        subjects = line.replace("Tárgyak: ", "").split(", ").filter(Boolean);
+      }
+      if (line.startsWith("Oktatók: ")) {
+        teachers = line.replace("Oktatók: ", "").split(", ").filter(Boolean);
+      }
+    });
+
+    return { header, subjects, teachers };
+  }, [dbEntry, meshName]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -84,104 +109,79 @@ export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
   return (
     <group position={worldPosition}>
       <Html position={[0, 1.2, 0]} center zIndexRange={[100, 0]}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", pointerEvents: "none" }}>
+        <div className="door-panel-container">
 
           {!showPanel && (
-            <div style={{
-              background: "rgba(0,0,0,0.7)",
-              color: "white",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              fontFamily: "sans-serif",
-              fontSize: "14px",
-              whiteSpace: "nowrap",
-              textAlign: "center",
-            }}>
+            <div className="door-hint">
               {/* Objektum neve */}
-              <div style={{ fontSize: "11px", color: "#aaaaaa", marginBottom: "4px" }}>
+              <div className="door-hint-name">
                 {meshName}
               </div>
-              Nyomd meg az <strong style={{ color: "#ffcc00" }}>E</strong> gombot
+              Nyomd meg az <strong className="door-hint-key">E</strong> gombot
             </div>
           )}
 
           {showPanel && (
-            <div style={{
-              background: "rgba(20,20,20,0.95)",
-              color: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              border: "1px solid #444",
-              fontFamily: "sans-serif",
-              width: "300px",
-              maxHeight: "400px",
-              overflowY: "auto",
-              textAlign: "center",
-              boxShadow: "0px 10px 30px rgba(0,0,0,0.5)",
-            }}>
-              <h3 style={{ margin: "0 0 4px 0", color: "#4da6ff" }}>{title}</h3>
+            <div
+              className="door-info-panel"
+              onWheel={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="door-info-title">{parsedInfo.header}</h3>
 
-              {/* Objektum neve a cím alatt kis betűvel */}
-              <div style={{ fontSize: "11px", color: "#777777", marginBottom: "12px" }}>
-                {meshName}
-              </div>
-
-              {/* Media (image or video) if available */}
               {mediaUrl && (
-                <div style={{ marginBottom: "12px" }}>
+                <div className="door-media-container">
                   {mediaUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                    <img
-                      src={mediaUrl}
-                      alt={title}
-                      style={{
-                        width: "100%",
-                        borderRadius: "4px",
-                        maxHeight: "150px",
-                        objectFit: "cover"
-                      }}
-                    />
+                    <img src={mediaUrl} alt={parsedInfo.header} className="door-media-image" />
                   ) : mediaUrl.match(/\.(mp4|webm|ogg)$/i) ? (
-                    <video
-                      src={mediaUrl}
-                      controls
-                      style={{
-                        width: "100%",
-                        borderRadius: "4px",
-                        maxHeight: "150px"
-                      }}
-                    />
+                    <video src={mediaUrl} controls className="door-media-video" />
                   ) : (
-                    <a
-                      href={mediaUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: "#4da6ff", fontSize: "12px" }}
-                    >
-                      View Media
+                    <a href={mediaUrl} target="_blank" rel="noopener noreferrer" className="door-media-link">
+                      Média megtekintése
                     </a>
                   )}
                 </div>
               )}
 
-              {/* Information text */}
-              <p style={{ margin: 0, fontSize: "14px", lineHeight: "1.4", textAlign: "left" }}>
-                {infoText}
-              </p>
+              {/* Tab bar */}
+              <div className="door-tabs">
+                {parsedInfo.subjects.length > 0 && (
+                  <button
+                    className={`door-tab ${activeTab === "subjects" ? "door-tab-active" : ""}`}
+                    onClick={() => setActiveTab("subjects")}
+                  >
+                    Tárgyak
+                    <span className="door-tab-count">{parsedInfo.subjects.length}</span>
+                  </button>
+                )}
+                {parsedInfo.teachers.length > 0 && (
+                  <button
+                    className={`door-tab ${activeTab === "teachers" ? "door-tab-active" : ""}`}
+                    onClick={() => setActiveTab("teachers")}
+                  >
+                    Oktatók
+                    <span className="door-tab-count">{parsedInfo.teachers.length}</span>
+                  </button>
+                )}
+              </div>
 
-              {/* Debug info - remove in production */}
-              {!dbEntry && (
-                <div style={{
-                  marginTop: "12px",
-                  padding: "8px",
-                  background: "rgba(255,0,0,0.1)",
-                  border: "1px solid rgba(255,0,0,0.3)",
-                  borderRadius: "4px",
-                  fontSize: "11px",
-                  color: "#ff6b6b"
-                }}>
-                  ⚠️ Debug: No DB match for "{meshName}"
-                </div>
-              )}
+              {/* Tab content */}
+              <div className="door-tab-content" onWheel={(e) => e.stopPropagation()}>
+                {activeTab === "subjects" && parsedInfo.subjects.length > 0 && (
+                  <div className="door-info-tags">
+                    {parsedInfo.subjects.map((s, i) => (
+                      <span key={i} className="door-tag door-tag-subject">{s}</span>
+                    ))}
+                  </div>
+                )}
+                {activeTab === "teachers" && parsedInfo.teachers.length > 0 && (
+                  <div className="door-info-tags">
+                    {parsedInfo.teachers.map((t, i) => (
+                      <span key={i} className="door-tag door-tag-teacher">{t}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

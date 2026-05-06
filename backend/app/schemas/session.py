@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field, ConfigDict
 class DeviceBase(BaseModel):
     """Base schema for Device."""
     device_type: str = Field(..., max_length=50)
-    device_name: str = Field(..., max_length=100)
+    browser: str = Field(..., max_length=100)
+    browser_version: Optional[str] = Field(None, max_length=50)
     os_name: str = Field(..., max_length=100)
 
 
