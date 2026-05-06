@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, ForeignKey
+from sqlalchemy import String, Integer, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional, List
 
@@ -46,7 +46,7 @@ class InfoPanel(Base):
     __tablename__ = "info_panels"
     
     panel_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    information: Mapped[str] = mapped_column(String(2000), nullable=False)
+    information: Mapped[str] = mapped_column(Text, nullable=False)
     coordinates_obj_name: Mapped[str] = mapped_column(String(200), nullable=False)
     media_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     

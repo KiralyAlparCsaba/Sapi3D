@@ -152,6 +152,22 @@ async def init_db() -> None:
             END
             $$;
         """))
+        # info_panels.information: widen from VARCHAR(2000) to TEXT
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'info_panels'
+                      AND column_name = 'information'
+                      AND data_type = 'character varying'
+                ) THEN
+                    ALTER TABLE info_panels
+                    ALTER COLUMN information TYPE TEXT;
+                END IF;
+            END
+            $$;
+        """))
         # Achievement schema backward-compat patches
         await conn.execute(text("""
             DO $$

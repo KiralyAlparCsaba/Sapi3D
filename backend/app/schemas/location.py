@@ -68,7 +68,7 @@ class LocationWithEvents(LocationResponse):
 # InfoPanel Schemas
 class InfoPanelBase(BaseModel):
     """Base schema for InfoPanel."""
-    information: str = Field(..., max_length=2000)
+    information: str
     coordinates_obj_name: str = Field(..., max_length=200)
     media_url: Optional[str] = Field(None, max_length=500)
 
@@ -80,7 +80,7 @@ class InfoPanelCreate(InfoPanelBase):
 
 class InfoPanelUpdate(BaseModel):
     """Schema for updating an InfoPanel."""
-    information: Optional[str] = Field(None, max_length=2000)
+    information: Optional[str] = None
     coordinates_obj_name: Optional[str] = Field(None, max_length=200)
     media_url: Optional[str] = Field(None, max_length=500)
 

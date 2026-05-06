@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     
     # Model Settings
     models_directory: str = "static/models"
-    default_model_filename: str = "sapi3D_V1.5.1.glb"
+    default_model_filename: str = "sapi3D_V1.5.2.glb"
 
     # Avatar Upload Settings
     avatars_directory: str = "static/avatars"

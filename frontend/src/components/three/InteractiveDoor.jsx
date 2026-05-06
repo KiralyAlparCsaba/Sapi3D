@@ -5,12 +5,12 @@ import "../../styles/InteractiveDoor.css";
 
 export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
   const [showPanel, setShowPanel] = useState(false);
-  const [activeTab, setActiveTab] = useState("subjects");
+  const [activeTab, setActiveTab] = useState(null);
 
   useEffect(() => {
     if (!isHovered) {
       setShowPanel(false);
-      setActiveTab("subjects");
+      setActiveTab(null);
     }
   }, [isHovered]);
 
@@ -72,27 +72,61 @@ export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
 
   const mediaUrl = dbEntry?.media_url || null;
 
-  // Parse structured information string into sections
+  // Day abbreviation map for tab labels
+  const DAY_ABBR = {
+    "Hétfő":    "H",
+    "Kedd":     "K",
+    "Szerda":   "SZ",
+    "Csütörtök":"CS",
+    "Péntek":   "P",
+    "Szombat":  "SZO",
+  };
+  const DAY_ORDER = ["Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat"];
+
+  // Parse information: supports JSON (new format) and legacy string format
   const parsedInfo = useMemo(() => {
     const raw = dbEntry?.information || "";
-    if (!raw) return { header: meshName, subjects: [], teachers: [] };
+    if (!raw) return { mode: "empty", header: meshName, schedule: {}, teachers: [], subjects: [] };
 
+    // Try JSON first (new by-day format)
+    try {
+      const obj = JSON.parse(raw);
+      if (obj && obj.schedule) {
+        return {
+          mode: "byday",
+          header: obj.header || meshName,
+          schedule: obj.schedule || {},
+          teachers: obj.teachers || [],
+          subjects: [],
+        };
+      }
+    } catch (_) { /* not JSON, fall through */ }
+
+    // Legacy string format
     const lines = raw.split("\n");
     const header = lines[0] || meshName;
     let subjects = [];
     let teachers = [];
-
     lines.forEach((line) => {
-      if (line.startsWith("Tárgyak: ")) {
+      if (line.startsWith("Tárgyak: "))
         subjects = line.replace("Tárgyak: ", "").split(", ").filter(Boolean);
-      }
-      if (line.startsWith("Oktatók: ")) {
+      if (line.startsWith("Oktatók: "))
         teachers = line.replace("Oktatók: ", "").split(", ").filter(Boolean);
-      }
     });
-
-    return { header, subjects, teachers };
+    return { mode: "legacy", header, schedule: {}, teachers, subjects };
   }, [dbEntry, meshName]);
+
+  // Set default tab when panel opens or parsedInfo changes
+  const activeDays = DAY_ORDER.filter((d) => parsedInfo.schedule[d]?.length > 0);
+  const defaultTab = parsedInfo.mode === "byday"
+    ? (activeDays[0] || "teachers")
+    : (parsedInfo.subjects.length > 0 ? "subjects" : "teachers");
+
+  useEffect(() => {
+    if (showPanel && activeTab === null) {
+      setActiveTab(defaultTab);
+    }
+  }, [showPanel, activeTab, defaultTab]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -145,7 +179,17 @@ export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
 
               {/* Tab bar */}
               <div className="door-tabs">
-                {parsedInfo.subjects.length > 0 && (
+                {parsedInfo.mode === "byday" && activeDays.map((day) => (
+                  <button
+                    key={day}
+                    className={`door-tab ${activeTab === day ? "door-tab-active" : ""}`}
+                    onClick={() => setActiveTab(day)}
+                  >
+                    {DAY_ABBR[day] || day}
+                    <span className="door-tab-count">{parsedInfo.schedule[day].length}</span>
+                  </button>
+                ))}
+                {parsedInfo.mode === "legacy" && parsedInfo.subjects.length > 0 && (
                   <button
                     className={`door-tab ${activeTab === "subjects" ? "door-tab-active" : ""}`}
                     onClick={() => setActiveTab("subjects")}
@@ -167,13 +211,34 @@ export default function InteractiveDoor({ mesh, databaseInfo, isHovered }) {
 
               {/* Tab content */}
               <div className="door-tab-content" onWheel={(e) => e.stopPropagation()}>
-                {activeTab === "subjects" && parsedInfo.subjects.length > 0 && (
+                {/* By-day mode: show schedule slots for the selected day */}
+                {parsedInfo.mode === "byday" && activeTab && activeTab !== "teachers" && parsedInfo.schedule[activeTab] && (
+                  <div className="door-schedule-list">
+                    {parsedInfo.schedule[activeTab].map((slot, i) => (
+                      <div key={i} className="door-schedule-slot">
+                        <div className="door-schedule-time">
+                          {slot.start}–{slot.end}
+                          {slot.weeks !== "minden hét" && (
+                            <span className="door-schedule-week">{slot.weeks === "Hét A (páratlan)" ? "A" : "B"}</span>
+                          )}
+                        </div>
+                        <div className="door-schedule-subject">{slot.subject}</div>
+                        {slot.teachers?.length > 0 && (
+                          <div className="door-schedule-teacher">{slot.teachers.join(", ")}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Legacy mode: subject chips */}
+                {parsedInfo.mode === "legacy" && activeTab === "subjects" && (
                   <div className="door-info-tags">
                     {parsedInfo.subjects.map((s, i) => (
                       <span key={i} className="door-tag door-tag-subject">{s}</span>
                     ))}
                   </div>
                 )}
+                {/* Teachers tab (both modes) */}
                 {activeTab === "teachers" && parsedInfo.teachers.length > 0 && (
                   <div className="door-info-tags">
                     {parsedInfo.teachers.map((t, i) => (
