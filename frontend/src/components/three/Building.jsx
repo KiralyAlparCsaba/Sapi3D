@@ -13,9 +13,10 @@ export default function Building({
   controlsRef,
   onInsideChange,
   onWorldReady,
+  onInfoPanelOpen,
   sessionId,
   infoPanelsData,
-  locationsData
+  locationsData,
 }) {
   // IMPORTANT (production): never default to "http://localhost:8000".
   // In the user's browser, "localhost" points to their own device and is often blocked
@@ -120,11 +121,17 @@ export default function Building({
         const normalizedChildName = child.name.toLowerCase();
         const dbEntry = locationsData?.find((item) => {
           const dbName = item.name ? item.name.toLowerCase() : "";
-          const dbButtonLoc = item.button_location ? item.button_location.toLowerCase() : "";
-          return dbName === normalizedChildName || dbButtonLoc === normalizedChildName;
+          const dbButtonLoc = item.button_location
+            ? item.button_location.toLowerCase()
+            : "";
+          return (
+            dbName === normalizedChildName ||
+            dbButtonLoc === normalizedChildName
+          );
         });
 
-        const displayText = dbEntry?.information || `Nincs DB infó:\n${child.name}`;
+        const displayText =
+          dbEntry?.information || `Nincs DB infó:\n${child.name}`;
 
         foundHolograms.push({
           id: child.uuid,
@@ -145,7 +152,10 @@ export default function Building({
 
     // 🎯 RAYCAST
     raycaster.current.setFromCamera(centerScreen.current, camera);
-    const intersects = raycaster.current.intersectObjects(gltf.scene.children, true);
+    const intersects = raycaster.current.intersectObjects(
+      gltf.scene.children,
+      true,
+    );
 
     let hoveredRoot = null;
 
@@ -165,7 +175,6 @@ export default function Building({
       hoveredDoorRef.current = hoveredRoot;
       setHoveredDoor(hoveredRoot);
     }
-
 
     // 🏠 INSIDE CHECK
     const camPos = camera.position;
@@ -221,6 +230,7 @@ export default function Building({
         mesh={hoveredDoor}
         databaseInfo={infoPanelsData}
         isHovered={!!hoveredDoor}
+        onPanelOpen={onInfoPanelOpen}
       />
 
       {hologramMarkers.map((marker) => (

@@ -10,7 +10,16 @@ import { metricsCollector } from "./metricsCollector";
 import api from "../../services/api";
 
 // SCENE CONTENT
-function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, infoPanelsData, locationsData, loadStartRef }) {
+function SceneContent({
+  controlsRef,
+  sessionId,
+  isMobile,
+  markerToTeleport,
+  infoPanelsData,
+  locationsData,
+  loadStartRef,
+  onInfoPanelOpen,
+}) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
   const playerRootRef = useRef(new THREE.Object3D());
@@ -83,6 +92,7 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
         sessionId={sessionId}
         infoPanelsData={infoPanelsData}
         locationsData={locationsData}
+        onInfoPanelOpen={onInfoPanelOpen}
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
 
@@ -126,7 +136,10 @@ function SceneContent({ controlsRef, sessionId, isMobile, markerToTeleport, info
 
           const markerQuaternion = new THREE.Quaternion();
           markerObj.getWorldQuaternion(markerQuaternion);
-          const euler = new THREE.Euler().setFromQuaternion(markerQuaternion, 'YXZ');
+          const euler = new THREE.Euler().setFromQuaternion(
+            markerQuaternion,
+            "YXZ",
+          );
           euler.x = 0;
           euler.z = 0;
           playerRootRef.current.quaternion.setFromEuler(euler);
@@ -147,6 +160,7 @@ export default function ThreeScene() {
   const controlsRef = useRef();
   const modelOpenTrackedRef = useRef(false);
   const modelCloseLastSentRef = useRef(0);
+  const panelTrackRef = useRef({});
   const navigate = useNavigate();
   const [PointerLock, setPointerLock] = useState(null);
   const loadStartRef = useRef(performance.now());
@@ -233,6 +247,25 @@ export default function ThreeScene() {
       );
   };
 
+  const handleInfoPanelOpen = (panelId) => {
+    if (!panelId) return;
+    const now = Date.now();
+    const lastSentAt = panelTrackRef.current[panelId] || 0;
+    if (now - lastSentAt < 2000) return;
+    panelTrackRef.current[panelId] = now;
+
+    api
+      .post("/achievements/track/panel", null, {
+        params: { panel_id: panelId },
+      })
+      .then(() => {
+        window.dispatchEvent(new CustomEvent("achievements-updated"));
+      })
+      .catch((err) => {
+        console.error("Panel achievement tracking failed:", err);
+      });
+  };
+
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
@@ -288,9 +321,10 @@ export default function ThreeScene() {
           sessionId={sessionId}
           isMobile={isMobile}
           markerToTeleport={markerToTeleport}
-          infoPanelsData={infoPanelsData}  // Ajtókhoz
-          locationsData={locationsData}    // Hologramokhoz
+          infoPanelsData={infoPanelsData} // Ajtókhoz
+          locationsData={locationsData} // Hologramokhoz
           loadStartRef={loadStartRef}
+          onInfoPanelOpen={handleInfoPanelOpen}
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}
