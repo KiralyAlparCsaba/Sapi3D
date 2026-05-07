@@ -1,0 +1,30 @@
+[
+  {
+    "name": "hackathon",
+    "description": "A hackathon (vagy magyarul gyakran \"maraton programozás\") egy olyan intenzív, korlátozott ideig tartó esemény, ahol fejlesztők, designerek, projektmenedzserek és más szakemberek csapatokban dolgozva igyekeznek egy konkrét problémára megoldást találni vagy egy új digitális terméket (prototípust) létrehozni. \nWikipedia\nWikipedia\n +1\nA hackathonok legfontosabb jellemzői:\nIdőtartam: Általában 24–48 óra, de néha egy teljes hétvégét ölel fel, intenzív munkával.\nCél: Egy működőképes prototípus (MVP - Minimum Viable Product) létrehozása a végére.\nCsapatmunka: A résztvevők 2-5 fős csapatokban dolgoznak, gyakran mentorok segítségével.\nVerseny jelleg: A végén a csapatok bemutatják a projektjüket egy zsűrinek, és értékes nyereményekért versenyeznek.",
+    "image_path": "string",
+    "loc_id": 2,
+    "event_id": 2
+  },
+  {
+    "name": "Tanévnyitó",
+    "description": "✨ A 2025/2026-os tanév hivatalos megnyitója 📅 szeptember 15-én, hétfőn ⏰10 órától kezdődik a Marosvásárhelyi Kar koronkai kampuszának aulájában.\n👋 A héten zajlik az Összerázó Hét, valamint az 👩‍🏫👨‍🏫oktatás is kezdetét veszi hétfőn 12:30 órától a II., III. IV. éves hallgatók számára.\nAz összerázó hét programja itt érhető el 👉 https://tinyurl.com/38r8hu3v\nAz esemény pedig itt 👉 https://fb.me/e/2QclUYIUC\n🙌 Sikerekben és élményekben gazdag tanévet kívánunk Mindenkinek!",
+    "image_path": "string",
+    "loc_id": 2,
+    "event_id": 3
+  },
+  {
+    "name": "Projektbemutató",
+    "description": "⏰ Hamarosan lejár a 48 óra és fény derül nagyközönség előtt is arra, hogy mire volt elég ez az idő.\n\n😁 Ha kíváncsi vagy a csapatok projektjeire gyere el az egyetem 114-es termébe, hogy élőben szurkolhass nekik!\n\n👩‍💻 Idén első alkalommal online közvetítést is biztosítunk, szóval ha nem tudsz jelen lenni élőben, mindenképp csatlakozz online a projektbemutatókhoz és az ezt követő díjazáshoz.\n\n⌛Kezdés MA 14:00 🔜\n\n🔗 Csatlakozási link: https://meet.google.com/osr-tqsh-sus\n\nTarts velünk!",
+    "image_path": "string",
+    "loc_id": 6,
+    "event_id": 1
+  },
+  {
+    "name": "XXV. Kari Tudományos Diákköri Konferencia",
+    "description": "A Hallgatói Önkormányzat (msHÖK) és a Sapientia EMTE Marosvásárhelyi Karának Tudományos Diákköri Tanácsa meghirdeti a XXV. Kari Tudományos Diákköri Konferenciát (msTDK 2026).\n\nA konferencia célja, hogy ösztönözze a hallgatói tudományos diákköri tevékenységet, és teret biztosítson a hallgatók pályamunkáinak ismertetésére. A konferenciára várjuk azon hallgatók jelentkezését, akik tanulmányaik folytatása mellett önképzési céllal tudományos tevékenységet folytatnak, és annak eredményeit színvonalas dolgozatba foglalják.\n\nA Sapientia EMTE Marosvásárhelyi Karának keretében megrendezett kari TDK egyben jelölő fórum a 2027-ben szervezendő XXXVIII. Országos Tudományos Diákköri Konferenciára (OTDK) az alkalmazott nyelvtudományi, egészségtudományi, informatika és szoftverfejlesztés valamint kommunikációtudományi szakosztályok számára.",
+    "image_path": "string",
+    "loc_id": 2,
+    "event_id": 4
+  }
+]
