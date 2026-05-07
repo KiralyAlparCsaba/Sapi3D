@@ -30,7 +30,11 @@ function SceneContent({
   useEffect(() => {
     scene.add(playerRootRef.current);
 
-    playerRootRef.current.position.set(0, 0, 0);
+    // NOTE: do NOT reset playerRootRef.current.position here.
+    // On a cached-model second visit, Building's useEffect (child) runs before
+    // this one (parent), so onWorldReady already placed the player at the correct
+    // marker position. Resetting to (0,0,0) would undo the teleport.
+    // A fresh Object3D starts at (0,0,0) anyway, so this line is always redundant.
 
     playerRootRef.current.add(camera);
     camera.position.set(0, 1.7, 0);
