@@ -113,6 +113,15 @@ export default function LocationsPage() {
       .catch((error) => {
         console.error("Location achievement tracking failed:", error);
       });
+
+    api
+      .post("/achievements/track/model-open")
+      .then(() => {
+        window.dispatchEvent(new CustomEvent("achievements-updated"));
+      })
+      .catch((error) => {
+        console.error("Model-open achievement tracking failed:", error);
+      });
   };
 
   useEffect(() => {

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import api from "../../services/api";
 import "../../styles/AchievementsSection.css";
 import {
-  STATIC_ACHIEVEMENTS,
   BADGE_TIERS,
   buildDbAchievementDisplay,
   collectLocationIds,
@@ -227,52 +226,6 @@ export default function AchievementsSection() {
             );
           })}
         </div>
-      </div>
-
-      {/* ── Statikus achievement kártyák ── */}
-      <div className="profil-achievements-grid">
-        {STATIC_ACHIEVEMENTS.map((item) => {
-          const progress = Math.min(100, Math.round((item.current / item.target) * 100));
-          return (
-            <article
-              key={item.id}
-              className={`profil-achievement-card ${item.unlocked ? "is-unlocked" : "is-locked"}`}
-            >
-              <div className="profil-achievement-top">
-                <span className="profil-achievement-category">{item.category}</span>
-                <span className="profil-achievement-state">
-                  {item.unlocked ? "Teljesítve" : "Folyamatban"}
-                </span>
-              </div>
-              <h4>{item.name}</h4>
-              <p>{item.description}</p>
-              <small>{item.condition}</small>
-              <div
-                className="profil-achievement-progress"
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={item.target}
-                aria-valuenow={item.current}
-              >
-                <div
-                  className="profil-achievement-progress-fill"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <span className="profil-achievement-progress-text">
-                {item.current}/{item.target}
-              </span>
-            </article>
-          );
-        })}
-      </div>
-
-      {/* ── DB-ből betöltött achievement kártyák ── */}
-      <div className="profil-achievements-subhead">
-        <h4>Adatbázisból betöltött kihívások</h4>
-        <span>
-          {dbAchievementsLoading ? "Betöltés..." : `${dbAchievements.length} elem`}
-        </span>
       </div>
 
       {dbAchievementsError && (
