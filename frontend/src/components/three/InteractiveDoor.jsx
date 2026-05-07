@@ -12,6 +12,7 @@ export default function InteractiveDoor({
   const [showPanel, setShowPanel] = useState(false);
   const [activeTab, setActiveTab] = useState(null);
   const wasOpenRef = React.useRef(false);
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   useEffect(() => {
     if (!isHovered) {
@@ -192,11 +193,21 @@ export default function InteractiveDoor({
       <Html position={[0, 1.2, 0]} center zIndexRange={[100, 0]}>
         <div className="door-panel-container">
           {!showPanel && (
-            <div className="door-hint">
-              {/* Objektum neve */}
-              <div className="door-hint-name">{meshName}</div>
-              Nyomd meg az <strong className="door-hint-key">E</strong> gombot
-            </div>
+            isMobile ? (
+              <button
+                className="door-hint door-hint-tap"
+                onClick={() => setShowPanel(true)}
+              >
+                <div className="door-hint-name">{meshName}</div>
+                Érintsd meg a megnyitáshoz
+              </button>
+            ) : (
+              <div className="door-hint">
+                {/* Objektum neve */}
+                <div className="door-hint-name">{meshName}</div>
+                Nyomd meg az <strong className="door-hint-key">E</strong> gombot
+              </div>
+            )
           )}
 
           {showPanel && (
@@ -205,6 +216,14 @@ export default function InteractiveDoor({
               onWheel={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
             >
+              {isMobile && (
+                <button
+                  className="door-close-btn"
+                  onClick={() => setShowPanel(false)}
+                >
+                  ✕
+                </button>
+              )}
               <h3 className="door-info-title">{parsedInfo.header}</h3>
 
               {mediaUrl && (

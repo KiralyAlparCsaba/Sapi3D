@@ -41,8 +41,55 @@
   line-height: 1.5;
 }
 
+/* ── Mobile tap hint ── */
+.door-hint-tap {
+  cursor: pointer;
+  pointer-events: auto;
+  background: rgba(10, 10, 10, 0.88);
+  border: 1px solid rgba(77, 166, 255, 0.4);
+  color: #4da6ff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-family: sans-serif;
+  white-space: nowrap;
+  text-align: center;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.door-hint-tap:active {
+  background: rgba(77, 166, 255, 0.2);
+  border-color: rgba(77, 166, 255, 0.7);
+}
+
+/* ── Mobile close button ── */
+.door-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: #aaa;
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px 8px;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.door-close-btn:active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
 /* ── Info panel ── */
 .door-info-panel {
+  position: relative;
   background: rgba(15, 15, 20, 0.96);
   color: #e8e8e8;
   padding: 18px 20px 20px;
