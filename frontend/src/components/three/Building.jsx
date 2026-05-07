@@ -14,6 +14,7 @@ export default function Building({
   onInsideChange,
   onWorldReady,
   onInfoPanelOpen,
+  onLocationVisit,
   sessionId,
   infoPanelsData,
   locationsData,
@@ -58,9 +59,13 @@ export default function Building({
 
   const raycaster = useRef(new THREE.Raycaster());
   const centerScreen = useRef(new THREE.Vector2(0, 0));
+  const cameraWorldPosRef = useRef(new THREE.Vector3());
+  const locationMarkersRef = useRef([]);
+  const proximityTriggeredRef = useRef(new Set());
 
   // ✅ PROXIMITY LIMIT
   const MAX_DISTANCE = 3;
+  const LOCATION_DISTANCE_SQ = 4;
 
   useEffect(() => {
     if (sessionId) metricsCollector.setSession(sessionId);
@@ -78,6 +83,7 @@ export default function Building({
     triggerBoxes.current = [];
     doorObjects.current = [];
     const foundHolograms = [];
+    const foundLocationMarkers = [];
 
     if (!didSnapRef.current) {
       camera.position.copy(SPAWN_POS);
@@ -139,10 +145,19 @@ export default function Building({
           position: center,
           text: displayText,
         });
+
+        if (dbEntry?.loc_id) {
+          foundLocationMarkers.push({
+            locationId: dbEntry.loc_id,
+            position: center,
+          });
+        }
       }
     });
 
     setHologramMarkers(foundHolograms);
+    locationMarkersRef.current = foundLocationMarkers;
+    proximityTriggeredRef.current = new Set();
     onWorldReady?.(gltf.scene);
   }, [gltf.scene, camera, onWorldReady, locationsData]);
 
@@ -191,6 +206,22 @@ export default function Building({
       if (roofRef.current) roofRef.current.visible = !inside;
       if (interiorRef.current) interiorRef.current.visible = inside;
       onInsideChange?.(inside);
+    }
+
+    if (onLocationVisit && locationMarkersRef.current.length > 0) {
+      const cameraWorldPos = cameraWorldPosRef.current;
+      camera.getWorldPosition(cameraWorldPos);
+
+      for (const marker of locationMarkersRef.current) {
+        if (proximityTriggeredRef.current.has(marker.locationId)) continue;
+        if (
+          cameraWorldPos.distanceToSquared(marker.position) <=
+          LOCATION_DISTANCE_SQ
+        ) {
+          proximityTriggeredRef.current.add(marker.locationId);
+          onLocationVisit(marker.locationId);
+        }
+      }
     }
 
     // 📊 METRICS

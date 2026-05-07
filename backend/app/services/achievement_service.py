@@ -308,14 +308,21 @@ class AchievementService:
         
         # Get all achievements that track locations
         all_achievements = await self.achievement_repo.get_all_achievements()
-        
+
         for achievement in all_achievements:
+            requirements = await self.requirement_repo.get_by_achievement(achievement.achv_id)
+            if not any(
+                req.req_type in ("location_count", "location", "location_any_of")
+                for req in requirements
+            ):
+                continue
+
             # Get or create progress
             progress = await self.progress_repo.get_or_create_progress(user_id, achievement.achv_id)
-            
+
             # Add location to progress
             await self.location_repo.add_location(progress.id, location_id)
-            
+
             # Check if unlock
             if await self.check_and_unlock_achievement(user_id, achievement.achv_id):
                 unlocked.append(achievement.achv_id)

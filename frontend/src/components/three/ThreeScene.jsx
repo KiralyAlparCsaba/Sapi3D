@@ -19,6 +19,7 @@ function SceneContent({
   locationsData,
   loadStartRef,
   onInfoPanelOpen,
+  onLocationVisit,
 }) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
@@ -93,6 +94,7 @@ function SceneContent({
         infoPanelsData={infoPanelsData}
         locationsData={locationsData}
         onInfoPanelOpen={onInfoPanelOpen}
+        onLocationVisit={onLocationVisit}
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
 
@@ -161,6 +163,7 @@ export default function ThreeScene() {
   const modelOpenTrackedRef = useRef(false);
   const modelCloseLastSentRef = useRef(0);
   const panelTrackRef = useRef({});
+  const locationTrackRef = useRef({});
   const navigate = useNavigate();
   const [PointerLock, setPointerLock] = useState(null);
   const loadStartRef = useRef(performance.now());
@@ -266,6 +269,25 @@ export default function ThreeScene() {
       });
   };
 
+  const handleLocationVisit = (locationId) => {
+    if (!locationId) return;
+    const now = Date.now();
+    const lastSentAt = locationTrackRef.current[locationId] || 0;
+    if (now - lastSentAt < 2000) return;
+    locationTrackRef.current[locationId] = now;
+
+    api
+      .post("/achievements/track/location", null, {
+        params: { location_id: locationId },
+      })
+      .then(() => {
+        window.dispatchEvent(new CustomEvent("achievements-updated"));
+      })
+      .catch((err) => {
+        console.error("Location achievement tracking failed:", err);
+      });
+  };
+
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
@@ -325,6 +347,7 @@ export default function ThreeScene() {
           locationsData={locationsData} // Hologramokhoz
           loadStartRef={loadStartRef}
           onInfoPanelOpen={handleInfoPanelOpen}
+          onLocationVisit={handleLocationVisit}
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}
