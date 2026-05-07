@@ -26,7 +26,7 @@ export default function usePerformanceUploader(metrics, sessionId) {
         const token = localStorage.getItem("access_token");
 
         await axios.post(
-          `${import.meta.env.VITE_API_URL}/sessions/${sessionId}/metrics`,
+          `${import.meta.env.VITE_API_URL || "/api"}/sessions/${sessionId}/metrics`,
           {
             session_id: sessionId,
             fps: Math.round(avgFps),

@@ -34,6 +34,12 @@ detect_local_ip() {
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
         LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "localhost")
+    elif [[ "$OSTYPE" == "msys"* ]] || [[ "$OSTYPE" == "cygwin"* ]] || [[ "$OSTYPE" == "win32"* ]]; then
+        # Git Bash / MinGW / Cygwin on Windows
+        LOCAL_IP=$(ipconfig 2>/dev/null | grep "IPv4 Address" | grep -v "169\." | grep -v "172\." | head -1 | awk -F': ' '{print $2}' | sed 's/\r$//')
+        if [ -z "$LOCAL_IP" ]; then
+            LOCAL_IP=$(ipconfig 2>/dev/null | grep -i "ipv4" | grep -v "169\." | grep -v "172\." | head -1 | awk -F': ' '{print $2}' | sed 's/\r$//')
+        fi
     else
         LOCAL_IP="localhost"
     fi
@@ -60,14 +66,12 @@ fi
 echo "✅ .env file found"
 echo ""
 
-# If mobile mode, update VITE_API_URL with the detected IP
+# If mobile mode, clear VITE_API_URL so all requests go through Vite's proxy
+# (same as production nginx) - avoids CORS issues when accessing from mobile IP
 if [ "$MOBILE_MODE" = true ]; then
     LOCAL_IP=$(detect_local_ip)
-    echo "📱 Updating VITE_API_URL for mobile access: http://$LOCAL_IP:8000"
-    
-    # Update .env file with the detected IP for both API and frontend
-    sed -i "s|VITE_API_URL=.*|VITE_API_URL=http://$LOCAL_IP:8000|g" .env
-
+    echo "📱 Mobile mode: clearing VITE_API_URL so requests use Vite proxy (no CORS issues)"
+    sed -i "s|VITE_API_URL=.*|VITE_API_URL=|g" .env
 fi
 
 echo ""

@@ -171,7 +171,7 @@ export default function ThreeScene() {
   const [infoPanelsData, setInfoPanelsData] = useState([]);
   const [locationsData, setLocationsData] = useState([]);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const API_URL = import.meta.env.VITE_API_URL || "/api";
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const routeLocation = useLocation();
