@@ -8,6 +8,8 @@ import * as THREE from "three";
 import MobilePointerLockControls from "./MobilePointerLockControls";
 import { metricsCollector } from "./metricsCollector";
 import api from "../../services/api";
+import useMultiplayer from "./useMultiplayer";
+import RemotePlayer from "./RemotePlayer";
 
 // SCENE CONTENT
 function SceneContent({
@@ -20,10 +22,13 @@ function SceneContent({
   loadStartRef,
   onInfoPanelOpen,
   onLocationVisit,
+  remotePlayers,
+  sendPosition,
 }) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
   const playerRootRef = useRef(new THREE.Object3D());
+  const forwardTmpRef = useRef(new THREE.Vector3());
 
   const didTeleportRef = useRef(false);
 
@@ -65,6 +70,14 @@ function SceneContent({
 
     if (controlsRef.current?.update) {
       controlsRef.current.update(delta);
+    }
+
+    // MULTIPLAYER: broadcast our position + facing direction (throttled in the hook)
+    if (sendPosition && playerRootRef.current) {
+      const fwd = forwardTmpRef.current;
+      camera.getWorldDirection(fwd);
+      const rotY = Math.atan2(fwd.x, fwd.z);
+      sendPosition(playerRootRef.current.position, rotY);
     }
   });
 
@@ -158,6 +171,12 @@ function SceneContent({
           didTeleportRef.current = true;
         }}
       />
+
+      {/* MULTIPLAYER: remote players rendered in-world */}
+      {remotePlayers &&
+        [...remotePlayers.values()].map((p) => (
+          <RemotePlayer key={p.userId} player={p} />
+        ))}
     </Suspense>
   );
 }
@@ -313,6 +332,15 @@ export default function ThreeScene() {
 
   const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
 
+  // MULTIPLAYER: open WS, expose remote player state + sendPosition
+  const {
+    remotePlayers,
+    sendPosition,
+    connected: mpConnected,
+    status: mpStatus,
+    lastError: mpError,
+  } = useMultiplayer();
+
   return (
     <>
       <button
@@ -335,6 +363,42 @@ export default function ThreeScene() {
         ← Vissza a főoldalra
       </button>
 
+      {/* MULTIPLAYER status pill */}
+      <div
+        style={{
+          position: "absolute",
+          top: "20px",
+          left: "20px",
+          padding: "6px 12px",
+          background: mpConnected
+            ? "rgba(0,150,80,0.85)"
+            : mpStatus === "no_token"
+            ? "rgba(180,60,60,0.85)"
+            : mpStatus === "error" || (mpStatus === "closed" && mpError)
+            ? "rgba(180,60,60,0.85)"
+            : "rgba(120,120,120,0.85)",
+          color: "white",
+          borderRadius: "999px",
+          fontSize: "13px",
+          fontFamily: "sans-serif",
+          zIndex: 999,
+          pointerEvents: "none",
+          maxWidth: "90vw",
+        }}
+      >
+        {mpConnected
+          ? `Online • ${remotePlayers.size} másik játékos`
+          : mpStatus === "no_token"
+          ? "MP: nincs token (jelentkezz be újra)"
+          : mpStatus === "connecting"
+          ? "MP: csatlakozás..."
+          : mpStatus === "closed"
+          ? `MP: lecsatlakozva${mpError ? ` (${mpError})` : ""}`
+          : mpStatus === "error"
+          ? `MP: hiba${mpError ? ` (${mpError})` : ""}`
+          : "MP: indul..."}
+      </div>
+
       <Canvas
         camera={{ position: [0, 1.7, 0], fov: 75 }}
         style={{ width: "100vw", height: "100vh" }}
@@ -352,6 +416,8 @@ export default function ThreeScene() {
           loadStartRef={loadStartRef}
           onInfoPanelOpen={handleInfoPanelOpen}
           onLocationVisit={handleLocationVisit}
+          remotePlayers={remotePlayers}
+          sendPosition={sendPosition}
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}
