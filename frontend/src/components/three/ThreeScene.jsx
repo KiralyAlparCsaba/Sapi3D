@@ -172,10 +172,16 @@ function SceneContent({
         }}
       />
 
-      {/* MULTIPLAYER: remote players rendered in-world */}
+      {/* MULTIPLAYER: remote players rendered in-world.
+          `otherPlayers` (the whole map) is forwarded so each avatar can
+          look at the nearest other player. */}
       {remotePlayers &&
         [...remotePlayers.values()].map((p) => (
-          <RemotePlayer key={p.userId} player={p} />
+          <RemotePlayer
+            key={p.userId}
+            player={p}
+            otherPlayers={remotePlayers}
+          />
         ))}
     </Suspense>
   );

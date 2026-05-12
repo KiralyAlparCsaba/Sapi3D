@@ -1,21 +1,24 @@
-import { useRef, useMemo } from "react";
+import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
 
+import Avatar from "./avatars/Avatar";
+
 const LERP_RATE = 12; // higher = snappier; lower = smoother
 
-// Stable color from user id (HSL ring)
-function colorFromId(id) {
-  const hue = (Number(id) * 137) % 360;
-  return `hsl(${hue}, 70%, 55%)`;
-}
-
-export default function RemotePlayer({ player }) {
+/**
+ * RemotePlayer — handles the network-driven motion of a remote player
+ * (interpolation toward the latest broadcast pose) and renders an
+ * <Avatar> + nametag at that pose.
+ *
+ * The avatar itself (GLB or capsule fallback) is chosen inside <Avatar>
+ * based on the loaded manifest. `otherPlayers` is forwarded so the avatar
+ * can implement look-at-nearest-player.
+ */
+export default function RemotePlayer({ player, otherPlayers }) {
   const groupRef = useRef();
   const playerRef = useRef(player);
-  playerRef.current = player; // always point to latest reference
-
-  const color = useMemo(() => colorFromId(player.userId), [player.userId]);
+  playerRef.current = player; // always point to the latest reference
 
   useFrame((_, delta) => {
     const g = groupRef.current;
@@ -29,7 +32,7 @@ export default function RemotePlayer({ player }) {
     p.curY += (p.targetY - p.curY) * k;
     p.curZ += (p.targetZ - p.curZ) * k;
 
-    // Handle rotation wrap-around for short-path interpolation
+    // Rotation wrap-around for short-path interpolation
     let dr = p.targetRotY - p.curRotY;
     while (dr > Math.PI) dr -= Math.PI * 2;
     while (dr < -Math.PI) dr += Math.PI * 2;
@@ -41,17 +44,7 @@ export default function RemotePlayer({ player }) {
 
   return (
     <group ref={groupRef}>
-      {/* Body — capsule centered roughly at hip height */}
-      <mesh position={[0, 0.9, 0]} castShadow>
-        <capsuleGeometry args={[0.3, 1.0, 6, 12]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
-
-      {/* "Nose" — small marker showing facing direction (+Z is forward) */}
-      <mesh position={[0, 1.25, 0.32]}>
-        <sphereGeometry args={[0.08, 8, 8]} />
-        <meshStandardMaterial color="#ffffff" />
-      </mesh>
+      <Avatar player={player} otherPlayers={otherPlayers} />
 
       {/* Username tag floating overhead */}
       <Text
