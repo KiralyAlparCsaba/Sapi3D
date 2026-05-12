@@ -10,6 +10,7 @@ import { metricsCollector } from "./metricsCollector";
 import api from "../../services/api";
 import useMultiplayer from "./useMultiplayer";
 import RemotePlayer from "./RemotePlayer";
+import ModelLoadingOverlay from "./ModelLoadingOverlay";
 
 // SCENE CONTENT
 function SceneContent({
@@ -24,6 +25,7 @@ function SceneContent({
   onLocationVisit,
   remotePlayers,
   sendPosition,
+  onModelReady,
 }) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
@@ -114,6 +116,10 @@ function SceneContent({
         onLocationVisit={onLocationVisit}
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
+
+          // Signal up to the parent so the loading overlay can fade out.
+          // Safe to call repeatedly — the parent's state setter is idempotent.
+          onModelReady?.();
 
           if (didTeleportRef.current) return;
 
@@ -338,6 +344,11 @@ export default function ThreeScene() {
 
   const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
 
+  // Loading overlay state. Flips to true the first time Building reports
+  // its scene is ready; the overlay then handles its own fade-out.
+  const [modelReady, setModelReady] = useState(false);
+  const handleModelReady = () => setModelReady(true);
+
   // MULTIPLAYER: open WS, expose remote player state + sendPosition
   const {
     remotePlayers,
@@ -349,6 +360,10 @@ export default function ThreeScene() {
 
   return (
     <>
+      {/* Loading overlay — covers the screen while the GLB downloads.
+          Fades out automatically once Building reports onWorldReady. */}
+      <ModelLoadingOverlay visible={!modelReady} />
+
       <button
         onClick={() => {
           sendModelClose();
@@ -424,6 +439,7 @@ export default function ThreeScene() {
           onLocationVisit={handleLocationVisit}
           remotePlayers={remotePlayers}
           sendPosition={sendPosition}
+          onModelReady={handleModelReady}
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}
