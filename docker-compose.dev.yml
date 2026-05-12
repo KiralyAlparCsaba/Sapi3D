@@ -13,16 +13,27 @@ services:
       - ./backend/static:/app/static
     env_file:
       - .env
-    # Override CMD to enable hot reload
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+    command:
+      - "uvicorn"
+      - "main:app"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--reload"
+      - "--ws-ping-interval"
+      - "10"
+      - "--ws-ping-timeout"
+      - "5"
 
   # Frontend Development Overrides
   frontend:
     build:
-      target: build  # Use only the build stage (not production nginx)
+      target: build # Use only the build stage (not production nginx)
     ports:
-      - "3000:5173"  # Vite dev server port
-      - "5173:5173"  # Also expose 5173 for mobile access
+      - "3000:5173" # Vite dev server port
+      - "5173:5173" # Also expose 5173 for mobile access
     volumes:
       # Mount source code for hot reload
       - ./frontend/src:/app/src

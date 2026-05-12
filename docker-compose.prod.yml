@@ -32,6 +32,18 @@ services:
     container_name: sapi3d-backend-prod
     ports:
       - "8000:8000"
+
+    command:
+      - "uvicorn"
+      - "main:app"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--ws-ping-interval"
+      - "10"
+      - "--ws-ping-timeout"
+      - "5"
     # No volume mounts in production - code is baked into the image
     # volumes:
     #   - ./backend/static:/app/static
@@ -68,7 +80,6 @@ services:
     networks:
       - sapi3d-network
     restart: unless-stopped
-
 
 networks:
   sapi3d-network:

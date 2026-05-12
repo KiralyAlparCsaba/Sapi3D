@@ -19,6 +19,15 @@ import { useEffect, useRef, useState, useCallback } from "react";
 const SEND_INTERVAL_MS = 100;     // 10 Hz target
 const MIN_DELTA_POS = 0.02;       // require ~2cm of movement to send
 const MIN_DELTA_ROT = 0.02;       // ~1.1 degrees
+// If the WS sits in CONNECTING this long, force-close it so the close
+// handler can trigger a reconnect. Without this, mobile browsers can leave
+// a half-open handshake silently stuck — no open event, no close event,
+// no progress. The user would have to manually refresh to recover.
+const CONNECT_TIMEOUT_MS = 6000;
+// On a watchdog-triggered close (stuck handshake), retry sooner than the
+// normal 2s — the user is already waiting, no point making them wait more.
+const FAST_RECONNECT_MS = 500;
+const NORMAL_RECONNECT_MS = 2000;
 
 function buildWsUrl(token) {
   // Vite dev proxy + nginx in prod both route /ws to the backend.
@@ -63,6 +72,10 @@ export default function useMultiplayer() {
     let closed = false;
     let reconnectTimer = null;
 
+    // Tracks whether the most recent close was triggered by our watchdog
+    // (stuck CONNECTING) so we can retry faster than the default 2s.
+    let watchdogTriggered = false;
+
     const open = () => {
       const url = buildWsUrl(token);
       console.log("[MP] Opening WS:", url);
@@ -77,8 +90,28 @@ export default function useMultiplayer() {
         return;
       }
       wsRef.current = ws;
+      watchdogTriggered = false;
+
+      // Watchdog: if the WS is still CONNECTING after CONNECT_TIMEOUT_MS,
+      // assume the handshake is stuck (slow mobile network, dead Vite
+      // proxy upgrade, browser tab throttling, etc.) and force-close.
+      // The close handler will then trigger a fast reconnect.
+      const watchdog = setTimeout(() => {
+        if (ws && ws.readyState === WebSocket.CONNECTING) {
+          console.warn(
+            "[MP] Connect timeout — WS stuck in CONNECTING, forcing close to retry",
+          );
+          watchdogTriggered = true;
+          try {
+            ws.close();
+          } catch {
+            /* ignore */
+          }
+        }
+      }, CONNECT_TIMEOUT_MS);
 
       ws.addEventListener("open", () => {
+        clearTimeout(watchdog);
         // Ignore if this WS is no longer the active one (StrictMode dispose
         // already replaced it with a newer connection).
         if (closed || wsRef.current !== ws) return;
@@ -88,6 +121,7 @@ export default function useMultiplayer() {
       });
 
       ws.addEventListener("close", (e) => {
+        clearTimeout(watchdog);
         // CRITICAL: only touch shared state if THIS websocket is still the
         // one we're using. Under React StrictMode, the first WS gets disposed
         // and its close event can fire AFTER the second WS has already been
@@ -114,8 +148,14 @@ export default function useMultiplayer() {
         playersMapRef.current = new Map();
         updatePlayersState();
         if (!closed) {
-          // Simple reconnect after 2s if not intentional close
-          reconnectTimer = setTimeout(open, 2000);
+          // After a watchdog timeout, retry fast — the user is already
+          // waiting and we know the previous attempt never reached OPEN.
+          // After a "real" close (network drop, server kick, etc.), wait
+          // a bit longer so we don't hammer a flaky server.
+          const delay = watchdogTriggered
+            ? FAST_RECONNECT_MS
+            : NORMAL_RECONNECT_MS;
+          reconnectTimer = setTimeout(open, delay);
         }
       });
 
