@@ -63,13 +63,27 @@ The look-at-nearest-player feature expects these bone names by default:
 - `eye_L` — rotated to aim the left eye.
 - `eye_R` — rotated to aim the right eye.
 
-Each bone's local **+Z axis** should point along its "looking forward"
-direction at rest. If your rig uses different names (e.g. `Head`,
-`Eye.L`, `Eye.R`), override them in the manifest entry's `bones` block
-rather than renaming bones inside Blender.
+If your rig uses different names (Blender's `.L`/`.R` convention is
+common — e.g. `Head`, `Eye.L`, `Eye.R`), override them in the manifest
+entry's `bones` block rather than renaming bones inside Blender.
 
-A minimum rig of just these three bones plus a root works fine; you don't
-need a full body skeleton unless you also want body animation.
+A minimum rig of just these bones plus a root works fine; you don't
+need a full body skeleton unless you also want body animation. An
+eyes-only rig (no `head` bone) is also valid — body won't track,
+only the eyes will.
+
+#### Bone forward axis
+
+Each bone has a local "forward" axis — the direction it visually points
+in at rest. The default is **bone-local +Y**, which matches Blender's
+standard convention (a bone's local +Y is its head→tail direction).
+This is what you get from any normal Blender glTF export, so most rigs
+work without configuration.
+
+For rigs that use a different convention, set `bones.forwardAxis` on
+the variant in `manifest.json`. Accepted values: `+X`, `-X`, `+Y`,
+`-Y`, `+Z`, `-Z`. All look-at bones in a variant share the same forward
+axis — mixing conventions within one rig isn't supported.
 
 ### Animations (optional but recommended)
 
@@ -101,8 +115,9 @@ same avatar.
       "thumbnail": "/api/static/avatars-3d/student_male.png",
       "bones": {
         "head": "Head",
-        "eyeL": "Eye_L",
-        "eyeR": "Eye_R"
+        "eyeL": "Eye.L",
+        "eyeR": "Eye.R",
+        "forwardAxis": "+Y"
       }
     }
   ]
