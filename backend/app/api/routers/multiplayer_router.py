@@ -89,6 +89,12 @@ async def world_ws(websocket: WebSocket, token: str = Query(...)):
             data = await websocket.receive_json()
             msg_type = data.get("type")
 
+            # Per-user inbound rate limit. Drops messages above the threshold
+            # silently — a well-behaved client will never hit this, but a
+            # buggy or hostile one can't flood the server.
+            if not connection_manager.check_rate_limit(user_id):
+                continue
+
             if msg_type == "position":
                 try:
                     x = float(data.get("x", 0.0))

@@ -11,13 +11,21 @@ swap this for a Redis-backed implementation.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+from collections import deque
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from time import monotonic
+from typing import Deque, Dict, Optional
 
 from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
+
+# Per-user inbound message rate limit (token bucket-ish).
+# Normal client sends ~10Hz, this gives headroom for bursts but stops abuse.
+RATE_LIMIT_PER_SEC = 15
+RATE_LIMIT_WINDOW = 1.0  # seconds
 
 
 @dataclass
@@ -36,6 +44,9 @@ class PlayerState:
     # fake default (0,0,0) coordinate, which would otherwise make capsules
     # briefly appear at the world origin.
     has_position: bool = False
+    # Sliding window of inbound message timestamps (monotonic seconds). Used
+    # for per-user rate limiting so one bad client can't flood the server.
+    msg_times: Deque[float] = field(default_factory=deque)
 
     def public_dict(self) -> dict:
         """Serializable info about the player (no websocket)."""
@@ -159,6 +170,33 @@ class ConnectionManager:
         return len(self._players)
 
     # ──────────────────────────────────────────────
+    # RATE LIMITING
+    # ──────────────────────────────────────────────
+    def check_rate_limit(self, user_id: int) -> bool:
+        """
+        Returns True if the user is within their per-second message budget.
+        Returns False if they should be silently dropped this message.
+
+        Uses a sliding-window log of timestamps. Normal clients send at ~10Hz,
+        so the 15/sec cap leaves room for legitimate bursts (e.g., a brief
+        catchup after a network hiccup) while stopping a malicious or buggy
+        client from flooding the server.
+        """
+        p = self._players.get(user_id)
+        if p is None:
+            return False
+        now = monotonic()
+        times = p.msg_times
+        cutoff = now - RATE_LIMIT_WINDOW
+        # Drop expired timestamps from the front.
+        while times and times[0] < cutoff:
+            times.popleft()
+        if len(times) >= RATE_LIMIT_PER_SEC:
+            return False
+        times.append(now)
+        return True
+
+    # ──────────────────────────────────────────────
     # BROADCAST
     # ──────────────────────────────────────────────
     async def send_to(self, user_id: int, message: dict) -> None:
@@ -167,21 +205,42 @@ class ConnectionManager:
         if p is None:
             return
         try:
-            await p.websocket.send_json(message)
+            await p.websocket.send_text(json.dumps(message, separators=(",", ":")))
         except Exception as e:
             logger.warning(f"[MP] Failed to send to user {user_id}: {e}")
 
     async def broadcast(self, message: dict, exclude_user_id: Optional[int] = None) -> None:
-        """Send a JSON message to all connected users, optionally excluding one."""
-        # Snapshot the player list so we can iterate without holding the lock.
+        """
+        Send a JSON message to all connected users in parallel.
+
+        Two key optimizations vs the naïve loop-with-await version:
+        1. JSON is serialized ONCE, not per-recipient. At 50 users that's a
+           49x reduction in json.dumps calls per broadcast.
+        2. Sends happen concurrently via asyncio.gather, so a single slow
+           client can't head-of-line block delivery to everyone else.
+
+        At 50 users × 10Hz updates, the old serial path would dispatch ~24k
+        send operations/sec on the event loop. With parallel+pre-serialized
+        sends, throughput easily fits in a single uvicorn worker.
+        """
         targets = [
-            (uid, p) for uid, p in self._players.items() if uid != exclude_user_id
+            p for uid, p in self._players.items() if uid != exclude_user_id
         ]
-        for uid, p in targets:
-            try:
-                await p.websocket.send_json(message)
-            except Exception as e:
-                logger.warning(f"[MP] Broadcast failed for user {uid}: {e}")
+        if not targets:
+            return
+
+        payload = json.dumps(message, separators=(",", ":"))
+
+        results = await asyncio.gather(
+            *(p.websocket.send_text(payload) for p in targets),
+            return_exceptions=True,
+        )
+
+        for p, result in zip(targets, results):
+            if isinstance(result, Exception):
+                logger.warning(
+                    f"[MP] Broadcast failed for user {p.user_id}: {result}"
+                )
 
 
 # Module-level singleton. Import this from routers.

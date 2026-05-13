@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Text } from "@react-three/drei";
+import { Html } from "@react-three/drei";
 
 import Avatar from "./avatars/Avatar";
 
@@ -46,18 +46,31 @@ export default function RemotePlayer({ player, otherPlayers }) {
     <group ref={groupRef}>
       <Avatar player={player} otherPlayers={otherPlayers} />
 
-      {/* Username tag floating overhead */}
-      <Text
+      {/* Username tag floating overhead.
+          We use <Html> (DOM billboard) instead of drei's <Text> because
+          drei's <Text> spins up a separate troika-three-text SDF atlas
+          textura per instance. At 50 concurrent remote players that's
+          50 atlas textures + 50 extra draw calls just for nametags —
+          painful on mobile GPUs. <Html> is a single DOM element scaled
+          by distance, essentially free on the GPU. */}
+      <Html
         position={[0, 2.05, 0]}
-        fontSize={0.18}
-        color="#ffffff"
-        outlineWidth={0.012}
-        outlineColor="#000000"
-        anchorX="center"
-        anchorY="middle"
+        center
+        distanceFactor={6}
+        style={{
+          color: "#ffffff",
+          fontFamily: "sans-serif",
+          fontWeight: 600,
+          fontSize: "16px",
+          textShadow:
+            "0 0 3px #000, 0 0 3px #000, 0 0 3px #000, 0 0 3px #000",
+          pointerEvents: "none",
+          userSelect: "none",
+          whiteSpace: "nowrap",
+        }}
       >
         {player.username || `user${player.userId}`}
-      </Text>
+      </Html>
     </group>
   );
 }
