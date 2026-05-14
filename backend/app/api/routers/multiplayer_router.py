@@ -1,23 +1,3 @@
-"""
-Multiplayer WebSocket router.
-
-Single endpoint: /ws/world
-
-Auth: JWT token passed as ?token=... in the connect URL.
-
-Protocol (JSON over WS):
-  Client -> Server:
-    { "type": "position", "x": ..., "y": ..., "z": ..., "rotY": ... }
-    { "type": "ping" }
-
-  Server -> Client:
-    { "type": "welcome",       "self": {...},   "others": [...] }
-    { "type": "user_joined",   "user": {...} }
-    { "type": "user_left",     "userId": ... }
-    { "type": "position",      "userId": ..., "x":..., "y":..., "z":..., "rotY":... }
-    { "type": "pong" }
-"""
-
 from __future__ import annotations
 
 import logging
@@ -27,7 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import AsyncSessionLocal
 from core.security import decode_access_token
 from repositories.user_repository import UserRepository
+from repositories.chat_repository import ChatRepository
 from services.presence_service import connection_manager
+
+MAX_CHAT_TEXT_LEN = 500
+CHAT_HISTORY_LIMIT = 50
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +19,6 @@ router = APIRouter()
 
 
 async def _resolve_user_from_token(token: str):
-    """Decode token, fetch user from DB. Returns (user_id, username, avatar_url) or None."""
     try:
         payload = decode_access_token(token)
     except Exception as e:
@@ -46,7 +29,7 @@ async def _resolve_user_from_token(token: str):
     if not username:
         return None
 
-    async with AsyncSessionLocal() as db:  # type: AsyncSession
+    async with AsyncSessionLocal() as db:
         repo = UserRepository(db)
         user = await repo.get_by_username(username)
         if user is None:
@@ -56,8 +39,6 @@ async def _resolve_user_from_token(token: str):
 
 @router.websocket("/ws/world")
 async def world_ws(websocket: WebSocket, token: str = Query(...)):
-    """Main multiplayer presence WebSocket."""
-    # Authenticate BEFORE accepting (cleaner reject) - but FastAPI requires accept first for close.
     await websocket.accept()
 
     resolved = await _resolve_user_from_token(token)
@@ -71,27 +52,14 @@ async def world_ws(websocket: WebSocket, token: str = Query(...)):
     state = await connection_manager.connect(websocket, user_id, username, avatar_url)
 
     try:
-        # Send welcome with current world snapshot. `get_others` already
-        # excludes players who haven't sent their first position yet — those
-        # are "invisible" and shouldn't show up as fake (0,0,0) capsules.
         await websocket.send_json({
             "type": "welcome",
             "self": state.public_dict(),
             "others": connection_manager.get_others(user_id),
         })
-
-        # NOTE: we DON'T broadcast user_joined here. We wait until the client
-        # sends its first real position — then we announce them to others
-        # with correct coordinates so nobody ever sees them at (0,0,0).
-
-        # Message loop
         while True:
             data = await websocket.receive_json()
             msg_type = data.get("type")
-
-            # Per-user inbound rate limit. Drops messages above the threshold
-            # silently — a well-behaved client will never hit this, but a
-            # buggy or hostile one can't flood the server.
             if not connection_manager.check_rate_limit(user_id):
                 continue
 
@@ -109,8 +77,6 @@ async def world_ws(websocket: WebSocket, token: str = Query(...)):
                 )
 
                 if first_position:
-                    # This is the user's first real position. Tell everyone
-                    # else they joined — *with* correct coordinates.
                     player = connection_manager.get_player(user_id)
                     if player is not None:
                         await connection_manager.broadcast(
@@ -118,7 +84,6 @@ async def world_ws(websocket: WebSocket, token: str = Query(...)):
                             exclude_user_id=user_id,
                         )
                 else:
-                    # Routine position update.
                     await connection_manager.broadcast(
                         {
                             "type": "position",
@@ -131,20 +96,130 @@ async def world_ws(websocket: WebSocket, token: str = Query(...)):
             elif msg_type == "ping":
                 await websocket.send_json({"type": "pong"})
 
-            # Other message types ignored for now (chat comes later)
+            elif msg_type == "chat_send":
+                await _handle_chat_send(user_id, username, data, websocket)
+
+            elif msg_type == "chat_history":
+                await _handle_chat_history(user_id, data, websocket)
 
     except WebSocketDisconnect:
         logger.info(f"[MP] User {user_id} ({username}) disconnected normally")
     except Exception as e:
         logger.exception(f"[MP] Unexpected error for user {user_id}: {e}")
     finally:
-        # Only remove from manager + broadcast departure if THIS websocket is
-        # still the registered one (i.e. this isn't a stale duplicate that was
-        # already replaced by a newer connection). Also only announce departure
-        # if the user was ever visible (had_position) — otherwise nobody ever
-        # received a user_joined for them.
         removed, was_visible = await connection_manager.disconnect(user_id, websocket)
         if removed and was_visible:
             await connection_manager.broadcast(
                 {"type": "user_left", "userId": user_id},
             )
+
+def _chat_message_dict(msg, from_username: str) -> dict:
+    return {
+        "msgId": msg.msg_id,
+        "fromUserId": msg.from_user_id,
+        "toUserId": msg.to_user_id,
+        "fromUsername": from_username,
+        "text": msg.text,
+        "sentAt": msg.sent_at.isoformat() if msg.sent_at else None,
+    }
+
+
+async def _handle_chat_send(
+    user_id: int,
+    username: str,
+    data: dict,
+    websocket: WebSocket,
+) -> None:
+    to_user_id = data.get("to")
+    text = data.get("text")
+    if not isinstance(to_user_id, int):
+        await websocket.send_json(
+            {"type": "chat_error", "reason": "missing_recipient"}
+        )
+        return
+    if to_user_id == user_id:
+        await websocket.send_json(
+            {"type": "chat_error", "reason": "cant_message_self"}
+        )
+        return
+    if not isinstance(text, str):
+        await websocket.send_json(
+            {"type": "chat_error", "reason": "missing_text"}
+        )
+        return
+    text = text.strip()
+    if not text:
+        await websocket.send_json(
+            {"type": "chat_error", "reason": "empty_text"}
+        )
+        return
+    if len(text) > MAX_CHAT_TEXT_LEN:
+        await websocket.send_json(
+            {"type": "chat_error", "reason": "text_too_long"}
+        )
+        return
+    async with AsyncSessionLocal() as db:
+        chat_repo = ChatRepository(db)
+        user_repo = UserRepository(db)
+        recipient = await user_repo.get_by_id(to_user_id)
+        if recipient is None:
+            await websocket.send_json(
+                {"type": "chat_error", "reason": "unknown_recipient"}
+            )
+            return
+
+        try:
+            msg = await chat_repo.save_message(user_id, to_user_id, text)
+            await db.commit()
+        except Exception as e:
+            logger.exception(f"[MP] Failed to save chat message: {e}")
+            await db.rollback()
+            await websocket.send_json(
+                {"type": "chat_error", "reason": "save_failed"}
+            )
+            return
+
+    payload = {"type": "chat_message", **_chat_message_dict(msg, username)}
+    await connection_manager.send_to(user_id, payload)
+    await connection_manager.send_to(to_user_id, payload)
+
+
+async def _handle_chat_history(
+    user_id: int,
+    data: dict,
+    websocket: WebSocket,
+) -> None:
+    with_user_id = data.get("with")
+    if not isinstance(with_user_id, int) or with_user_id == user_id:
+        await websocket.send_json(
+            {"type": "chat_error", "reason": "bad_history_target"}
+        )
+        return
+
+    async with AsyncSessionLocal() as db:
+        chat_repo = ChatRepository(db)
+        user_repo = UserRepository(db)
+        rows = await chat_repo.get_conversation(
+            user_id, with_user_id, limit=CHAT_HISTORY_LIMIT
+        )
+        partner = await user_repo.get_by_id(with_user_id)
+        self_user = await user_repo.get_by_id(user_id)
+
+        username_by_id = {}
+        if partner is not None:
+            username_by_id[partner.user_id] = partner.username
+        if self_user is not None:
+            username_by_id[self_user.user_id] = self_user.username
+
+    messages = [
+        _chat_message_dict(r, username_by_id.get(r.from_user_id, "?"))
+        for r in rows
+    ]
+
+    await websocket.send_json(
+        {
+            "type": "chat_history_response",
+            "withUserId": with_user_id,
+            "messages": messages,
+        }
+    )
