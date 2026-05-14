@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import "../../styles/ChatWindow.css";
 
 const MAX_TEXT_LEN = 500;
 
@@ -72,81 +73,28 @@ export default function ChatWindow({
 
   const partnerName = partner?.username || `user${partner?.userId ?? "?"}`;
   const charsLeft = MAX_TEXT_LEN - draft.length;
+  const containerClass = isMobile ? "chat-window is-mobile" : "chat-window";
+  const counterClass =
+    charsLeft < 20
+      ? "chat-window__counter is-critical"
+      : "chat-window__counter";
 
   return (
     <div
-      style={{
-        position: "absolute",
-        left: 20,
-        bottom: 20,
-        width: 360,
-        maxWidth: "calc(100vw - 40px)",
-        height: isMobile ? 360 : 440,
-        maxHeight: isMobile ? "calc(100vh - 200px)" : "calc(100vh - 120px)",
-        display: "flex",
-        flexDirection: "column",
-        background: "rgba(4, 14, 11, 0.92)",
-        border: "1px solid rgba(21, 80, 21, 0.55)",
-        borderRadius: 14,
-        boxShadow: "0 18px 36px rgba(0,0,0,0.55)",
-        backdropFilter: isMobile ? "none" : "blur(16px)",
-        WebkitBackdropFilter: isMobile ? "none" : "blur(16px)",
-        color: "#fff",
-        fontFamily: '"Inter", Arial, sans-serif',
-        zIndex: 1000,
-        overflow: "hidden",
-      }}
+      className={containerClass}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
     >
-      <div
-        style={{
-          padding: "12px 14px",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            minWidth: 0,
-          }}
-        >
-          <span style={{ fontSize: 11, opacity: 0.55, letterSpacing: 0.5 }}>
-            CHAT
-          </span>
-          <span
-            style={{
-              fontSize: 15,
-              fontWeight: 600,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {partnerName}
-          </span>
+      <div className="chat-window__header">
+        <div className="chat-window__title">
+          <span className="chat-window__subtitle">CHAT</span>
+          <span className="chat-window__name">{partnerName}</span>
         </div>
         <button
           onClick={onClose}
           aria-label="Bezárás"
-          style={{
-            border: "none",
-            background: "rgba(255,255,255,0.08)",
-            color: "#fff",
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            cursor: "pointer",
-            fontSize: 18,
-            lineHeight: 1,
-            flexShrink: 0,
-          }}
+          className="chat-window__close"
         >
           ×
         </button>
@@ -155,24 +103,10 @@ export default function ChatWindow({
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "12px 14px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-        }}
+        className="chat-window__messages"
       >
         {messages.length === 0 ? (
-          <div
-            style={{
-              margin: "auto",
-              color: "rgba(255,255,255,0.4)",
-              fontSize: 13,
-              textAlign: "center",
-            }}
-          >
+          <div className="chat-window__empty">
             Még nincs üzenet ebben a beszélgetésben.
             <br />
             írj egy üzenetet, hogy elindítsd a csevegést!
@@ -183,40 +117,12 @@ export default function ChatWindow({
             return (
               <div
                 key={m.msgId ?? `${m.fromUserId}-${m.sentAt}-${m.text}`}
-                style={{
-                  alignSelf: mine ? "flex-end" : "flex-start",
-                  maxWidth: "82%",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: mine ? "flex-end" : "flex-start",
-                }}
+                className={`chat-window__message${mine ? " is-mine" : ""}`}
               >
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 14,
-                    borderBottomRightRadius: mine ? 4 : 14,
-                    borderBottomLeftRadius: mine ? 14 : 4,
-                    background: mine
-                      ? "rgba(21, 80, 21, 0.85)"
-                      : "rgba(255,255,255,0.08)",
-                    color: "#fff",
-                    fontSize: 14,
-                    lineHeight: 1.35,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                  }}
-                >
+                <div className={`chat-window__bubble${mine ? " is-mine" : ""}`}>
                   {m.text}
                 </div>
-                <div
-                  style={{
-                    fontSize: 10.5,
-                    color: "rgba(255,255,255,0.4)",
-                    marginTop: 2,
-                    padding: "0 4px",
-                  }}
-                >
+                <div className="chat-window__timestamp">
                   {formatTime(m.sentAt)}
                 </div>
               </div>
@@ -225,15 +131,7 @@ export default function ChatWindow({
         )}
       </div>
 
-      <div
-        style={{
-          padding: "10px 12px 12px",
-          borderTop: "1px solid rgba(255,255,255,0.08)",
-          display: "flex",
-          gap: 8,
-          alignItems: "flex-end",
-        }}
-      >
+      <div className="chat-window__input-row">
         <textarea
           ref={inputRef}
           value={draft}
@@ -242,55 +140,18 @@ export default function ChatWindow({
           onKeyUp={(e) => e.stopPropagation()}
           placeholder="Írj egy üzenetet..."
           rows={1}
-          style={{
-            flex: 1,
-            resize: "none",
-            border: "1px solid rgba(255,255,255,0.1)",
-            background: "rgba(255,255,255,0.05)",
-            color: "#fff",
-            padding: "8px 10px",
-            borderRadius: 8,
-            fontSize: 16,
-            fontFamily: "inherit",
-            outline: "none",
-            maxHeight: 100,
-          }}
+          className="chat-window__input"
         />
         <button
           onClick={submit}
           disabled={!draft.trim()}
-          style={{
-            padding: "8px 14px",
-            border: "none",
-            borderRadius: 8,
-            background: draft.trim()
-              ? "rgba(21, 80, 21, 0.9)"
-              : "rgba(255,255,255,0.08)",
-            color: "#fff",
-            cursor: draft.trim() ? "pointer" : "default",
-            fontSize: 13,
-            fontWeight: 600,
-            flexShrink: 0,
-          }}
+          className="chat-window__send"
         >
           Küldés
         </button>
       </div>
 
-      {charsLeft < 80 && (
-        <div
-          style={{
-            position: "absolute",
-            right: 90,
-            bottom: 18,
-            fontSize: 11,
-            color: charsLeft < 20 ? "#ff8080" : "rgba(255,255,255,0.45)",
-            pointerEvents: "none",
-          }}
-        >
-          {charsLeft}
-        </div>
-      )}
+      {charsLeft < 80 && <div className={counterClass}>{charsLeft}</div>}
     </div>
   );
 }

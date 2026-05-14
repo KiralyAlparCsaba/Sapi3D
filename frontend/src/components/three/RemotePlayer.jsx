@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 
 import Avatar from "./avatars/Avatar";
+import "../../styles/RemotePlayer.css";
 
 const LERP_RATE = 12;
 export default function RemotePlayer({ player, otherPlayers, onSelect }) {
@@ -45,16 +46,7 @@ export default function RemotePlayer({ player, otherPlayers, onSelect }) {
         position={[0, 2.05, 0]}
         center
         distanceFactor={6}
-        style={{
-          color: "#ffffff",
-          fontFamily: "sans-serif",
-          fontWeight: 600,
-          fontSize: "16px",
-          textShadow: "0 0 3px #000, 0 0 3px #000, 0 0 3px #000, 0 0 3px #000",
-          pointerEvents: "none",
-          userSelect: "none",
-          whiteSpace: "nowrap",
-        }}
+        className="remote-player__nametag"
       >
         {player.username || `user${player.userId}`}
       </Html>

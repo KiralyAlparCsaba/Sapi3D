@@ -13,6 +13,7 @@ import RemotePlayer from "./RemotePlayer";
 import ModelLoadingOverlay from "./ModelLoadingOverlay";
 import ChatWindow from "./ChatWindow";
 import PlayerPickerPanel from "./PlayerPickerPanel";
+import "../../styles/ThreeScene.css";
 
 function SceneContent({
   controlsRef,
@@ -425,6 +426,16 @@ export default function ThreeScene() {
   const activeMessages =
     activeChatUserId != null ? chatMessages?.get?.(activeChatUserId) || [] : [];
 
+  const mpStatusClass = mpConnected
+    ? "is-online"
+    : mpStatus === "no_token" ||
+        mpStatus === "error" ||
+        (mpStatus === "closed" && mpError)
+      ? "is-error"
+      : mpStatus === "connecting"
+        ? "is-connecting"
+        : "is-idle";
+
   return (
     <>
       <ModelLoadingOverlay visible={!modelReady} />
@@ -434,17 +445,7 @@ export default function ThreeScene() {
           sendModelClose();
           navigate("/app");
         }}
-        style={{
-          position: "absolute",
-          top: "20px",
-          right: "20px",
-          padding: "10px 20px",
-          background: "white",
-          borderRadius: "8px",
-          border: "none",
-          cursor: "pointer",
-          zIndex: 999,
-        }}
+        className="three-back-button"
       >
         ← Vissza a főoldalra
       </button>
@@ -453,78 +454,18 @@ export default function ThreeScene() {
         <button
           onClick={() => setPickerOpen(true)}
           title={isMobile ? "Chat" : "Chat (T)"}
-          style={{
-            position: "absolute",
-            left: 20,
-            top: isMobile ? 60 : "auto",
-            bottom: isMobile ? "auto" : 20,
-            padding: "10px 14px",
-            background: "rgba(4, 14, 11, 0.85)",
-            border: "1px solid rgba(21, 80, 21, 0.55)",
-            color: "#fff",
-            borderRadius: 12,
-            cursor: "pointer",
-            fontSize: 13,
-            fontFamily: '"Inter", Arial, sans-serif',
-            zIndex: 997,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
-            transition: "background 0.15s ease, transform 0.15s ease",
-          }}
-          onMouseEnter={(e) => {
-            if (isMobile) return;
-            e.currentTarget.style.background = "rgba(8, 22, 16, 0.95)";
-          }}
-          onMouseLeave={(e) => {
-            if (isMobile) return;
-            e.currentTarget.style.background = "rgba(4, 14, 11, 0.85)";
-          }}
+          className={`three-chat-launcher${isMobile ? " is-mobile" : ""}`}
         >
-          <span style={{ fontSize: 16, lineHeight: 1 }}>💬</span>
-          <span style={{ fontWeight: 500 }}>Chat</span>
+          <span className="three-chat-launcher__icon">💬</span>
+          <span className="three-chat-launcher__label">Chat</span>
           {!isMobile && (
-            <span
-              aria-hidden="true"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minWidth: 20,
-                height: 20,
-                padding: "0 6px",
-                marginLeft: 2,
-                background: "rgba(255, 255, 255, 0.08)",
-                border: "1px solid rgba(255, 255, 255, 0.18)",
-                borderBottom: "2px solid rgba(255, 255, 255, 0.22)",
-                borderRadius: 5,
-                fontSize: 11,
-                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                color: "rgba(255, 255, 255, 0.75)",
-                letterSpacing: 0.5,
-              }}
-            >
+            <span aria-hidden="true" className="three-chat-launcher__kbd">
               T
             </span>
           )}
 
           {totalUnread > 0 && (
-            <span
-              style={{
-                background: "#cc3333",
-                color: "#fff",
-                borderRadius: 999,
-                padding: "2px 8px",
-                fontSize: 11,
-                fontWeight: 700,
-                minWidth: 22,
-                textAlign: "center",
-                marginLeft: 4,
-              }}
-            >
+            <span className="three-chat-launcher__badge">
               {totalUnread > 99 ? "99+" : totalUnread}
             </span>
           )}
@@ -552,28 +493,7 @@ export default function ThreeScene() {
         />
       )}
 
-      <div
-        style={{
-          position: "absolute",
-          top: "20px",
-          left: "20px",
-          padding: "6px 12px",
-          background: mpConnected
-            ? "rgba(0,150,80,0.85)"
-            : mpStatus === "no_token"
-              ? "rgba(180,60,60,0.85)"
-              : mpStatus === "error" || (mpStatus === "closed" && mpError)
-                ? "rgba(180,60,60,0.85)"
-                : "rgba(120,120,120,0.85)",
-          color: "white",
-          borderRadius: "999px",
-          fontSize: "13px",
-          fontFamily: "sans-serif",
-          zIndex: 999,
-          pointerEvents: "none",
-          maxWidth: "90vw",
-        }}
-      >
+      <div className={`three-mp-status ${mpStatusClass}`}>
         {mpConnected
           ? `Online • ${remotePlayers.size} másik játékos`
           : mpStatus === "no_token"
@@ -589,7 +509,7 @@ export default function ThreeScene() {
 
       <Canvas
         camera={{ position: [0, 1.7, 0], fov: 75 }}
-        style={{ width: "100vw", height: "100vh" }}
+        className="three-canvas"
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
