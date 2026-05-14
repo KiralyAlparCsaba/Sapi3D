@@ -108,8 +108,7 @@ export default function useMultiplayer() {
           watchdogTriggered = true;
           try {
             ws.close();
-          } catch {
-          }
+          } catch {}
         }
       }, CONNECT_TIMEOUT_MS);
 
@@ -128,7 +127,7 @@ export default function useMultiplayer() {
           "[MP] Disconnected",
           e.code,
           e.reason,
-          wasActive ? "(active)" : "(stale)"
+          wasActive ? "(active)" : "(stale)",
         );
         if (!wasActive) return;
 
@@ -176,8 +175,14 @@ export default function useMultiplayer() {
           for (const other of msg.others || []) {
             map.set(other.userId, {
               ...other,
-              curX: other.x, curY: other.y, curZ: other.z, curRotY: other.rotY,
-              targetX: other.x, targetY: other.y, targetZ: other.z, targetRotY: other.rotY,
+              curX: other.x,
+              curY: other.y,
+              curZ: other.z,
+              curRotY: other.rotY,
+              targetX: other.x,
+              targetY: other.y,
+              targetZ: other.z,
+              targetRotY: other.rotY,
             });
           }
           playersMapRef.current = map;
@@ -189,8 +194,14 @@ export default function useMultiplayer() {
           const u = msg.user;
           playersMapRef.current.set(u.userId, {
             ...u,
-            curX: u.x, curY: u.y, curZ: u.z, curRotY: u.rotY,
-            targetX: u.x, targetY: u.y, targetZ: u.z, targetRotY: u.rotY,
+            curX: u.x,
+            curY: u.y,
+            curZ: u.z,
+            curRotY: u.rotY,
+            targetX: u.x,
+            targetY: u.y,
+            targetZ: u.z,
+            targetRotY: u.rotY,
           });
           updatePlayersState();
           break;
@@ -235,11 +246,14 @@ export default function useMultiplayer() {
     return () => {
       closed = true;
       if (reconnectTimer) clearTimeout(reconnectTimer);
-      if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+      if (
+        ws &&
+        ws.readyState !== WebSocket.CLOSED &&
+        ws.readyState !== WebSocket.CLOSING
+      ) {
         try {
           ws.close(1000, "Component unmount");
-        } catch {
-        }
+        } catch {}
       }
       wsRef.current = null;
     };
@@ -274,7 +288,7 @@ export default function useMultiplayer() {
         y: position.y,
         z: position.z,
         rotY,
-      })
+      }),
     );
 
     last.x = position.x;
