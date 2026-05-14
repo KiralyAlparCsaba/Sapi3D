@@ -1,65 +1,75 @@
-/**
- * useMultiplayer
- *
- * Opens a WebSocket to /ws/world, sends our position at ~10Hz (when moved),
- * and exposes the other players' latest positions as a stateful Map.
- *
- * Usage (inside ThreeScene):
- *   const { remotePlayers, sendPosition, connected } = useMultiplayer();
- *   ...
- *   useFrame(() => {
- *     sendPosition(playerRootRef.current.position, controlsRef.current);
- *   });
- *   ...
- *   {[...remotePlayers.values()].map(p => <RemotePlayer key={p.userId} player={p} />)}
- */
-
 import { useEffect, useRef, useState, useCallback } from "react";
 
-const SEND_INTERVAL_MS = 100;     // 10 Hz target
-const MIN_DELTA_POS = 0.02;       // require ~2cm of movement to send
-const MIN_DELTA_ROT = 0.02;       // ~1.1 degrees
-// If the WS sits in CONNECTING this long, force-close it so the close
-// handler can trigger a reconnect. Without this, mobile browsers can leave
-// a half-open handshake silently stuck — no open event, no close event,
-// no progress. The user would have to manually refresh to recover.
+const SEND_INTERVAL_MS = 100;
+const MIN_DELTA_POS = 0.02;
+const MIN_DELTA_ROT = 0.02;
 const CONNECT_TIMEOUT_MS = 6000;
-// On a watchdog-triggered close (stuck handshake), retry sooner than the
-// normal 2s — the user is already waiting, no point making them wait more.
 const FAST_RECONNECT_MS = 500;
 const NORMAL_RECONNECT_MS = 2000;
 
 function buildWsUrl(token) {
-  // Vite dev proxy + nginx in prod both route /ws to the backend.
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
   return `${proto}//${window.location.host}/ws/world?token=${encodeURIComponent(token)}`;
 }
 
 export default function useMultiplayer() {
   const wsRef = useRef(null);
+  const selfUserIdRef = useRef(null);
+  const [selfUserId, setSelfUserId] = useState(null);
   const [connected, setConnected] = useState(false);
-  // Diagnostic status so we can see what's going on, especially on mobile
-  // where DevTools aren't easily accessible.
-  // Values: "init" | "no_token" | "connecting" | "open" | "closed" | "error"
   const [status, setStatus] = useState("init");
   const [lastError, setLastError] = useState(null);
   const [remotePlayers, setRemotePlayers] = useState(() => new Map());
 
-  // Last-sent snapshot (to throttle + skip-when-unchanged)
+  const [chatMessages, setChatMessages] = useState(() => new Map());
+  const [unreadCounts, setUnreadCounts] = useState(() => new Map());
+  const [activeChatUserId, setActiveChatUserId] = useState(null);
+  const activeChatUserIdRef = useRef(null);
+  const historyFetchedRef = useRef(new Set());
+
   const lastSentRef = useRef({ x: 0, y: 0, z: 0, rotY: 0, ts: 0 });
 
-  // We mutate the players map by reference for speed, then trigger re-render
-  // by replacing the Map ref. The state holds the current Map.
   const playersMapRef = useRef(new Map());
 
   const updatePlayersState = useCallback(() => {
-    // Clone so React notices the change
     setRemotePlayers(new Map(playersMapRef.current));
   }, []);
 
-  // ─────────────────────────────────────────────
-  // CONNECT
-  // ─────────────────────────────────────────────
+  const appendChatMessage = useCallback((msg, selfUserId) => {
+    const otherUserId =
+      msg.fromUserId === selfUserId ? msg.toUserId : msg.fromUserId;
+
+    setChatMessages((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(otherUserId) ?? [];
+      if (existing.some((m) => m.msgId === msg.msgId)) {
+        return prev;
+      }
+      next.set(otherUserId, [...existing, msg]);
+      return next;
+    });
+
+    if (
+      msg.fromUserId !== selfUserId &&
+      activeChatUserIdRef.current !== otherUserId
+    ) {
+      setUnreadCounts((prev) => {
+        const next = new Map(prev);
+        next.set(otherUserId, (prev.get(otherUserId) ?? 0) + 1);
+        return next;
+      });
+    }
+  }, []);
+
+  const replaceChatHistory = useCallback((withUserId, messages) => {
+    setChatMessages((prev) => {
+      const next = new Map(prev);
+      next.set(withUserId, messages);
+      return next;
+    });
+    historyFetchedRef.current.add(withUserId);
+  }, []);
+
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     if (!token) {
@@ -72,8 +82,6 @@ export default function useMultiplayer() {
     let closed = false;
     let reconnectTimer = null;
 
-    // Tracks whether the most recent close was triggered by our watchdog
-    // (stuck CONNECTING) so we can retry faster than the default 2s.
     let watchdogTriggered = false;
 
     const open = () => {
@@ -92,10 +100,6 @@ export default function useMultiplayer() {
       wsRef.current = ws;
       watchdogTriggered = false;
 
-      // Watchdog: if the WS is still CONNECTING after CONNECT_TIMEOUT_MS,
-      // assume the handshake is stuck (slow mobile network, dead Vite
-      // proxy upgrade, browser tab throttling, etc.) and force-close.
-      // The close handler will then trigger a fast reconnect.
       const watchdog = setTimeout(() => {
         if (ws && ws.readyState === WebSocket.CONNECTING) {
           console.warn(
@@ -105,15 +109,12 @@ export default function useMultiplayer() {
           try {
             ws.close();
           } catch {
-            /* ignore */
           }
         }
       }, CONNECT_TIMEOUT_MS);
 
       ws.addEventListener("open", () => {
         clearTimeout(watchdog);
-        // Ignore if this WS is no longer the active one (StrictMode dispose
-        // already replaced it with a newer connection).
         if (closed || wsRef.current !== ws) return;
         console.log("[MP] Connected");
         setConnected(true);
@@ -122,14 +123,6 @@ export default function useMultiplayer() {
 
       ws.addEventListener("close", (e) => {
         clearTimeout(watchdog);
-        // CRITICAL: only touch shared state if THIS websocket is still the
-        // one we're using. Under React StrictMode, the first WS gets disposed
-        // and its close event can fire AFTER the second WS has already been
-        // installed into wsRef.current. Without this guard we'd null out the
-        // live ref and clear the players map, leaving the live socket open
-        // but unreachable — sendPosition would `return` early forever, so the
-        // server never gets our first position, never broadcasts user_joined,
-        // and other clients never learn we joined.
         const wasActive = wsRef.current === ws;
         console.log(
           "[MP] Disconnected",
@@ -148,10 +141,6 @@ export default function useMultiplayer() {
         playersMapRef.current = new Map();
         updatePlayersState();
         if (!closed) {
-          // After a watchdog timeout, retry fast — the user is already
-          // waiting and we know the previous attempt never reached OPEN.
-          // After a "real" close (network drop, server kick, etc.), wait
-          // a bit longer so we don't hammer a flaky server.
           const delay = watchdogTriggered
             ? FAST_RECONNECT_MS
             : NORMAL_RECONNECT_MS;
@@ -160,7 +149,7 @@ export default function useMultiplayer() {
       });
 
       ws.addEventListener("error", (e) => {
-        if (wsRef.current !== ws) return; // ignore stale errors
+        if (wsRef.current !== ws) return;
         console.warn("[MP] WS error", e);
         setLastError("network/proxy error");
       });
@@ -179,11 +168,14 @@ export default function useMultiplayer() {
     const handleServerMessage = (msg) => {
       switch (msg.type) {
         case "welcome": {
+          if (msg.self?.userId != null) {
+            selfUserIdRef.current = msg.self.userId;
+            setSelfUserId(msg.self.userId);
+          }
           const map = new Map();
           for (const other of msg.others || []) {
             map.set(other.userId, {
               ...other,
-              // Animation state: where we ARE rendering vs where we WANT to be
               curX: other.x, curY: other.y, curZ: other.z, curRotY: other.rotY,
               targetX: other.x, targetY: other.y, targetZ: other.z, targetRotY: other.rotY,
             });
@@ -215,11 +207,22 @@ export default function useMultiplayer() {
             p.targetY = msg.y;
             p.targetZ = msg.z;
             p.targetRotY = msg.rotY;
-            // NOTE: no setState here — RemotePlayer reads via ref pattern below.
-            // Position updates happen 10x/sec, we don't want to re-render the
-            // whole React tree that often. The RemotePlayer component
-            // interpolates from a ref to its target each frame.
           }
+          break;
+        }
+        case "chat_message": {
+          const selfId = selfUserIdRef.current;
+          if (selfId != null) {
+            appendChatMessage(msg, selfId);
+          }
+          break;
+        }
+        case "chat_history_response": {
+          replaceChatHistory(msg.withUserId, msg.messages || []);
+          break;
+        }
+        case "chat_error": {
+          console.warn("[MP] Chat error:", msg.reason);
           break;
         }
         default:
@@ -232,23 +235,16 @@ export default function useMultiplayer() {
     return () => {
       closed = true;
       if (reconnectTimer) clearTimeout(reconnectTimer);
-      // Close regardless of state. close() is valid during CONNECTING too —
-      // it aborts the handshake. Without this, StrictMode's double-mount in
-      // dev would leave a phantom WS half-open on the server.
       if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
         try {
           ws.close(1000, "Component unmount");
         } catch {
-          /* ignore */
         }
       }
       wsRef.current = null;
     };
   }, [updatePlayersState]);
 
-  // ─────────────────────────────────────────────
-  // SEND POSITION (called from useFrame)
-  // ─────────────────────────────────────────────
   const sendPosition = useCallback((position, rotY) => {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -268,7 +264,6 @@ export default function useMultiplayer() {
       Math.abs(dz) > MIN_DELTA_POS ||
       Math.abs(dr) > MIN_DELTA_ROT;
 
-    // Heartbeat: send anyway every 2s so server knows we're alive
     const heartbeat = now - last.ts > 2000;
     if (!movedEnough && !heartbeat) return;
 
@@ -289,11 +284,69 @@ export default function useMultiplayer() {
     last.ts = now;
   }, []);
 
+  const sendOverWs = useCallback((message) => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+    ws.send(JSON.stringify(message));
+    return true;
+  }, []);
+
+  const sendChatMessage = useCallback(
+    (toUserId, text) => {
+      const trimmed = (text ?? "").trim();
+      if (!trimmed || !Number.isInteger(toUserId)) return false;
+      return sendOverWs({
+        type: "chat_send",
+        to: toUserId,
+        text: trimmed,
+      });
+    },
+    [sendOverWs],
+  );
+
+  const requestChatHistory = useCallback(
+    (withUserId) => {
+      if (!Number.isInteger(withUserId)) return false;
+      return sendOverWs({ type: "chat_history", with: withUserId });
+    },
+    [sendOverWs],
+  );
+
+  const openChat = useCallback(
+    (userId) => {
+      if (!Number.isInteger(userId)) return;
+      activeChatUserIdRef.current = userId;
+      setActiveChatUserId(userId);
+      setUnreadCounts((prev) => {
+        if (!prev.has(userId)) return prev;
+        const next = new Map(prev);
+        next.delete(userId);
+        return next;
+      });
+      if (!historyFetchedRef.current.has(userId)) {
+        requestChatHistory(userId);
+      }
+    },
+    [requestChatHistory],
+  );
+
+  const closeChat = useCallback(() => {
+    activeChatUserIdRef.current = null;
+    setActiveChatUserId(null);
+  }, []);
+
   return {
     connected,
     status,
     lastError,
-    remotePlayers,        // Map<userId, {userId, username, avatarUrl, cur*, target*}>
+    remotePlayers,
     sendPosition,
+    chatMessages,
+    unreadCounts,
+    activeChatUserId,
+    selfUserId,
+    sendChatMessage,
+    openChat,
+    closeChat,
   };
 }
