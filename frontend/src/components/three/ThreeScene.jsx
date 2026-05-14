@@ -11,8 +11,9 @@ import api from "../../services/api";
 import useMultiplayer from "./useMultiplayer";
 import RemotePlayer from "./RemotePlayer";
 import ModelLoadingOverlay from "./ModelLoadingOverlay";
+import ChatWindow from "./ChatWindow";
+import PlayerPickerPanel from "./PlayerPickerPanel";
 
-// SCENE CONTENT
 function SceneContent({
   controlsRef,
   sessionId,
@@ -26,6 +27,7 @@ function SceneContent({
   remotePlayers,
   sendPosition,
   onModelReady,
+  onSelectPlayer,
 }) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
@@ -36,12 +38,6 @@ function SceneContent({
 
   useEffect(() => {
     scene.add(playerRootRef.current);
-
-    // NOTE: do NOT reset playerRootRef.current.position here.
-    // On a cached-model second visit, Building's useEffect (child) runs before
-    // this one (parent), so onWorldReady already placed the player at the correct
-    // marker position. Resetting to (0,0,0) would undo the teleport.
-    // A fresh Object3D starts at (0,0,0) anyway, so this line is always redundant.
 
     playerRootRef.current.add(camera);
     camera.position.set(0, 1.7, 0);
@@ -74,7 +70,6 @@ function SceneContent({
       controlsRef.current.update(delta);
     }
 
-    // MULTIPLAYER: broadcast our position + facing direction (throttled in the hook)
     if (sendPosition && playerRootRef.current) {
       const fwd = forwardTmpRef.current;
       camera.getWorldDirection(fwd);
@@ -117,8 +112,6 @@ function SceneContent({
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
 
-          // Signal up to the parent so the loading overlay can fade out.
-          // Safe to call repeatedly — the parent's state setter is idempotent.
           onModelReady?.();
 
           if (didTeleportRef.current) return;
@@ -178,15 +171,13 @@ function SceneContent({
         }}
       />
 
-      {/* MULTIPLAYER: remote players rendered in-world.
-          `otherPlayers` (the whole map) is forwarded so each avatar can
-          look at the nearest other player. */}
       {remotePlayers &&
         [...remotePlayers.values()].map((p) => (
           <RemotePlayer
             key={p.userId}
             player={p}
             otherPlayers={remotePlayers}
+            onSelect={onSelectPlayer}
           />
         ))}
     </Suspense>
@@ -344,24 +335,98 @@ export default function ThreeScene() {
 
   const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
 
-  // Loading overlay state. Flips to true the first time Building reports
-  // its scene is ready; the overlay then handles its own fade-out.
   const [modelReady, setModelReady] = useState(false);
   const handleModelReady = () => setModelReady(true);
 
-  // MULTIPLAYER: open WS, expose remote player state + sendPosition
   const {
     remotePlayers,
     sendPosition,
     connected: mpConnected,
     status: mpStatus,
     lastError: mpError,
+    chatMessages,
+    unreadCounts,
+    activeChatUserId,
+    selfUserId,
+    sendChatMessage,
+    openChat,
+    closeChat,
   } = useMultiplayer();
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  let totalUnread = 0;
+  if (unreadCounts) {
+    for (const n of unreadCounts.values()) totalUnread += n;
+  }
+
+  const handlePickPlayer = (userId) => {
+    setPickerOpen(false);
+    openChat(userId);
+  };
+
+  useEffect(() => {
+    if (isMobile) return;
+    const isTypingTarget = (el) => {
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || el.isContentEditable;
+    };
+    const onKey = (e) => {
+      if (isTypingTarget(document.activeElement)) return;
+      if (e.code === "KeyT") {
+        e.preventDefault();
+        if (activeChatUserId != null) {
+          closeChat();
+        } else {
+          setPickerOpen((v) => !v);
+        }
+      } else if (e.code === "Escape") {
+        if (activeChatUserId != null) closeChat();
+        else if (pickerOpen) setPickerOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isMobile, activeChatUserId, pickerOpen, closeChat]);
+
+  useEffect(() => {
+    if (isMobile) return;
+    if (activeChatUserId != null || pickerOpen) {
+      try {
+        controlsRef.current?.unlock?.();
+      } catch {}
+    }
+  }, [activeChatUserId, pickerOpen, isMobile]);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    const chatOpen = activeChatUserId != null || pickerOpen;
+    const ids = ["joystick-move", "joystick-look"];
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = chatOpen ? "none" : "block";
+    }
+    return () => {
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "block";
+      }
+    };
+  }, [isMobile, activeChatUserId, pickerOpen]);
+
+  const activePartner =
+    activeChatUserId != null
+      ? remotePlayers?.get?.(activeChatUserId) || {
+          userId: activeChatUserId,
+          username: `user${activeChatUserId}`,
+        }
+      : null;
+  const activeMessages =
+    activeChatUserId != null ? chatMessages?.get?.(activeChatUserId) || [] : [];
 
   return (
     <>
-      {/* Loading overlay — covers the screen while the GLB downloads.
-          Fades out automatically once Building reports onWorldReady. */}
       <ModelLoadingOverlay visible={!modelReady} />
 
       <button
@@ -384,7 +449,109 @@ export default function ThreeScene() {
         ← Vissza a főoldalra
       </button>
 
-      {/* MULTIPLAYER status pill */}
+      {activeChatUserId == null && !pickerOpen && (
+        <button
+          onClick={() => setPickerOpen(true)}
+          title={isMobile ? "Chat" : "Chat (T)"}
+          style={{
+            position: "absolute",
+            left: 20,
+            top: isMobile ? 60 : "auto",
+            bottom: isMobile ? "auto" : 20,
+            padding: "10px 14px",
+            background: "rgba(4, 14, 11, 0.85)",
+            border: "1px solid rgba(21, 80, 21, 0.55)",
+            color: "#fff",
+            borderRadius: 12,
+            cursor: "pointer",
+            fontSize: 13,
+            fontFamily: '"Inter", Arial, sans-serif',
+            zIndex: 997,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
+            transition: "background 0.15s ease, transform 0.15s ease",
+          }}
+          onMouseEnter={(e) => {
+            if (isMobile) return;
+            e.currentTarget.style.background = "rgba(8, 22, 16, 0.95)";
+          }}
+          onMouseLeave={(e) => {
+            if (isMobile) return;
+            e.currentTarget.style.background = "rgba(4, 14, 11, 0.85)";
+          }}
+        >
+          <span style={{ fontSize: 16, lineHeight: 1 }}>💬</span>
+          <span style={{ fontWeight: 500 }}>Chat</span>
+          {!isMobile && (
+            <span
+              aria-hidden="true"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minWidth: 20,
+                height: 20,
+                padding: "0 6px",
+                marginLeft: 2,
+                background: "rgba(255, 255, 255, 0.08)",
+                border: "1px solid rgba(255, 255, 255, 0.18)",
+                borderBottom: "2px solid rgba(255, 255, 255, 0.22)",
+                borderRadius: 5,
+                fontSize: 11,
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                color: "rgba(255, 255, 255, 0.75)",
+                letterSpacing: 0.5,
+              }}
+            >
+              T
+            </span>
+          )}
+
+          {totalUnread > 0 && (
+            <span
+              style={{
+                background: "#cc3333",
+                color: "#fff",
+                borderRadius: 999,
+                padding: "2px 8px",
+                fontSize: 11,
+                fontWeight: 700,
+                minWidth: 22,
+                textAlign: "center",
+                marginLeft: 4,
+              }}
+            >
+              {totalUnread > 99 ? "99+" : totalUnread}
+            </span>
+          )}
+        </button>
+      )}
+
+      {pickerOpen && (
+        <PlayerPickerPanel
+          remotePlayers={remotePlayers}
+          unreadCounts={unreadCounts}
+          onPick={handlePickPlayer}
+          onClose={() => setPickerOpen(false)}
+          isMobile={isMobile}
+        />
+      )}
+
+      {activeChatUserId != null && (
+        <ChatWindow
+          messages={activeMessages}
+          selfUserId={selfUserId}
+          partner={activePartner}
+          onSend={(text) => sendChatMessage(activeChatUserId, text)}
+          onClose={closeChat}
+          isMobile={isMobile}
+        />
+      )}
+
       <div
         style={{
           position: "absolute",
@@ -394,10 +561,10 @@ export default function ThreeScene() {
           background: mpConnected
             ? "rgba(0,150,80,0.85)"
             : mpStatus === "no_token"
-            ? "rgba(180,60,60,0.85)"
-            : mpStatus === "error" || (mpStatus === "closed" && mpError)
-            ? "rgba(180,60,60,0.85)"
-            : "rgba(120,120,120,0.85)",
+              ? "rgba(180,60,60,0.85)"
+              : mpStatus === "error" || (mpStatus === "closed" && mpError)
+                ? "rgba(180,60,60,0.85)"
+                : "rgba(120,120,120,0.85)",
           color: "white",
           borderRadius: "999px",
           fontSize: "13px",
@@ -410,14 +577,14 @@ export default function ThreeScene() {
         {mpConnected
           ? `Online • ${remotePlayers.size} másik játékos`
           : mpStatus === "no_token"
-          ? "MP: nincs token (jelentkezz be újra)"
-          : mpStatus === "connecting"
-          ? "MP: csatlakozás..."
-          : mpStatus === "closed"
-          ? `MP: lecsatlakozva${mpError ? ` (${mpError})` : ""}`
-          : mpStatus === "error"
-          ? `MP: hiba${mpError ? ` (${mpError})` : ""}`
-          : "MP: indul..."}
+            ? "MP: nincs token (jelentkezz be újra)"
+            : mpStatus === "connecting"
+              ? "MP: csatlakozás..."
+              : mpStatus === "closed"
+                ? `MP: lecsatlakozva${mpError ? ` (${mpError})` : ""}`
+                : mpStatus === "error"
+                  ? `MP: hiba${mpError ? ` (${mpError})` : ""}`
+                  : "MP: indul..."}
       </div>
 
       <Canvas
@@ -432,14 +599,15 @@ export default function ThreeScene() {
           sessionId={sessionId}
           isMobile={isMobile}
           markerToTeleport={markerToTeleport}
-          infoPanelsData={infoPanelsData} // Ajtókhoz
-          locationsData={locationsData} // Hologramokhoz
+          infoPanelsData={infoPanelsData}
+          locationsData={locationsData}
           loadStartRef={loadStartRef}
           onInfoPanelOpen={handleInfoPanelOpen}
           onLocationVisit={handleLocationVisit}
           remotePlayers={remotePlayers}
           sendPosition={sendPosition}
           onModelReady={handleModelReady}
+          onSelectPlayer={isMobile ? openChat : undefined}
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}

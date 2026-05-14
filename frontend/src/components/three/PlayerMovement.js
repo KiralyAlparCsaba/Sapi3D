@@ -1,8 +1,18 @@
 import { useRef, useEffect } from "react";
 import * as THREE from "three";
 
-export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, moveSpeed = 10.0) {
-  const move = useRef({ forward: false, backward: false, left: false, right: false });
+export default function PlayerMovement(
+  controlsRef,
+  sceneRef,
+  playerRootRef,
+  moveSpeed = 10.0,
+) {
+  const move = useRef({
+    forward: false,
+    backward: false,
+    left: false,
+    right: false,
+  });
   const velocity = useRef(new THREE.Vector3());
   const direction = new THREE.Vector3();
   const raycaster = useRef(new THREE.Raycaster());
@@ -15,7 +25,6 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
   const camWorldPosRef = useRef(new THREE.Vector3());
   const originRef = useRef(new THREE.Vector3());
 
-  // Konfiguráció
   const playerHeight = 1.7;
   const collisionDistance = 0.32;
   const gravity = -30;
@@ -29,11 +38,8 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
   const collidableRef = useRef([]);
   const collidableDirtyRef = useRef(true);
 
-  // FAILSAFE CONFIG 
-  // Teleport location (Blender coordinates converted)
   const SPAWN_POS = new THREE.Vector3(1, -0.099324, 6.3213);
   const FALL_DEATH_Y = -15;
-
 
   const markCollidableDirty = () => {
     collidableDirtyRef.current = true;
@@ -52,19 +58,38 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
     collidableDirtyRef.current = false;
   };
 
-  // Billentyűzet kezelés 
   useEffect(() => {
+    const isTypingTarget = (el) => {
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || el.isContentEditable;
+    };
+
     const down = (e) => {
-      if (e.code === "KeyW" || e.code === "ArrowUp") move.current.forward = true;
-      if (e.code === "KeyS" || e.code === "ArrowDown") move.current.backward = true;
+      if (isTypingTarget(document.activeElement)) {
+        move.current.forward = false;
+        move.current.backward = false;
+        move.current.left = false;
+        move.current.right = false;
+        return;
+      }
+      if (e.code === "KeyW" || e.code === "ArrowUp")
+        move.current.forward = true;
+      if (e.code === "KeyS" || e.code === "ArrowDown")
+        move.current.backward = true;
       if (e.code === "KeyA" || e.code === "ArrowLeft") move.current.left = true;
-      if (e.code === "KeyD" || e.code === "ArrowRight") move.current.right = true;
+      if (e.code === "KeyD" || e.code === "ArrowRight")
+        move.current.right = true;
     };
     const up = (e) => {
-      if (e.code === "KeyW" || e.code === "ArrowUp") move.current.forward = false;
-      if (e.code === "KeyS" || e.code === "ArrowDown") move.current.backward = false;
-      if (e.code === "KeyA" || e.code === "ArrowLeft") move.current.left = false;
-      if (e.code === "KeyD" || e.code === "ArrowRight") move.current.right = false;
+      if (e.code === "KeyW" || e.code === "ArrowUp")
+        move.current.forward = false;
+      if (e.code === "KeyS" || e.code === "ArrowDown")
+        move.current.backward = false;
+      if (e.code === "KeyA" || e.code === "ArrowLeft")
+        move.current.left = false;
+      if (e.code === "KeyD" || e.code === "ArrowRight")
+        move.current.right = false;
     };
 
     window.addEventListener("keydown", down);
@@ -90,17 +115,14 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
 
     camera.getWorldPosition(camWorldPosRef.current);
 
-    // MOBILE joystick → pass rotation to controller
     if (controls.setLook && window.joystickLook) {
       controls.setLook(window.joystickLook.lx, window.joystickLook.ly);
     }
 
-    // 1) Sebesség csillapítás
     const dampK = Math.exp(-DAMPING * delta);
     velocity.current.x *= dampK;
     velocity.current.z *= dampK;
 
-    // 2) Irány meghatározása (Keyboard + Joystick)
     direction.z = Number(move.current.forward) - Number(move.current.backward);
     direction.x = Number(move.current.right) - Number(move.current.left);
 
@@ -111,11 +133,11 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
 
     direction.normalize();
 
-    // 3) Gyorsítás
-    if (direction.z !== 0) velocity.current.z -= direction.z * moveSpeed * delta;
-    if (direction.x !== 0) velocity.current.x -= direction.x * moveSpeed * delta;
+    if (direction.z !== 0)
+      velocity.current.z -= direction.z * moveSpeed * delta;
+    if (direction.x !== 0)
+      velocity.current.x -= direction.x * moveSpeed * delta;
 
-    // 4) Világ-irányok kiszámítása a kamerához képest
     camera.getWorldDirection(frontDir);
     frontDir.y = 0;
     frontDir.normalize();
@@ -145,7 +167,6 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
         const hits = raycaster.current.intersectObjects(collidable, true);
         if (!hits.length) continue;
 
-        // Legközelebbi
         let nearest = hits[0];
         for (let j = 1; j < hits.length; j++) {
           if (hits[j].distance < nearest.distance) nearest = hits[j];
@@ -163,7 +184,6 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
       return { ok: scale > 0, scale, blocked: scale < 1 };
     };
 
-    // 5) Mozgás sub-stepping-el + wall-sliding
     const totalX = -velocity.current.x * delta;
     const totalZ = -velocity.current.z * delta;
 
@@ -220,7 +240,6 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
       camera.getWorldPosition(camWorldPosRef.current);
     }
 
-    // 6) Padló érzékelés és gravitáció
     const downOrigin = originRef.current.copy(camWorldPosRef.current);
     downOrigin.y += 0.2;
 
@@ -228,7 +247,7 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
       downOrigin,
       new THREE.Vector3(0, -1, 0),
       0,
-      playerHeight + MAX_STEP_HEIGHT + 0.5
+      playerHeight + MAX_STEP_HEIGHT + 0.5,
     );
 
     const floorHits = downRay.intersectObjects(collidable, true);
@@ -251,17 +270,14 @@ export default function PlayerMovement(controlsRef, sceneRef, playerRootRef, mov
       root.position.y += velocity.current.y * delta;
     }
 
-    // 7) FAILSAFE: Ha a játékos kiesik a pályáról (Fall out of map)
     if (root.position.y < FALL_DEATH_Y) {
       console.log("Player fell! Resetting to spawn...");
-      
-      // Teleport the root body
+
       root.position.copy(SPAWN_POS);
 
-      camera.position.set(0, 1.7, 0); // Reset camera relative position to root
-      
-      // CRITICAL: Reset falling velocity so they don't instantly clip through the spawn floor!
-      velocity.current.set(0, 0, 0); 
+      camera.position.set(0, 1.7, 0);
+
+      velocity.current.set(0, 0, 0);
     }
 
     if (controls.update) controls.update(delta);
