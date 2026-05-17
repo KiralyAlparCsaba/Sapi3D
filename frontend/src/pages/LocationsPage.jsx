@@ -369,8 +369,7 @@ export default function LocationsPage() {
               </p>
               <div className="loc-detail-actions">
                 <Link
-                  to="/app/model"
-                  state={{ marker: selectedLocation.button_location }}
+                  to={`/app/model?marker=${encodeURIComponent(selectedLocation.button_location)}`}
                   className="loc-card-link"
                   onClick={() => trackLocationTeleport(selectedLocation.loc_id)}
                 >
@@ -525,8 +524,7 @@ export default function LocationsPage() {
                               Részletek megtekintése
                             </button>
                             <Link
-                              to="/app/model"
-                              state={{ marker: loc.button_location }}
+                              to={`/app/model?marker=${encodeURIComponent(loc.button_location)}`}
                               className="loc-card-link"
                               onClick={() => trackLocationTeleport(loc.loc_id)}
                             >
