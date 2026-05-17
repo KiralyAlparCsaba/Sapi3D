@@ -1,6 +1,6 @@
 import { useRef, useState, Suspense, useEffect } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import UsePlayerMovement from "./PlayerMovement";
 import { createMobileJoystick } from "./MobileJoystick";
 import Building from "./Building";
@@ -201,8 +201,12 @@ export default function ThreeScene() {
   const API_URL = import.meta.env.VITE_API_URL || "/api";
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  const routeLocation = useLocation();
-  const markerToTeleport = routeLocation.state?.marker;
+  // Marker comes from a URL query param now (e.g. /app/model?marker=Foo).
+  // This survives "open in new tab", refresh, and shared/bookmarked links —
+  // unlike React Router's location.state, which only carries through a real
+  // in-app click and is silently dropped otherwise.
+  const [searchParams] = useSearchParams();
+  const markerToTeleport = searchParams.get("marker");
 
   useEffect(() => {
     fetch(`${API_URL}/info-panels/`)

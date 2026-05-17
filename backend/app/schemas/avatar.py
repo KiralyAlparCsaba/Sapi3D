@@ -12,11 +12,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class AvatarBones(BaseModel):
-    """Optional bone-name overrides for non-conventional rigs.
+    """Optional bone-name and axis overrides for non-conventional rigs.
 
     If a GLB follows the conventions documented in
     `static/avatars-3d/README.md` (head bone named `head`, eyes named
-    `eye_L` / `eye_R`), this block can be omitted entirely.
+    `eye_L` / `eye_R`, local +Y as the forward axis), this block can be
+    omitted entirely.
     """
 
     model_config = ConfigDict(populate_by_name=True)
@@ -24,6 +25,11 @@ class AvatarBones(BaseModel):
     head: Optional[str] = None
     eye_l: Optional[str] = Field(default=None, alias="eyeL")
     eye_r: Optional[str] = Field(default=None, alias="eyeR")
+    forward_axis: Optional[str] = Field(
+        default=None,
+        alias="forwardAxis",
+        description="Which local bone axis is 'forward' / looking direction. One of: +X, -X, +Y, -Y, +Z, -Z. Defaults to +Y (Blender bone head→tail convention).",
+    )
 
 
 class AvatarVariant(BaseModel):
