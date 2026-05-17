@@ -12,7 +12,7 @@ function buildWsUrl(token) {
   return `${proto}//${window.location.host}/ws/world?token=${encodeURIComponent(token)}`;
 }
 
-export default function useMultiplayer() {
+export default function useMultiplayer({ enabled = true } = {}) {
   const wsRef = useRef(null);
   const selfUserIdRef = useRef(null);
   const [selfUserId, setSelfUserId] = useState(null);
@@ -71,6 +71,12 @@ export default function useMultiplayer() {
   }, []);
 
   useEffect(() => {
+    
+    if (!enabled) {
+      setStatus("disabled");
+      setConnected(false);
+      return;
+    }
     const token = sessionStorage.getItem("token");
     if (!token) {
       console.warn("[MP] No token in sessionStorage, multiplayer disabled");
@@ -257,7 +263,8 @@ export default function useMultiplayer() {
       }
       wsRef.current = null;
     };
-  }, [updatePlayersState]);
+    
+  }, [enabled, updatePlayersState, appendChatMessage, replaceChatHistory]);
 
   const sendPosition = useCallback((position, rotY) => {
     const ws = wsRef.current;

@@ -339,6 +339,31 @@ export default function ThreeScene() {
   const [modelReady, setModelReady] = useState(false);
   const handleModelReady = () => setModelReady(true);
 
+  
+  const initialMode =
+    routeLocation.state?.mode === "single" ||
+    routeLocation.state?.mode === "multi"
+      ? routeLocation.state.mode
+      : null;
+  const [playMode, setPlayMode] = useState(initialMode);
+  const isMultiplayer = playMode === "multi";
+
+ 
+  const [defaultMode] = useState(() => {
+    const v = sessionStorage.getItem("sapi3d.modelMode");
+    return v === "single" || v === "multi" ? v : null;
+  });
+
+  const handleSelectMode = (mode) => {
+    if (mode !== "single" && mode !== "multi") return;
+    try {
+      sessionStorage.setItem("sapi3d.modelMode", mode);
+    } catch {
+      
+    }
+    setPlayMode(mode);
+  };
+
   const {
     remotePlayers,
     sendPosition,
@@ -352,7 +377,7 @@ export default function ThreeScene() {
     sendChatMessage,
     openChat,
     closeChat,
-  } = useMultiplayer();
+  } = useMultiplayer({ enabled: isMultiplayer });
 
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -368,6 +393,8 @@ export default function ThreeScene() {
 
   useEffect(() => {
     if (isMobile) return;
+    // Singleplayer: no chat shortcuts make sense.
+    if (!isMultiplayer) return;
     const isTypingTarget = (el) => {
       if (!el) return false;
       const tag = el.tagName;
@@ -389,7 +416,7 @@ export default function ThreeScene() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isMobile, activeChatUserId, pickerOpen, closeChat]);
+  }, [isMobile, isMultiplayer, activeChatUserId, pickerOpen, closeChat]);
 
   useEffect(() => {
     if (isMobile) return;
@@ -438,7 +465,16 @@ export default function ThreeScene() {
 
   return (
     <>
-      <ModelLoadingOverlay visible={!modelReady} />
+      {/* The overlay stays up until BOTH the GLB is parsed AND the user
+          has confirmed their play mode. The picker UI is rendered inside
+          the overlay (see ModelLoadingOverlay) — passing mode/onSelectMode
+          activates it. */}
+      <ModelLoadingOverlay
+        visible={!modelReady || playMode == null}
+        mode={playMode}
+        defaultMode={defaultMode}
+        onSelectMode={handleSelectMode}
+      />
 
       <button
         onClick={() => {
@@ -450,7 +486,10 @@ export default function ThreeScene() {
         ← Vissza a főoldalra
       </button>
 
-      {activeChatUserId == null && !pickerOpen && (
+      {/* All multiplayer UI is gated on isMultiplayer. In singleplayer
+          mode the chat launcher, picker, chat window, and MP status pill
+          are hidden — the scene looks like a regular solo walkthrough. */}
+      {isMultiplayer && activeChatUserId == null && !pickerOpen && (
         <button
           onClick={() => setPickerOpen(true)}
           title={isMobile ? "Chat" : "Chat (T)"}
@@ -472,7 +511,7 @@ export default function ThreeScene() {
         </button>
       )}
 
-      {pickerOpen && (
+      {isMultiplayer && pickerOpen && (
         <PlayerPickerPanel
           remotePlayers={remotePlayers}
           unreadCounts={unreadCounts}
@@ -482,7 +521,7 @@ export default function ThreeScene() {
         />
       )}
 
-      {activeChatUserId != null && (
+      {isMultiplayer && activeChatUserId != null && (
         <ChatWindow
           messages={activeMessages}
           selfUserId={selfUserId}
@@ -493,19 +532,21 @@ export default function ThreeScene() {
         />
       )}
 
-      <div className={`three-mp-status ${mpStatusClass}`}>
-        {mpConnected
-          ? `Online • ${remotePlayers.size} másik játékos`
-          : mpStatus === "no_token"
-            ? "MP: nincs token (jelentkezz be újra)"
-            : mpStatus === "connecting"
-              ? "MP: csatlakozás..."
-              : mpStatus === "closed"
-                ? `MP: lecsatlakozva${mpError ? ` (${mpError})` : ""}`
-                : mpStatus === "error"
-                  ? `MP: hiba${mpError ? ` (${mpError})` : ""}`
-                  : "MP: indul..."}
-      </div>
+      {isMultiplayer && (
+        <div className={`three-mp-status ${mpStatusClass}`}>
+          {mpConnected
+            ? `Online • ${remotePlayers.size} másik játékos`
+            : mpStatus === "no_token"
+              ? "MP: nincs token (jelentkezz be újra)"
+              : mpStatus === "connecting"
+                ? "MP: csatlakozás..."
+                : mpStatus === "closed"
+                  ? `MP: lecsatlakozva${mpError ? ` (${mpError})` : ""}`
+                  : mpStatus === "error"
+                    ? `MP: hiba${mpError ? ` (${mpError})` : ""}`
+                    : "MP: indul..."}
+        </div>
+      )}
 
       <Canvas
         camera={{ position: [0, 1.7, 0], fov: 75 }}
@@ -525,9 +566,16 @@ export default function ThreeScene() {
           onInfoPanelOpen={handleInfoPanelOpen}
           onLocationVisit={handleLocationVisit}
           remotePlayers={remotePlayers}
-          sendPosition={sendPosition}
+          // Skip sendPosition in singleplayer so we don't run the
+          // per-frame camera-direction computation when nobody's
+          // listening on the WS anyway.
+          sendPosition={isMultiplayer ? sendPosition : undefined}
           onModelReady={handleModelReady}
-          onSelectPlayer={isMobile ? openChat : undefined}
+          // Tap-to-chat is mobile-only — and obviously irrelevant
+          // when multiplayer is off entirely.
+          onSelectPlayer={
+            isMobile && isMultiplayer ? openChat : undefined
+          }
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}
