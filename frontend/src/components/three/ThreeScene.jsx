@@ -1,6 +1,6 @@
 import { useRef, useState, Suspense, useEffect } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import UsePlayerMovement from "./PlayerMovement";
 import { createMobileJoystick } from "./MobileJoystick";
 import Building from "./Building";
@@ -343,7 +343,9 @@ export default function ThreeScene() {
   const [modelReady, setModelReady] = useState(false);
   const handleModelReady = () => setModelReady(true);
 
-  
+  // Re-added for the merged single/multi-mode selector (the marker still
+  // comes from useSearchParams above; mode keeps using route state for now).
+  const routeLocation = useLocation();
   const initialMode =
     routeLocation.state?.mode === "single" ||
     routeLocation.state?.mode === "multi"
