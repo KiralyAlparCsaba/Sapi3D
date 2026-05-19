@@ -341,7 +341,19 @@ export default function ThreeScene() {
   const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
 
   const [modelReady, setModelReady] = useState(false);
-  const handleModelReady = () => setModelReady(true);
+  const handleModelReady = () => {
+    setModelReady(true);
+    // Record load time: from ThreeScene mount (loadStartRef) to first
+    // onWorldReady fire. Stored in seconds — backend column is FLOAT.
+    // Only record once per mount so a remount (HMR / StrictMode double
+    // mount) doesn't overwrite a real measurement with a tiny one.
+    if (metricsCollector.getLoadTime() == null) {
+      const seconds = (performance.now() - loadStartRef.current) / 1000;
+      if (Number.isFinite(seconds) && seconds >= 0) {
+        metricsCollector.setLoadTime(seconds);
+      }
+    }
+  };
 
   // Re-added for the merged single/multi-mode selector (the marker still
   // comes from useSearchParams above; mode keeps using route state for now).

@@ -225,7 +225,14 @@ export default function Building({
     }
 
     // 📊 METRICS
-    const fps = 1 / delta;
+    // Clamp fps: 1/delta is Infinity when delta=0 (happens on the very
+    // first frame in some renders). If Infinity reaches buildSamplesArray
+    // it taints the bucket average → JSON serializes as null → backend
+    // 422-rejects the whole metrics POST. Keeping fps as a finite,
+    // non-negative number capped at a sane upper bound avoids that.
+    const rawFps = 1 / delta;
+    const fps =
+      Number.isFinite(rawFps) && rawFps >= 0 ? Math.min(rawFps, 240) : 0;
     avgFps.current = avgFps.current * 0.9 + fps * 0.1;
 
     let memoryMB = 0;
