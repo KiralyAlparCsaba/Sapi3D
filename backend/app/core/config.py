@@ -7,19 +7,24 @@ class Settings(BaseSettings):
     
     # API Settings
     api_title: str = "Sapi3D Backend API"
-    api_version: str = "0.2.0"
+    api_version: str = "0.3.0"
     api_description: str = "FastAPI backend for Sapi3D application"
-    app_version: str = "1.3.0"
+    app_version: str = "1.4.0"
     
     # Model Settings
     models_directory: str = "static/models"
     default_model_filename: str = "sapi3D_V1.6.1.glb"
 
-    # Avatar Upload Settings
+    # Avatar Upload Settings (profile pictures — 2D images)
     avatars_directory: str = "static/avatars"
     avatar_max_size_bytes: int = 3 * 1024 * 1024  # 3MB
     avatar_allowed_mime_types: List[str] = ["image/jpeg", "image/png"]
     avatar_allowed_extensions: List[str] = ["jpg", "png"]
+
+    # 3D Avatar Settings (multiplayer — GLB models)
+    # Separate from `avatars_directory` above (which is for profile photos).
+    # Holds GLB binaries + manifest.json describing the available variants.
+    avatars_3d_directory: str = "static/avatars-3d"
 
     # Event Image Upload Settings
     events_directory: str = "static/events"

@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
 
-from api.routers import health, model, user_router, auth_router, session_router, location_router, event_router, info_panels_router, achievement_router
+from api.routers import health, model, user_router, auth_router, session_router, location_router, event_router, info_panels_router, achievement_router, multiplayer_router, avatars_router
 from core.config import settings
 from core.logging import logger
 from core.database import init_db, close_db
@@ -22,6 +22,7 @@ async def lifespan(app: FastAPI):
         await init_db()
         os.makedirs(settings.avatars_directory, exist_ok=True)
         os.makedirs(settings.events_directory, exist_ok=True)
+        os.makedirs(settings.avatars_3d_directory, exist_ok=True)
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize database: {type(e).__name__}: {e}", exc_info=True)
@@ -51,7 +52,9 @@ app = FastAPI(
         {"name": "Sessions", "description": "Session management and performance metrics endpoints"},
         {"name": "Auth", "description": "Authentication and authorization endpoints"},
         {"name": "Info Panels", "description": "Info Panel management and endpoints"},
-        {"name": "Achievements", "description": "Achievement system and progress tracking"}
+        {"name": "Achievements", "description": "Achievement system and progress tracking"},
+        {"name": "Multiplayer", "description": "Realtime multiplayer presence over WebSocket"},
+        {"name": "Avatars", "description": "3D avatar variants for multiplayer rendering (manifest + GLB files)"}
     ],
     docs_url="/docs",  # Swagger UI
     redoc_url="/redoc",  # ReDoc alternative documentation
@@ -74,6 +77,10 @@ app.mount("/static/avatars", StaticFiles(directory=settings.avatars_directory), 
 os.makedirs(settings.events_directory, exist_ok=True)
 app.mount("/static/events", StaticFiles(directory=settings.events_directory), name="events")
 
+# Static 3D avatar files (GLB models + manifest.json + optional thumbnails)
+os.makedirs(settings.avatars_3d_directory, exist_ok=True)
+app.mount("/static/avatars-3d", StaticFiles(directory=settings.avatars_3d_directory), name="avatars-3d")
+
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(model.router, tags=["Model"])
@@ -85,6 +92,8 @@ app.include_router(location_router.router, tags=["Locations"])
 app.include_router(event_router.router, tags=["Events"])
 app.include_router(info_panels_router.router, tags=["Info Panels"])
 app.include_router(achievement_router.router, tags=["Achievements"])
+app.include_router(multiplayer_router.router, tags=["Multiplayer"])
+app.include_router(avatars_router.router, tags=["Avatars"])
 
 
 

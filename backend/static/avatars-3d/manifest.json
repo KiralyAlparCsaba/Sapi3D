@@ -1,0 +1,9 @@
+{
+  "variants": [
+    {
+      "id": "avatar_v1",
+      "name": "Avatar V1.1",
+      "gltfUrl": "/api/static/avatars-3d/Avatar_V1.1.glb"
+    }
+  ]
+}

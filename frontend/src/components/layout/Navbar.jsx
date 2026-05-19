@@ -139,7 +139,7 @@ export default function Navbar({ theme, setTheme}) {
         <div className="nav-center desktop-only">
           <div className="nav-menu">
             <Link to="/app" className="nav-link">Főoldal</Link>
-            <Link to="/app/model" state={{ marker: "MarkerAula" }} className="nav-link">Modell</Link>
+            <Link to="/app/model?marker=MarkerAula" className="nav-link">Modell</Link>
             <Link to="/app/events" className="nav-link">Események</Link>
             <Link to="/app/locations" className="nav-link">Helyszínek</Link>
             <Link to="/app/profil" className="nav-link">Profil</Link>
@@ -194,7 +194,7 @@ export default function Navbar({ theme, setTheme}) {
 
         <div className="drawer-menu">
           <Link to="/app" onClick={() => setDrawerOpen(false)}>Főoldal</Link>
-          <Link to="/app/model" state={{ marker: "MarkerAula" }} onClick={() => setDrawerOpen(false)}>Modell</Link>
+          <Link to="/app/model?marker=MarkerAula" onClick={() => setDrawerOpen(false)}>Modell</Link>
           <Link to="/app/events" onClick={() => setDrawerOpen(false)}>Események</Link>
           <Link to="/app/locations" onClick={() => setDrawerOpen(false)}>Helyszínek</Link>
           <Link to="/app/profil" onClick={() => setDrawerOpen(false)}>Profil</Link>

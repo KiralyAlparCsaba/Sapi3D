@@ -1,0 +1,223 @@
+.model-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(4, 26, 10, 0.98) 0%,
+    #010805 60%,
+    #000 100%
+  );
+  color: #fff;
+  font-family: "Inter", Arial, sans-serif;
+  opacity: 1;
+  transition: opacity 600ms ease-out;
+  pointer-events: auto;
+}
+
+.model-loading-overlay.is-fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.model-loading-overlay__glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(21, 80, 21, 0.35) 0%,
+    rgba(21, 80, 21, 0) 60%
+  );
+  pointer-events: none;
+}
+
+.model-loading-overlay__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 90vw;
+}
+
+.model-loading-overlay__logo {
+  width: 140px;
+  height: auto;
+  filter: drop-shadow(0 0 24px rgba(21, 80, 21, 0.6));
+  animation: sapi3d-loading-pulse 2.4s ease-in-out infinite;
+}
+
+.model-loading-overlay__progress {
+  width: 320px;
+  max-width: 80vw;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.model-loading-overlay__progress-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(21, 80, 21, 0.85),
+    rgba(120, 200, 120, 0.95)
+  );
+  box-shadow: 0 0 12px rgba(120, 200, 120, 0.6);
+  transition: width 0.25s ease;
+}
+
+.model-loading-overlay__label {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.model-loading-overlay__pct {
+  opacity: 0.6;
+  margin-left: 8px;
+}
+
+@keyframes sapi3d-loading-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+.model-loading-overlay__picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+  animation: sapi3d-picker-in 0.45s ease-out both;
+}
+
+.model-loading-overlay__picker-question {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.3px;
+}
+
+.model-loading-overlay__picker-buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.model-loading-overlay__mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 140px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.model-loading-overlay__mode-btn:hover {
+  background: rgba(21, 80, 21, 0.22);
+  border-color: rgba(21, 80, 21, 0.6);
+  transform: translateY(-1px);
+}
+
+.model-loading-overlay__mode-btn:active {
+  transform: translateY(0);
+}
+
+/* Last-used mode gets a subtle pre-highlight so the user notices it
+   but still has to click to confirm. */
+.model-loading-overlay__mode-btn--default {
+  background: rgba(21, 80, 21, 0.18);
+  border-color: rgba(21, 80, 21, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(21, 80, 21, 0.25),
+    0 8px 24px rgba(21, 80, 21, 0.15);
+}
+
+.model-loading-overlay__mode-icon {
+  font-size: 26px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.model-loading-overlay__mode-label {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.model-loading-overlay__mode-sub {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.2px;
+}
+
+.model-loading-overlay__picker-hint {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 2px;
+  text-align: center;
+}
+
+.model-loading-overlay__picker-hint strong {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+}
+
+.model-loading-overlay__mode-confirmed {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.55);
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+  animation: sapi3d-picker-in 0.35s ease-out both;
+}
+
+@keyframes sapi3d-picker-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .model-loading-overlay__mode-btn {
+    min-width: 130px;
+    padding: 14px 16px;
+  }
+  .model-loading-overlay__picker-buttons {
+    gap: 12px;
+  }
+}

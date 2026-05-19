@@ -47,6 +47,12 @@ export default function App() {
 
   // 3. Fixed Session Cleanup Logic
   useEffect(() => {
+    // Coerce any non-finite or negative value to 0 before sending.
+    // The backend schema rejects null / NaN / Infinity for int fields,
+    // and JSON.stringify silently turns Infinity/NaN into null.
+    const safeInt = (n) =>
+      Number.isFinite(n) && n >= 0 ? Math.round(n) : 0;
+
     function buildSamplesArray(rawSamples) {
       if (!rawSamples.length) return [];
       const startTime = rawSamples[0].timestamp;
@@ -55,15 +61,25 @@ export default function App() {
       for (const s of rawSamples) {
         const t = Math.floor((s.timestamp - startTime) / BUCKET_MS) * 3;
         if (!buckets[t]) buckets[t] = { fps: [], memory_mb: [] };
-        buckets[t].fps.push(s.fps);
-        buckets[t].memory_mb.push(s.memory_mb);
+        // Guard at the source too — a single non-finite sample taints
+        // the bucket average otherwise.
+        if (Number.isFinite(s.fps)) buckets[t].fps.push(s.fps);
+        if (Number.isFinite(s.memory_mb)) buckets[t].memory_mb.push(s.memory_mb);
       }
       return Object.entries(buckets)
-        .map(([t, data]) => ({
-          t: parseInt(t),
-          fps: Math.round(data.fps.reduce((a, b) => a + b, 0) / data.fps.length),
-          memory_mb: Math.round(data.memory_mb.reduce((a, b) => a + b, 0) / data.memory_mb.length),
-        }))
+        .map(([t, data]) => {
+          const avgFps = data.fps.length
+            ? data.fps.reduce((a, b) => a + b, 0) / data.fps.length
+            : 0;
+          const avgMem = data.memory_mb.length
+            ? data.memory_mb.reduce((a, b) => a + b, 0) / data.memory_mb.length
+            : 0;
+          return {
+            t: safeInt(parseInt(t)),
+            fps: safeInt(avgFps),
+            memory_mb: safeInt(avgMem),
+          };
+        })
         .sort((a, b) => a.t - b.t);
     }
 
@@ -81,16 +97,24 @@ export default function App() {
         const avgMem = weightedAverage(samples, "memory_mb");
         const avgLat = weightedAverage(samples, "latency_ms");
 
+        // Same safety as buildSamplesArray — never let Infinity/NaN reach
+        // the wire as null. Required int fields → safeInt; optional float
+        // fields → null if not finite (Pydantic accepts null for Optional).
+        const safeOptionalFloat = (n) =>
+          n != null && Number.isFinite(n) && n >= 0 ? n : null;
+        const safeOptionalInt = (n) =>
+          n != null && Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
+
         const payload = {
           session_id: Number(sessionId),
-          fps: Math.round(avgFps),
-          memory_mb: Math.round(avgMem),
-          latency_ms: Math.round(avgLat),
+          fps: safeInt(avgFps),
+          memory_mb: safeInt(avgMem),
+          latency_ms: safeInt(avgLat),
           timestamp: new Date().toISOString(),
           samples: buildSamplesArray(samples),
-          load_time_s: metricsCollector.getLoadTime(),
-          peak_memory_mb: metricsCollector.getPeakMemory(),
-          quality_reductions: metricsCollector.getQualityReductions(),
+          load_time_s: safeOptionalFloat(metricsCollector.getLoadTime()),
+          peak_memory_mb: safeOptionalFloat(metricsCollector.getPeakMemory()),
+          quality_reductions: safeOptionalInt(metricsCollector.getQualityReductions()),
         };
 
         // sendBeacon is perfect for metrics (POST)

@@ -1,0 +1,14 @@
+.remote-player__nametag {
+  color: #ffffff;
+  font-family: sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  text-shadow:
+    0 0 3px #000,
+    0 0 3px #000,
+    0 0 3px #000,
+    0 0 3px #000;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}

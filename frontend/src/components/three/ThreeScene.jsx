@@ -1,6 +1,6 @@
 import { useRef, useState, Suspense, useEffect } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import UsePlayerMovement from "./PlayerMovement";
 import { createMobileJoystick } from "./MobileJoystick";
 import Building from "./Building";
@@ -8,8 +8,13 @@ import * as THREE from "three";
 import MobilePointerLockControls from "./MobilePointerLockControls";
 import { metricsCollector } from "./metricsCollector";
 import api from "../../services/api";
+import useMultiplayer from "./useMultiplayer";
+import RemotePlayer from "./RemotePlayer";
+import ModelLoadingOverlay from "./ModelLoadingOverlay";
+import ChatWindow from "./ChatWindow";
+import PlayerPickerPanel from "./PlayerPickerPanel";
+import "../../styles/ThreeScene.css";
 
-// SCENE CONTENT
 function SceneContent({
   controlsRef,
   sessionId,
@@ -20,21 +25,20 @@ function SceneContent({
   loadStartRef,
   onInfoPanelOpen,
   onLocationVisit,
+  remotePlayers,
+  sendPosition,
+  onModelReady,
+  onSelectPlayer,
 }) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
   const playerRootRef = useRef(new THREE.Object3D());
+  const forwardTmpRef = useRef(new THREE.Vector3());
 
   const didTeleportRef = useRef(false);
 
   useEffect(() => {
     scene.add(playerRootRef.current);
-
-    // NOTE: do NOT reset playerRootRef.current.position here.
-    // On a cached-model second visit, Building's useEffect (child) runs before
-    // this one (parent), so onWorldReady already placed the player at the correct
-    // marker position. Resetting to (0,0,0) would undo the teleport.
-    // A fresh Object3D starts at (0,0,0) anyway, so this line is always redundant.
 
     playerRootRef.current.add(camera);
     camera.position.set(0, 1.7, 0);
@@ -65,6 +69,13 @@ function SceneContent({
 
     if (controlsRef.current?.update) {
       controlsRef.current.update(delta);
+    }
+
+    if (sendPosition && playerRootRef.current) {
+      const fwd = forwardTmpRef.current;
+      camera.getWorldDirection(fwd);
+      const rotY = Math.atan2(fwd.x, fwd.z);
+      sendPosition(playerRootRef.current.position, rotY);
     }
   });
 
@@ -101,6 +112,8 @@ function SceneContent({
         onLocationVisit={onLocationVisit}
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
+
+          onModelReady?.();
 
           if (didTeleportRef.current) return;
 
@@ -158,6 +171,16 @@ function SceneContent({
           didTeleportRef.current = true;
         }}
       />
+
+      {remotePlayers &&
+        [...remotePlayers.values()].map((p) => (
+          <RemotePlayer
+            key={p.userId}
+            player={p}
+            otherPlayers={remotePlayers}
+            onSelect={onSelectPlayer}
+          />
+        ))}
     </Suspense>
   );
 }
@@ -178,8 +201,12 @@ export default function ThreeScene() {
   const API_URL = import.meta.env.VITE_API_URL || "/api";
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  const routeLocation = useLocation();
-  const markerToTeleport = routeLocation.state?.marker;
+  // Marker comes from a URL query param now (e.g. /app/model?marker=Foo).
+  // This survives "open in new tab", refresh, and shared/bookmarked links —
+  // unlike React Router's location.state, which only carries through a real
+  // in-app click and is silently dropped otherwise.
+  const [searchParams] = useSearchParams();
+  const markerToTeleport = searchParams.get("marker");
 
   useEffect(() => {
     fetch(`${API_URL}/info-panels/`)
@@ -313,31 +340,235 @@ export default function ThreeScene() {
 
   const sessionId = parseInt(sessionStorage.getItem("session_id"), 10);
 
+  const [modelReady, setModelReady] = useState(false);
+  const handleModelReady = () => {
+    setModelReady(true);
+    // Record load time: from ThreeScene mount (loadStartRef) to first
+    // onWorldReady fire. Stored in seconds — backend column is FLOAT.
+    // Only record once per mount so a remount (HMR / StrictMode double
+    // mount) doesn't overwrite a real measurement with a tiny one.
+    if (metricsCollector.getLoadTime() == null) {
+      const seconds = (performance.now() - loadStartRef.current) / 1000;
+      if (Number.isFinite(seconds) && seconds >= 0) {
+        metricsCollector.setLoadTime(seconds);
+      }
+    }
+  };
+
+  // Re-added for the merged single/multi-mode selector (the marker still
+  // comes from useSearchParams above; mode keeps using route state for now).
+  const routeLocation = useLocation();
+  const initialMode =
+    routeLocation.state?.mode === "single" ||
+    routeLocation.state?.mode === "multi"
+      ? routeLocation.state.mode
+      : null;
+  const [playMode, setPlayMode] = useState(initialMode);
+  const isMultiplayer = playMode === "multi";
+
+ 
+  const [defaultMode] = useState(() => {
+    const v = sessionStorage.getItem("sapi3d.modelMode");
+    return v === "single" || v === "multi" ? v : null;
+  });
+
+  const handleSelectMode = (mode) => {
+    if (mode !== "single" && mode !== "multi") return;
+    try {
+      sessionStorage.setItem("sapi3d.modelMode", mode);
+    } catch {
+      
+    }
+    setPlayMode(mode);
+  };
+
+  const {
+    remotePlayers,
+    sendPosition,
+    connected: mpConnected,
+    status: mpStatus,
+    lastError: mpError,
+    chatMessages,
+    unreadCounts,
+    activeChatUserId,
+    selfUserId,
+    sendChatMessage,
+    openChat,
+    closeChat,
+  } = useMultiplayer({ enabled: isMultiplayer });
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  let totalUnread = 0;
+  if (unreadCounts) {
+    for (const n of unreadCounts.values()) totalUnread += n;
+  }
+
+  const handlePickPlayer = (userId) => {
+    setPickerOpen(false);
+    openChat(userId);
+  };
+
+  useEffect(() => {
+    if (isMobile) return;
+    // Singleplayer: no chat shortcuts make sense.
+    if (!isMultiplayer) return;
+    const isTypingTarget = (el) => {
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || el.isContentEditable;
+    };
+    const onKey = (e) => {
+      if (isTypingTarget(document.activeElement)) return;
+      if (e.code === "KeyT") {
+        e.preventDefault();
+        if (activeChatUserId != null) {
+          closeChat();
+        } else {
+          setPickerOpen((v) => !v);
+        }
+      } else if (e.code === "Escape") {
+        if (activeChatUserId != null) closeChat();
+        else if (pickerOpen) setPickerOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isMobile, isMultiplayer, activeChatUserId, pickerOpen, closeChat]);
+
+  useEffect(() => {
+    if (isMobile) return;
+    if (activeChatUserId != null || pickerOpen) {
+      try {
+        controlsRef.current?.unlock?.();
+      } catch {}
+    }
+  }, [activeChatUserId, pickerOpen, isMobile]);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    const chatOpen = activeChatUserId != null || pickerOpen;
+    const ids = ["joystick-move", "joystick-look"];
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = chatOpen ? "none" : "block";
+    }
+    return () => {
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "block";
+      }
+    };
+  }, [isMobile, activeChatUserId, pickerOpen]);
+
+  const activePartner =
+    activeChatUserId != null
+      ? remotePlayers?.get?.(activeChatUserId) || {
+          userId: activeChatUserId,
+          username: `user${activeChatUserId}`,
+        }
+      : null;
+  const activeMessages =
+    activeChatUserId != null ? chatMessages?.get?.(activeChatUserId) || [] : [];
+
+  const mpStatusClass = mpConnected
+    ? "is-online"
+    : mpStatus === "no_token" ||
+        mpStatus === "error" ||
+        (mpStatus === "closed" && mpError)
+      ? "is-error"
+      : mpStatus === "connecting"
+        ? "is-connecting"
+        : "is-idle";
+
   return (
     <>
+      {/* The overlay stays up until BOTH the GLB is parsed AND the user
+          has confirmed their play mode. The picker UI is rendered inside
+          the overlay (see ModelLoadingOverlay) — passing mode/onSelectMode
+          activates it. */}
+      <ModelLoadingOverlay
+        visible={!modelReady || playMode == null}
+        mode={playMode}
+        defaultMode={defaultMode}
+        onSelectMode={handleSelectMode}
+      />
+
       <button
         onClick={() => {
           sendModelClose();
           navigate("/app");
         }}
-        style={{
-          position: "absolute",
-          top: "20px",
-          right: "20px",
-          padding: "10px 20px",
-          background: "white",
-          borderRadius: "8px",
-          border: "none",
-          cursor: "pointer",
-          zIndex: 999,
-        }}
+        className="three-back-button"
       >
         ← Vissza a főoldalra
       </button>
 
+      {/* All multiplayer UI is gated on isMultiplayer. In singleplayer
+          mode the chat launcher, picker, chat window, and MP status pill
+          are hidden — the scene looks like a regular solo walkthrough. */}
+      {isMultiplayer && activeChatUserId == null && !pickerOpen && (
+        <button
+          onClick={() => setPickerOpen(true)}
+          title={isMobile ? "Chat" : "Chat (T)"}
+          className={`three-chat-launcher${isMobile ? " is-mobile" : ""}`}
+        >
+          <span className="three-chat-launcher__icon">💬</span>
+          <span className="three-chat-launcher__label">Chat</span>
+          {!isMobile && (
+            <span aria-hidden="true" className="three-chat-launcher__kbd">
+              T
+            </span>
+          )}
+
+          {totalUnread > 0 && (
+            <span className="three-chat-launcher__badge">
+              {totalUnread > 99 ? "99+" : totalUnread}
+            </span>
+          )}
+        </button>
+      )}
+
+      {isMultiplayer && pickerOpen && (
+        <PlayerPickerPanel
+          remotePlayers={remotePlayers}
+          unreadCounts={unreadCounts}
+          onPick={handlePickPlayer}
+          onClose={() => setPickerOpen(false)}
+          isMobile={isMobile}
+        />
+      )}
+
+      {isMultiplayer && activeChatUserId != null && (
+        <ChatWindow
+          messages={activeMessages}
+          selfUserId={selfUserId}
+          partner={activePartner}
+          onSend={(text) => sendChatMessage(activeChatUserId, text)}
+          onClose={closeChat}
+          isMobile={isMobile}
+        />
+      )}
+
+      {isMultiplayer && (
+        <div className={`three-mp-status ${mpStatusClass}`}>
+          {mpConnected
+            ? `Online • ${remotePlayers.size} másik játékos`
+            : mpStatus === "no_token"
+              ? "MP: nincs token (jelentkezz be újra)"
+              : mpStatus === "connecting"
+                ? "MP: csatlakozás..."
+                : mpStatus === "closed"
+                  ? `MP: lecsatlakozva${mpError ? ` (${mpError})` : ""}`
+                  : mpStatus === "error"
+                    ? `MP: hiba${mpError ? ` (${mpError})` : ""}`
+                    : "MP: indul..."}
+        </div>
+      )}
+
       <Canvas
         camera={{ position: [0, 1.7, 0], fov: 75 }}
-        style={{ width: "100vw", height: "100vh" }}
+        className="three-canvas"
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
@@ -347,11 +578,22 @@ export default function ThreeScene() {
           sessionId={sessionId}
           isMobile={isMobile}
           markerToTeleport={markerToTeleport}
-          infoPanelsData={infoPanelsData} // Ajtókhoz
-          locationsData={locationsData} // Hologramokhoz
+          infoPanelsData={infoPanelsData}
+          locationsData={locationsData}
           loadStartRef={loadStartRef}
           onInfoPanelOpen={handleInfoPanelOpen}
           onLocationVisit={handleLocationVisit}
+          remotePlayers={remotePlayers}
+          // Skip sendPosition in singleplayer so we don't run the
+          // per-frame camera-direction computation when nobody's
+          // listening on the WS anyway.
+          sendPosition={isMultiplayer ? sendPosition : undefined}
+          onModelReady={handleModelReady}
+          // Tap-to-chat is mobile-only — and obviously irrelevant
+          // when multiplayer is off entirely.
+          onSelectPlayer={
+            isMobile && isMultiplayer ? openChat : undefined
+          }
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}
