@@ -7,9 +7,9 @@ class Settings(BaseSettings):
     
     # API Settings
     api_title: str = "Sapi3D Backend API"
-    api_version: str = "0.2.0"
+    api_version: str = "0.3.0"
     api_description: str = "FastAPI backend for Sapi3D application"
-    app_version: str = "1.3.0"
+    app_version: str = "1.4.0"
     
     # Model Settings
     models_directory: str = "static/models"
