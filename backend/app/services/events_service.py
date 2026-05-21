@@ -63,6 +63,7 @@ class EventsService:
             name=event_data.name,
             description=event_data.description,
             image_path=event_data.image_path,
+            event_date=event_data.event_date,
             loc_id=event_data.loc_id,
         )
         await self.db.commit()
@@ -96,6 +97,8 @@ class EventsService:
             event.description = event_data.description
         if event_data.image_path is not None:
             event.image_path = event_data.image_path
+        if event_data.event_date is not None:
+            event.event_date = event_data.event_date
         if event_data.loc_id is not None:
             event.loc_id = event_data.loc_id
 
