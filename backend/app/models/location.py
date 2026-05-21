@@ -1,6 +1,7 @@
-from sqlalchemy import String, Integer, ForeignKey, Text
+from sqlalchemy import String, Integer, ForeignKey, Text, Date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional, List
+from datetime import date
 
 from models.base import Base
 
@@ -31,6 +32,7 @@ class Event(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(1000), nullable=False)
     image_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    event_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     loc_id: Mapped[int] = mapped_column(Integer, ForeignKey("locations.loc_id"), nullable=False, index=True)
     
     # Relationships
