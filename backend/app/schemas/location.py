@@ -1,5 +1,6 @@
 from typing import Optional, List
 from pydantic import BaseModel, Field, ConfigDict
+from datetime import date
 
 
 # Location Schemas
@@ -35,6 +36,7 @@ class EventBase(BaseModel):
     name: str = Field(..., max_length=100)
     description: str = Field(..., max_length=1000)
     image_path: Optional[str] = Field(None, max_length=500)
+    event_date: Optional[date] = None
     loc_id: int
 
 
@@ -48,6 +50,7 @@ class EventUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=100)
     description: Optional[str] = Field(None, max_length=1000)
     image_path: Optional[str] = Field(None, max_length=500)
+    event_date: Optional[date] = None
     loc_id: Optional[int] = None
 
 

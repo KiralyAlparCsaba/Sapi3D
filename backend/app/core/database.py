@@ -178,6 +178,18 @@ async def init_db() -> None:
         await conn.execute(text("""
             DO $$
             BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'events' AND column_name = 'event_date'
+                ) THEN
+                    ALTER TABLE events ADD COLUMN event_date DATE;
+                END IF;
+            END
+            $$;
+        """))
+        await conn.execute(text("""
+            DO $$
+            BEGIN
                 -- achievement_requirements.requirement_data (JSONB) — added in achievement system v2
                 IF EXISTS (
                     SELECT 1 FROM information_schema.tables
