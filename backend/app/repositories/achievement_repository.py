@@ -1,6 +1,6 @@
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from models.achievement import (
     Achievement,
@@ -76,12 +76,14 @@ class AchvProgressRepository(BaseRepository[AchvProgress]):
         """Get or create progress for user-achievement pair."""
         result = await self.db.execute(
             select(AchvProgress).where(
-                (AchvProgress.user_id == user_id) & 
+                (AchvProgress.user_id == user_id) &
                 (AchvProgress.achv_id == achv_id)
             )
         )
-        progress = result.scalar_one_or_none()
-        
+        # Use first() instead of scalar_one_or_none() to tolerate any
+        # duplicate rows that may have been created by concurrent requests.
+        progress = result.scalars().first()
+
         if not progress:
             progress = await self.create(
                 user_id=user_id,
@@ -97,11 +99,20 @@ class AchvProgressRepository(BaseRepository[AchvProgress]):
         """Get progress by user_id and achv_id."""
         result = await self.db.execute(
             select(AchvProgress).where(
-                (AchvProgress.user_id == user_id) & 
+                (AchvProgress.user_id == user_id) &
                 (AchvProgress.achv_id == achv_id)
             )
         )
-        return result.scalar_one_or_none()
+        return result.scalars().first()
+
+    async def increment_model_view_count(self, progress_id: int) -> None:
+        """Atomically increment model_view_count to avoid read-modify-write races."""
+        await self.db.execute(
+            update(AchvProgress)
+            .where(AchvProgress.id == progress_id)
+            .values(model_view_count=AchvProgress.model_view_count + 1)
+        )
+        await self.db.flush()
     
     async def get_all_by_user(self, user_id: int) -> List[AchvProgress]:
         """Get all progress records for a user."""

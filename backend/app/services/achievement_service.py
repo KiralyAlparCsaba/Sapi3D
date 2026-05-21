@@ -55,7 +55,13 @@ class AchievementService:
         user_progress = await self.progress_repo.get_all_by_user(user_id)
         
         unlocked_ids = {ua.achv_id for ua in unlocked_achievements}
-        progress_by_achv_id = {p.achv_id: p for p in user_progress}
+        # Deduplicate by achv_id in case concurrent requests created duplicate rows.
+        # Keep the record with the highest model_view_count so display is correct.
+        progress_by_achv_id: dict = {}
+        for p in user_progress:
+            existing = progress_by_achv_id.get(p.achv_id)
+            if existing is None or (p.model_view_count or 0) > (existing.model_view_count or 0):
+                progress_by_achv_id[p.achv_id] = p
         
         unlocked = []
         in_progress = []
@@ -228,9 +234,9 @@ class AchievementService:
         for achievement in all_achievements:
             progress = await self.progress_repo.get_or_create_progress(user_id, achievement.achv_id)
 
-            # Increment model_view_count
-            new_count = (progress.model_view_count or 0) + 1
-            await self.progress_repo.update(progress.id, model_view_count=new_count)
+            # Atomic increment avoids read-modify-write race when concurrent
+            # requests (e.g. LocationsPage + ThreeScene) fire simultaneously.
+            await self.progress_repo.increment_model_view_count(progress.id)
 
             # Handle time_spent achievements
             time_requirement = await self.requirement_repo.get_requirement_value(
