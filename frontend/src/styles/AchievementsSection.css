@@ -1,422 +1,394 @@
-.profil-achievements {
-  margin-top: 34px;
-  text-align: left;
+/* ═══════════════════════════════════════════════════════
+   ACHIEVEMENTS SECTION  (Kitűzők + Kihívások)
+   Uses the site's global tokens only:
+     --navbar-bg, --capsule-bg, --text-color, --shadow-color
+   Accent: #3DAA7A  /  rgba(61, 170, 122, x)
+   Medal gradients live in ProfilPage.css (.ph-medal.*)
+   No --p-* or [data-theme] overrides needed here.
+═══════════════════════════════════════════════════════ */
+
+@keyframes ach-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
 }
 
-.profil-current-badge {
-  margin-bottom: 14px;
+@keyframes ach-bar-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(var(--p, 0)); }
 }
 
-.profil-current-badge-label {
-  display: inline-block;
-  margin-bottom: 8px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: rgba(0, 85, 40, 0.8);
+/* ── Section container (shared by badges + challenges) ── */
+.ach-section {
+  background: var(--capsule-bg);
+  border: 1px solid rgba(61, 170, 122, 0.16);
+  border-radius: 28px;
+  padding: 26px 28px 28px;
+  box-shadow: 0 4px 16px -4px var(--shadow-color), 0 2px 6px -2px rgba(0, 0, 0, 0.08);
 }
 
-.profil-current-badge-card {
+@media (prefers-reduced-motion: no-preference) {
+  .ach-badges-section     { animation: ach-reveal 0.6s cubic-bezier(.2,.8,.2,1) 0.05s both; }
+  .ach-challenges-section { animation: ach-reveal 0.6s cubic-bezier(.2,.8,.2,1) 0.12s both; }
+}
+
+/* ── Section head (title + right control) ── */
+.ach-section-head {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  border-radius: 16px;
-  padding: 12px 14px;
-  border: 1px solid rgba(0, 140, 90, 0.34);
-  background: linear-gradient(
-    135deg,
-    rgba(120, 230, 180, 0.34),
-    rgba(210, 238, 210, 0.66)
-  );
-  box-shadow:
-    0 14px 30px rgba(0, 140, 90, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.56);
-}
-
-.profil-current-badge-icon {
-  font-size: 28px;
-  line-height: 1;
-}
-
-.profil-current-badge-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.profil-current-badge-copy strong {
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.profil-current-badge-copy span {
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-.profil-current-badge-copy small {
-  font-size: 11px;
-  font-weight: 800;
-  color: rgba(0, 85, 40, 0.82);
-}
-
-.profil-current-badge-empty {
-  border-radius: 14px;
-  padding: 11px 12px;
-  border: 1px dashed rgba(0, 120, 0, 0.28);
-  background: rgba(210, 238, 210, 0.35);
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(0, 85, 40, 0.82);
-}
-
-/* ── Kitűzők ── */
-
-.profil-badges {
-  margin-bottom: 14px;
-  border-radius: 16px;
-  padding: 12px;
-  border: 1px solid rgba(0, 120, 0, 0.2);
-  background: linear-gradient(
-    180deg,
-    rgba(210, 238, 210, 0.58),
-    rgba(210, 238, 210, 0.42)
-  );
-}
-
-.profil-badges-head {
-  display: flex;
-  align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.profil-badges-head h4 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.profil-badges-subtitle {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(0, 85, 40, 0.82);
-}
-
-.profil-badges-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.profil-badge-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  border-radius: 12px;
-  padding: 8px;
-  border: 1px solid rgba(0, 120, 0, 0.2);
-  background: rgba(255, 255, 255, 0.36);
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
-}
-
-.profil-badge-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(0, 120, 0, 0.14);
-}
-
-.profil-badge-icon {
-  font-size: 18px;
-  line-height: 1;
-  margin-top: 1px;
-}
-
-.profil-badge-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.profil-badge-copy strong {
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.profil-badge-copy span {
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-.profil-badge-copy small {
-  font-size: 10px;
-  font-weight: 700;
-  color: rgba(0, 85, 40, 0.82);
-}
-
-.profil-badge-card.is-locked {
-  opacity: 0.62;
-  filter: grayscale(0.26);
-}
-
-.profil-badge-card.is-unlocked {
-  border-color: rgba(0, 140, 90, 0.34);
-  box-shadow: 0 8px 20px rgba(0, 140, 90, 0.14);
-}
-
-/* ── Achievement lista fejléc ── */
-
-.profil-achievements-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.profil-achievements-subhead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 22px 0 12px;
-  gap: 12px;
+.ach-section-title {
+  font-family: 'Geist', sans-serif;
+  font-size: 22px;
   font-weight: 600;
-  color: rgba(15, 60, 20, 0.8);
-}
-
-.profil-achievements-subhead h4 {
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text-color);
   margin: 0;
-  font-size: 16px;
-  letter-spacing: 0.01em;
 }
 
-.profil-achievements-head h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 800;
+.ach-section-sub {
+  font-size: 12.5px;
+  color: color-mix(in srgb, var(--text-color) 42%, transparent);
+  margin-top: 5px;
+  line-height: 1.4;
 }
 
-.profil-achievements-count {
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  padding: 6px 10px;
+/* ═══════════════════════════════════════════════════════
+   KITŰZŐK  (Badges)
+═══════════════════════════════════════════════════════ */
+
+/* Count chip (e.g. "1/3 megszerezve") */
+.ach-count-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  background: rgba(61, 170, 122, 0.14);
+  color: #3DAA7A;
+  padding: 6px 11px;
   border-radius: 999px;
-  background: rgba(159, 209, 159, 0.44);
-  border: 1px solid rgba(0, 120, 0, 0.2);
+  font-family: 'Geist Mono', 'Geist', monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-/* ── Achievement kártyák ── */
+.ach-count-chip b {
+  font-size: 14px;
+  font-weight: 600;
+}
 
-.profil-achievements-grid {
+/* 3-column badge grid */
+.ach-badges-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
 }
 
-.profil-achievement-card {
-  border-radius: 16px;
-  padding: 14px 14px 12px;
-  border: 1px solid rgba(0, 120, 0, 0.18);
+/* Badge card */
+.ach-badge-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 16px 16px;
+  border-radius: 20px;
+  background: var(--navbar-bg);
+  border: 1px solid rgba(61, 170, 122, 0.16);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ach-badge-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px -4px var(--shadow-color), 0 2px 6px -2px rgba(0, 0, 0, 0.08);
+}
+
+.ach-badge-card.earned {
   background: linear-gradient(
     180deg,
-    rgba(210, 238, 210, 0.76),
-    rgba(210, 238, 210, 0.58)
+    rgba(61, 170, 122, 0.14),
+    var(--navbar-bg)
   );
-  box-shadow:
-    0 12px 28px rgba(0, 120, 0, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.46);
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease;
+  border-color: rgba(61, 170, 122, 0.28);
 }
 
-.profil-achievement-card:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 18px 36px rgba(0, 120, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.54);
+.ach-badge-card.locked {
+  opacity: 0.85;
 }
 
-.profil-achievement-card h4 {
-  margin: 0 0 6px;
+/* Status pill (Megszerezve / Zárolva) */
+.ach-badge-pill {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.ach-badge-pill.earned {
+  background: #3DAA7A;
+  color: #fff;
+}
+
+.ach-badge-pill.locked {
+  background: var(--capsule-bg);
+  color: color-mix(in srgb, var(--text-color) 42%, transparent);
+  border: 1px solid rgba(61, 170, 122, 0.28);
+}
+
+/* Badge name & desc */
+.ach-badge-name {
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+  line-height: 1.2;
 }
 
-.profil-achievement-card p {
-  margin: 0 0 6px;
-  font-size: 13px;
-  line-height: 1.45;
+.ach-badge-desc {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--text-color) 68%, transparent);
+  line-height: 1.4;
+  margin: 0;
+  min-height: 32px;
 }
 
-.profil-achievement-card small {
-  display: block;
-  margin-bottom: 10px;
+.ach-badge-meta {
   font-size: 11px;
-  font-weight: 700;
-  color: rgba(0, 85, 40, 0.82);
+  color: color-mix(in srgb, var(--text-color) 42%, transparent);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
 }
 
-.profil-achievement-top {
+/* ═══════════════════════════════════════════════════════
+   KIHÍVÁSOK  (Challenges)
+═══════════════════════════════════════════════════════ */
+
+/* Filter tabs (segmented control) */
+.ach-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--navbar-bg);
+  border: 1px solid rgba(61, 170, 122, 0.16);
+  border-radius: 10px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.ach-filter-tab {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Geist', sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--text-color) 42%, transparent);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.ach-filter-tab:hover {
+  color: var(--text-color);
+}
+
+.ach-filter-tab.active {
+  background: var(--capsule-bg);
+  color: var(--text-color);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+/* Challenge grid */
+.ach-challenges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+/* Challenge card */
+.ach-ch-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--navbar-bg);
+  border: 1px solid rgba(61, 170, 122, 0.16);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ach-ch-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px -4px var(--shadow-color), 0 2px 6px -2px rgba(0, 0, 0, 0.08);
+}
+
+.ach-ch-card.done {
+  background: linear-gradient(
+    180deg,
+    rgba(61, 170, 122, 0.10),
+    var(--navbar-bg)
+  );
+  border-color: rgba(61, 170, 122, 0.28);
+}
+
+/* Top row: category + status */
+.ach-ch-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  gap: 8px;
 }
 
-.profil-achievement-category,
-.profil-achievement-state {
+.ach-ch-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.55px;
+  font-weight: 600;
   text-transform: uppercase;
-  padding: 4px 8px;
+  letter-spacing: 0.10em;
+  color: color-mix(in srgb, var(--text-color) 42%, transparent);
+}
+
+.ach-ch-cat-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.ach-ch-status {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
   border-radius: 999px;
+  border: 1px solid rgba(61, 170, 122, 0.28);
+  background: var(--capsule-bg);
+  color: color-mix(in srgb, var(--text-color) 68%, transparent);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.profil-achievement-category {
-  background: rgba(159, 209, 159, 0.46);
-  border: 1px solid rgba(0, 120, 0, 0.18);
+.ach-ch-status.done {
+  background: #3DAA7A;
+  color: #fff;
+  border-color: transparent;
 }
 
-.profil-achievement-state {
-  border: 1px solid transparent;
+/* Card body */
+.ach-ch-name {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text-color);
+  line-height: 1.25;
+  margin: 0;
 }
 
-.profil-achievement-card.is-unlocked .profil-achievement-state {
-  color: #0d6c43;
-  background: rgba(120, 230, 180, 0.34);
-  border-color: rgba(0, 140, 90, 0.34);
+.ach-ch-desc {
+  font-size: 12.5px;
+  color: color-mix(in srgb, var(--text-color) 68%, transparent);
+  line-height: 1.45;
+  margin: 0;
 }
 
-.profil-achievement-card.is-locked .profil-achievement-state {
-  color: #365245;
-  background: rgba(170, 182, 175, 0.3);
-  border-color: rgba(95, 112, 102, 0.35);
+.ach-ch-goal {
+  font-size: 11.5px;
+  color: color-mix(in srgb, var(--text-color) 42%, transparent);
+  margin-top: -4px;
 }
 
-.profil-achievement-progress {
-  position: relative;
-  height: 8px;
+/* Progress area (pinned to bottom) */
+.ach-ch-progress-wrap {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ach-ch-bar {
+  height: 6px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(61, 170, 122, 0.16);
   overflow: hidden;
 }
 
-.profil-achievement-progress-fill {
+.ach-ch-bar-fill {
   height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #00a86b, #27d690);
-  box-shadow: 0 0 16px rgba(0, 179, 126, 0.32);
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(61, 170, 122, 0.6), #3DAA7A);
+  transform: scaleX(var(--p, 0));
+  transform-origin: left;
 }
 
-.profil-achievement-progress-text {
-  display: inline-block;
-  margin-top: 7px;
+.ach-ch-card.done .ach-ch-bar-fill {
+  background: #3DAA7A;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ach-ch-bar-fill {
+    animation: ach-bar-grow 1.2s cubic-bezier(.2,.8,.2,1) both;
+  }
+}
+
+.ach-ch-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Geist Mono', 'Geist', monospace;
   font-size: 11px;
-  font-weight: 800;
-  color: rgba(0, 85, 40, 0.8);
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--text-color) 42%, transparent);
 }
 
-/* ── Reszponzív ── */
+.ach-ch-progress-meta b {
+  color: var(--text-color);
+  font-weight: 600;
+}
 
-@media (max-width: 560px) {
-  .profil-achievements-grid {
+/* ── Loading / error states ── */
+.ach-loading,
+.ach-error {
+  font-size: 13px;
+  color: color-mix(in srgb, var(--text-color) 42%, transparent);
+  padding: 24px 0;
+  text-align: center;
+}
+
+.ach-error { color: oklch(0.55 0.180 25); }
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  .ach-badges-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ach-section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ach-badges-grid {
     grid-template-columns: 1fr;
   }
-
-  .profil-badges-grid {
-    grid-template-columns: 1fr;
+  .ach-section {
+    padding: 20px 16px 20px;
   }
-}
-
-/* ── Dark mode ── */
-
-[data-theme="dark"] .profil-achievement-card {
-  background: rgba(0, 0, 0, 0.28);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow:
-    0 14px 30px rgba(0, 0, 0, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-[data-theme="dark"] .profil-achievements-count,
-[data-theme="dark"] .profil-achievement-category {
-  background: rgba(0, 0, 0, 0.26);
-  border-color: rgba(255, 255, 255, 0.14);
-}
-
-[data-theme="dark"] .profil-achievement-card small,
-[data-theme="dark"] .profil-achievement-progress-text {
-  color: rgba(173, 226, 187, 0.88);
-}
-
-[data-theme="dark"]
-  .profil-achievement-card.is-locked
-  .profil-achievement-state {
-  color: rgba(190, 205, 198, 0.92);
-  background: rgba(90, 100, 95, 0.34);
-  border-color: rgba(130, 140, 136, 0.34);
-}
-
-[data-theme="dark"]
-  .profil-achievement-card.is-unlocked
-  .profil-achievement-state {
-  color: #ecfff3;
-  background: rgba(0, 185, 121, 0.62);
-  border-color: rgba(120, 255, 203, 0.62);
-  text-shadow: 0 0 8px rgba(39, 214, 144, 0.34);
-}
-
-[data-theme="dark"] .profil-current-badge-label,
-[data-theme="dark"] .profil-current-badge-copy small,
-[data-theme="dark"] .profil-current-badge-empty {
-  color: rgba(173, 226, 187, 0.9);
-}
-
-[data-theme="dark"] .profil-current-badge-card {
-  background: linear-gradient(
-    135deg,
-    rgba(0, 185, 121, 0.28),
-    rgba(0, 0, 0, 0.4)
-  );
-  border-color: rgba(120, 255, 203, 0.4);
-  box-shadow:
-    0 18px 32px rgba(0, 130, 86, 0.24),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
-}
-
-[data-theme="dark"] .profil-current-badge-empty {
-  border-color: rgba(120, 255, 203, 0.34);
-  background: rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="dark"] .profil-badges {
-  background: rgba(0, 0, 0, 0.24);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-[data-theme="dark"] .profil-badges-subtitle,
-[data-theme="dark"] .profil-badge-copy small {
-  color: rgba(173, 226, 187, 0.9);
-}
-
-[data-theme="dark"] .profil-badge-card {
-  background: rgba(0, 0, 0, 0.32);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-[data-theme="dark"] .profil-badge-card.is-unlocked {
-  border-color: rgba(78, 247, 184, 0.36);
-  box-shadow: 0 10px 26px rgba(0, 168, 110, 0.22);
-}
-
-[data-theme="dark"] .profil-achievements-subhead {
-  color: rgba(173, 226, 187, 0.9);
 }
