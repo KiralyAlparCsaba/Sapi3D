@@ -3,11 +3,24 @@ import { Link } from "react-router-dom";
 import api from "../../services/api";
 import "../../styles/HeroSection.css";
 
-const HU_MONTHS = ["jan","feb","márc","ápr","máj","jún","júl","aug","szept","okt","nov","dec"];
+const HU_MONTHS = [
+  "jan",
+  "feb",
+  "márc",
+  "ápr",
+  "máj",
+  "jún",
+  "júl",
+  "aug",
+  "szept",
+  "okt",
+  "nov",
+  "dec",
+];
 
 function todayDateStr() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function parseEvDate(dateStr) {
@@ -27,43 +40,70 @@ const MARQUEE_ITEMS = [
 ];
 
 const RING_R = 60;
-const RING_C = 2 * Math.PI * RING_R; // ≈ 376.99
+const RING_C = 2 * Math.PI * RING_R;
 
 const ArrowIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M5 12h14M12 5l7 7-7 7" />
   </svg>
 );
 
 const PinIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M12 22s-8-6-8-13a8 8 0 1 1 16 0c0 7-8 13-8 13z" />
     <circle cx="12" cy="9" r="3" />
   </svg>
 );
 
 const MedalIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M7 3h10l-2 5H9z" />
     <circle cx="12" cy="14" r="6" />
   </svg>
 );
 
 export default function HeroSection() {
-  const ctaBtnRef  = useRef(null);
-  const feat0Ref   = useRef(null);
-  const feat1Ref   = useRef(null);
-  const feat2Ref   = useRef(null);
+  const ctaBtnRef = useRef(null);
+  const feat0Ref = useRef(null);
+  const feat1Ref = useRef(null);
+  const feat2Ref = useRef(null);
 
-  const [events, setEvents]               = useState([]);
-  const [locations, setLocations]         = useState([]);
-  const [eventsReady, setEventsReady]     = useState(false);
+  const [events, setEvents] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [eventsReady, setEventsReady] = useState(false);
 
   const [profileInitial, setProfileInitial] = useState("?");
-  const [progressPct, setProgressPct]       = useState(0);
+  const [progressPct, setProgressPct] = useState(0);
   const [profileHovered, setProfileHovered] = useState(false);
 
   // ── Load events + locations ──
@@ -84,7 +124,9 @@ export default function HeroSection() {
         if (!cancelled) setEventsReady(true);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ── Load profile + achievements ──
@@ -100,18 +142,24 @@ export default function HeroSection() {
         const username = meRes.data?.username || "?";
         setProfileInitial(username[0].toUpperCase());
 
-        const unlocked  = Array.isArray(achRes.data?.unlocked)    ? achRes.data.unlocked    : [];
-        const inProg    = Array.isArray(achRes.data?.in_progress)  ? achRes.data.in_progress : [];
-        const locked    = Array.isArray(achRes.data?.locked)       ? achRes.data.locked      : [];
+        const unlocked = Array.isArray(achRes.data?.unlocked)
+          ? achRes.data.unlocked
+          : [];
+        const inProg = Array.isArray(achRes.data?.in_progress)
+          ? achRes.data.in_progress
+          : [];
+        const locked = Array.isArray(achRes.data?.locked)
+          ? achRes.data.locked
+          : [];
         const total = unlocked.length + inProg.length + locked.length;
-        const done  = unlocked.length;
+        const done = unlocked.length;
 
         setProgressPct(total > 0 ? Math.round((done / total) * 100) : 0);
-      } catch {
-        /* stay with defaults */
-      }
+      } catch {}
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ── Magnetic CTA ──
@@ -120,12 +168,12 @@ export default function HeroSection() {
     if (!btn) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const STRENGTH = 0.35;
-    const RADIUS   = 140;
+    const RADIUS = 140;
     const onMove = (e) => {
-      const r  = btn.getBoundingClientRect();
-      const dx = e.clientX - (r.left + r.width  / 2);
-      const dy = e.clientY - (r.top  + r.height / 2);
-      const d  = Math.hypot(dx, dy);
+      const r = btn.getBoundingClientRect();
+      const dx = e.clientX - (r.left + r.width / 2);
+      const dy = e.clientY - (r.top + r.height / 2);
+      const d = Math.hypot(dx, dy);
       if (d < RADIUS) {
         const t = (RADIUS - d) / RADIUS;
         btn.style.transform = `translate(${dx * STRENGTH * t}px, ${dy * STRENGTH * t}px)`;
@@ -133,7 +181,9 @@ export default function HeroSection() {
         btn.style.transform = "";
       }
     };
-    const onLeave = () => { btn.style.transform = ""; };
+    const onLeave = () => {
+      btn.style.transform = "";
+    };
     window.addEventListener("pointermove", onMove);
     btn.addEventListener("pointerleave", onLeave);
     return () => {
@@ -151,7 +201,7 @@ export default function HeroSection() {
       const handler = (e) => {
         const r = el.getBoundingClientRect();
         el.style.setProperty("--mx", e.clientX - r.left + "px");
-        el.style.setProperty("--my", e.clientY - r.top  + "px");
+        el.style.setProperty("--my", e.clientY - r.top + "px");
       };
       el.addEventListener("pointermove", handler);
       cleanups.push(() => el.removeEventListener("pointermove", handler));
@@ -164,7 +214,9 @@ export default function HeroSection() {
   const locMap = Object.fromEntries(locations.map((l) => [l.loc_id, l.name]));
   const upcomingEvents = events
     .filter((ev) => ev.event_date && ev.event_date >= today)
-    .sort((a, b) => (a.event_date < b.event_date ? -1 : a.event_date > b.event_date ? 1 : 0))
+    .sort((a, b) =>
+      a.event_date < b.event_date ? -1 : a.event_date > b.event_date ? 1 : 0,
+    )
     .slice(0, 3);
 
   // ── Profile ring ──
@@ -172,44 +224,40 @@ export default function HeroSection() {
 
   return (
     <div className="home-page">
-
-      {/* ─── Side rail ─── */}
       <aside className="home-siderail" aria-hidden="true">
         <span>Sapientia · 3D · Marosvásárhely</span>
       </aside>
 
       <div className="home-inner">
-
-        {/* ════════════════════════════════
-            HERO
-        ════════════════════════════════ */}
         <section className="home-hero" aria-label="Főoldal hero">
-
-          {/* z0 — fallback poster (behind video) */}
           <div className="home-hero-poster" aria-hidden="true" />
 
-          {/* z1 — video */}
           <video
             className="home-hero-video"
             src="/campus-video.mp4"
-            autoPlay loop muted playsInline
+            autoPlay
+            loop
+            muted
+            playsInline
           />
 
-          {/* z2 — film grain */}
           <div className="home-hero-noise" aria-hidden="true">
             <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
               <filter id="hGrain">
-                <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+                <feTurbulence
+                  type="fractalNoise"
+                  baseFrequency="0.65"
+                  numOctaves="3"
+                  stitchTiles="stitch"
+                />
                 <feColorMatrix type="saturate" values="0" />
               </filter>
               <rect width="100%" height="100%" filter="url(#hGrain)" />
             </svg>
           </div>
 
-          {/* z2 — dark veil */}
           <div className="home-hero-veil" aria-hidden="true" />
 
-          {/* z3 — corner brackets */}
           <div className="home-hero-corners" aria-hidden="true">
             <div className="hc hc-tl" />
             <div className="hc hc-tr" />
@@ -217,10 +265,7 @@ export default function HeroSection() {
             <div className="hc hc-br" />
           </div>
 
-          {/* z4 — content */}
           <div className="home-hero-content">
-
-            {/* Top row */}
             <div className="home-hero-top">
               <span />
               <span className="home-chip-mono">
@@ -228,23 +273,29 @@ export default function HeroSection() {
               </span>
             </div>
 
-            {/* Middle — headline block */}
             <div className="home-hero-middle">
               <p className="home-eyebrow">Interaktív egyetem</p>
               <h1 className="home-hero-title">
-                <span className="hw" style={{ animationDelay: "0.10s" }}>Üdvözlünk</span>
-                {" "}
-                <span className="hw" style={{ animationDelay: "0.18s" }}>a</span>
-                {" "}
-                <span className="hw" style={{ animationDelay: "0.26s" }}><em>Sapientia</em></span>
-                {" "}
-                <span className="hw" style={{ animationDelay: "0.34s" }}>egyetem</span>
-                {" "}
-                <span className="hw" style={{ animationDelay: "0.42s" }}>oldalán</span>
+                <span className="hw" style={{ animationDelay: "0.10s" }}>
+                  Üdvözlünk
+                </span>{" "}
+                <span className="hw" style={{ animationDelay: "0.18s" }}>
+                  a
+                </span>{" "}
+                <span className="hw" style={{ animationDelay: "0.26s" }}>
+                  <em>Sapientia</em>
+                </span>{" "}
+                <span className="hw" style={{ animationDelay: "0.34s" }}>
+                  egyetem
+                </span>{" "}
+                <span className="hw" style={{ animationDelay: "0.42s" }}>
+                  oldalán
+                </span>
               </h1>
               <p className="home-hero-sub">
-                Fedezd fel az egyetemet egy interaktív 3D modellen keresztül — sétálj végig
-                az aulán, tanszékeken és helyszíneken úgy, mintha ott lennél.
+                Fedezd fel az egyetemet egy interaktív 3D modellen keresztül —
+                sétálj végig az aulán, tanszékeken és helyszíneken úgy, mintha
+                ott lennél.
               </p>
               <div className="home-hero-cta">
                 <Link
@@ -260,19 +311,23 @@ export default function HeroSection() {
               </div>
             </div>
 
-            {/* Bottom — feature pills */}
             <div className="home-feats">
-              <span className="home-feat-pill"><ArrowIcon />Szabad mozgás</span>
-              <span className="home-feat-pill"><PinIcon />Valós helyszínek</span>
-              <span className="home-feat-pill"><MedalIcon />Kihívások</span>
+              <span className="home-feat-pill">
+                <ArrowIcon />
+                Szabad mozgás
+              </span>
+              <span className="home-feat-pill">
+                <PinIcon />
+                Valós helyszínek
+              </span>
+              <span className="home-feat-pill">
+                <MedalIcon />
+                Kihívások
+              </span>
             </div>
-
           </div>
         </section>
 
-        {/* ════════════════════════════════
-            SECTION DIVIDER
-        ════════════════════════════════ */}
         <div className="home-divider" aria-hidden="true">
           <div className="home-divider-line" />
           <div className="home-divider-cue">
@@ -282,22 +337,18 @@ export default function HeroSection() {
           <div className="home-divider-line" />
         </div>
 
-        {/* ════════════════════════════════
-            MARQUEE
-        ════════════════════════════════ */}
         <div className="home-marquee" aria-hidden="true">
           <div className="home-marquee-track">
             {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
-              <span key={i}>{item}<em> ·</em></span>
+              <span key={i}>
+                {item}
+                <em> ·</em>
+              </span>
             ))}
           </div>
         </div>
 
-        {/* ════════════════════════════════
-            FEATURES
-        ════════════════════════════════ */}
         <section className="home-features-section" aria-label="Főbb funkciók">
-
           <div className="home-features-head">
             <div className="home-features-lhs">
               <p className="home-section-mark">Mit találsz itt</p>
@@ -308,8 +359,6 @@ export default function HeroSection() {
           </div>
 
           <div className="home-features-grid">
-
-            {/* ── Card 1 — Események ── */}
             <Link
               to="/app/events"
               className="home-feat home-feat-events"
@@ -326,15 +375,25 @@ export default function HeroSection() {
                     <div className="home-ev-empty">Nincs közelgő esemény</div>
                   )}
                   {upcomingEvents.map((ev, idx) => {
-                    const parsed  = parseEvDate(ev.event_date);
-                    const locName = (locMap[ev.loc_id] || "Ismeretlen").slice(0, 18);
-                    const title   = (ev.name || "").slice(0, 25);
+                    const parsed = parseEvDate(ev.event_date);
+                    const locName = (locMap[ev.loc_id] || "Ismeretlen").slice(
+                      0,
+                      18,
+                    );
+                    const title = (ev.name || "").slice(0, 25);
                     return (
-                      <div key={ev.event_id} className={`home-ev-tile home-ev-tile--${idx}`}>
+                      <div
+                        key={ev.event_id}
+                        className={`home-ev-tile home-ev-tile--${idx}`}
+                      >
                         <div className="home-ev-row">
                           <div className="home-ev-date">
-                            <span className="home-ev-day">{parsed?.day ?? "—"}</span>
-                            <span className="home-ev-month">{parsed?.month ?? ""}</span>
+                            <span className="home-ev-day">
+                              {parsed?.day ?? "—"}
+                            </span>
+                            <span className="home-ev-month">
+                              {parsed?.month ?? ""}
+                            </span>
                           </div>
                           <div className="home-ev-info">
                             <div className="home-ev-title">{title}</div>
@@ -349,15 +408,19 @@ export default function HeroSection() {
 
               <div className="home-feat-text">
                 <h3>Események az egyetemen</h3>
-                <p>Lásd milyen előadások és programok lesznek — minden eseményhez a helyszín részletes leírása is elérhető.</p>
+                <p>
+                  Lásd milyen előadások és programok lesznek — minden eseményhez
+                  a helyszín részletes leírása is elérhető.
+                </p>
                 <span className="home-feat-link">
                   Böngészem
-                  <span className="home-feat-link-badge" aria-hidden="true"><ArrowIcon /></span>
+                  <span className="home-feat-link-badge" aria-hidden="true">
+                    <ArrowIcon />
+                  </span>
                 </span>
               </div>
             </Link>
 
-            {/* ── Card 2 — Helyszínek ── */}
             <Link
               to="/app/locations"
               className="home-feat home-feat-locations"
@@ -379,36 +442,55 @@ export default function HeroSection() {
                   >
                     <path
                       d="M30,100 Q100,30 200,80 T280,120"
-                      stroke="var(--h-line)" strokeWidth="6" fill="none" opacity="0.5"
+                      stroke="var(--h-line)"
+                      strokeWidth="6"
+                      fill="none"
+                      opacity="0.5"
                     />
                     <path
                       d="M20,150 Q80,100 160,120 T290,60"
-                      stroke="var(--h-line)" strokeWidth="6" fill="none" opacity="0.5"
+                      stroke="var(--h-line)"
+                      strokeWidth="6"
+                      fill="none"
+                      opacity="0.5"
                     />
                     <path
                       className="home-map-hi"
                       d="M50,80 Q130,150 220,100 T270,140"
-                      stroke="var(--h-accent)" strokeWidth="2.5" fill="none"
-                      strokeDasharray="4 6" opacity="0.9"
+                      stroke="var(--h-accent)"
+                      strokeWidth="2.5"
+                      fill="none"
+                      strokeDasharray="4 6"
+                      opacity="0.9"
                     />
                   </svg>
-                  <div className="home-pin home-pin--a home-pin--ping"><span>A</span></div>
-                  <div className="home-pin home-pin--b"><span>I</span></div>
-                  <div className="home-pin home-pin--c"><span>K</span></div>
+                  <div className="home-pin home-pin--a home-pin--ping">
+                    <span>A</span>
+                  </div>
+                  <div className="home-pin home-pin--b">
+                    <span>I</span>
+                  </div>
+                  <div className="home-pin home-pin--c">
+                    <span>K</span>
+                  </div>
                 </div>
               </div>
 
               <div className="home-feat-text">
                 <h3>Az egyetem fontos pontjai</h3>
-                <p>Válassz egy helyszínt, és teleportálj a 3D modellbe. Minden ponthoz részletes leírás tartozik.</p>
+                <p>
+                  Válassz egy helyszínt, és teleportálj a 3D modellbe. Minden
+                  ponthoz részletes leírás tartozik.
+                </p>
                 <span className="home-feat-link">
                   Megnézem
-                  <span className="home-feat-link-badge" aria-hidden="true"><ArrowIcon /></span>
+                  <span className="home-feat-link-badge" aria-hidden="true">
+                    <ArrowIcon />
+                  </span>
                 </span>
               </div>
             </Link>
 
-            {/* ── Card 3 — Profil ── */}
             <Link
               to="/app/profil"
               className="home-feat home-feat-profile"
@@ -430,35 +512,50 @@ export default function HeroSection() {
                       aria-hidden="true"
                       style={{ transform: "rotate(-90deg)" }}
                     >
-                      <circle className="home-pv-ring-track" cx="65" cy="65" r={RING_R} />
+                      <circle
+                        className="home-pv-ring-track"
+                        cx="65"
+                        cy="65"
+                        r={RING_R}
+                      />
                       <circle
                         className="home-pv-ring-fill"
-                        cx="65" cy="65" r={RING_R}
+                        cx="65"
+                        cy="65"
+                        r={RING_R}
                         style={{
                           strokeDasharray: RING_C,
                           strokeDashoffset: ringOffset,
                         }}
                       />
                     </svg>
-                    <div className="home-pv-face" aria-label={`Profil kezdőbetű: ${profileInitial}`}>
+                    <div
+                      className="home-pv-face"
+                      aria-label={`Profil kezdőbetű: ${profileInitial}`}
+                    >
                       {profileInitial}
                     </div>
-                    <div className="home-pv-pct" aria-hidden="true">{progressPct}%</div>
+                    <div className="home-pv-pct" aria-hidden="true">
+                      {progressPct}%
+                    </div>
                   </div>
-
                 </div>
               </div>
 
               <div className="home-feat-text">
                 <h3>A te haladásod</h3>
-                <p>Lásd az adataid, tölts fel avatart, és kövesd a kihívásokat amiket a 3D modellben teljesíthetsz.</p>
+                <p>
+                  Lásd az adataid, tölts fel avatart, és kövesd a kihívásokat
+                  amiket a 3D modellben teljesíthetsz.
+                </p>
                 <span className="home-feat-link">
                   Megnyitom
-                  <span className="home-feat-link-badge" aria-hidden="true"><ArrowIcon /></span>
+                  <span className="home-feat-link-badge" aria-hidden="true">
+                    <ArrowIcon />
+                  </span>
                 </span>
               </div>
             </Link>
-
           </div>
         </section>
       </div>
