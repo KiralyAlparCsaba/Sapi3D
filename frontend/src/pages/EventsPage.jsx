@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import "../styles/EventsPage.css";
+import CTAButton from "../components/CTAButton";
 
 const EVENT_COLORS = [
   { color: "#1A3A6B", colorLight: "#2A52A0" },
@@ -82,53 +83,6 @@ const IconCalendar = () => (
   </svg>
 );
 
-function CTAButton({ onClick }) {
-  const btnRef = useRef(null);
-  const [magPos, setMagPos] = useState({ x: 0, y: 0 });
-  const [hovered, setHovered] = useState(false);
-  const [ripples, setRipples] = useState([]);
-  const [shimmer, setShimmer] = useState(false);
-
-  const handleMouseMove = (e) => {
-    if (!btnRef.current) return;
-    const r = btnRef.current.getBoundingClientRect();
-    setMagPos({ x: (e.clientX-(r.left+r.width/2))*0.26, y: (e.clientY-(r.top+r.height/2))*0.26 });
-  };
-  const handleMouseEnter = () => { setHovered(true); setShimmer(true); setTimeout(() => setShimmer(false), 620); };
-  const handleMouseLeave = () => { setMagPos({ x:0,y:0 }); setHovered(false); };
-  const handleClick = (e) => {
-    if (!btnRef.current) return;
-    const r = btnRef.current.getBoundingClientRect();
-    const id = Date.now();
-    setRipples(prev => [...prev, { x: e.clientX-r.left, y: e.clientY-r.top, id }]);
-    setTimeout(() => setRipples(prev => prev.filter(rp => rp.id !== id)), 720);
-    onClick?.();
-  };
-
-  return (
-    <button
-      ref={btnRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      className="ev-cta-btn"
-      style={{
-        transform: `translate(${magPos.x}px,${magPos.y}px) scale(${hovered ? 1.05 : 1})`,
-        transition: hovered ? "transform 0.1s ease, box-shadow 0.2s ease" : "transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.25s ease",
-        boxShadow: hovered ? "0 10px 40px rgba(61,170,122,0.35), 0 2px 10px rgba(0,0,0,0.3)" : "0 4px 20px rgba(0,0,0,0.25)",
-      }}
-    >
-      <div className="ev-cta-shimmer" style={{ left: shimmer ? "160%" : "-65%", transition: shimmer ? "left 0.52s ease" : "none" }} />
-      {ripples.map(rp => <span key={rp.id} className="ev-cta-ripple" style={{ left: rp.x, top: rp.y }} />)}
-      <span className="ev-cta-label">Részletek megtekintése</span>
-      <span className="ev-cta-arrow">
-        <span style={{ position:"absolute",display:"flex",alignItems:"center", transform: hovered?"translateX(26px)":"translateX(0)", transition:"transform 0.32s cubic-bezier(0.34,1.56,0.64,1)" }}><IconArrowRight /></span>
-        <span style={{ position:"absolute",display:"flex",alignItems:"center", transform: hovered?"translateX(0)":"translateX(-26px)", transition:"transform 0.32s cubic-bezier(0.34,1.56,0.64,1)" }}><IconArrowRight /></span>
-      </span>
-    </button>
-  );
-}
 
 function CalendarWidget({ events }) {
   const today = useMemo(() => new Date(), []);
