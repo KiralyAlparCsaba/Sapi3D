@@ -9,6 +9,7 @@ class LocationBase(BaseModel):
     name: str = Field(..., max_length=100)
     button_location: str = Field(..., max_length=200)
     information: str = Field(..., max_length=1000)
+    image_path: Optional[str] = Field(None, max_length=500)
 
 
 class LocationCreate(LocationBase):
@@ -21,6 +22,7 @@ class LocationUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=100)
     button_location: Optional[str] = Field(None, max_length=200)
     information: Optional[str] = Field(None, max_length=1000)
+    image_path: Optional[str] = Field(None, max_length=500)
 
 
 class LocationResponse(LocationBase):

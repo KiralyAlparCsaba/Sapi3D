@@ -22,6 +22,7 @@ async def lifespan(app: FastAPI):
         await init_db()
         os.makedirs(settings.avatars_directory, exist_ok=True)
         os.makedirs(settings.events_directory, exist_ok=True)
+        os.makedirs(settings.locations_directory, exist_ok=True)
         os.makedirs(settings.avatars_3d_directory, exist_ok=True)
         logger.info("Database initialized successfully")
     except Exception as e:
@@ -76,6 +77,10 @@ app.mount("/static/avatars", StaticFiles(directory=settings.avatars_directory), 
 # Static event image files
 os.makedirs(settings.events_directory, exist_ok=True)
 app.mount("/static/events", StaticFiles(directory=settings.events_directory), name="events")
+
+# Static location image files
+os.makedirs(settings.locations_directory, exist_ok=True)
+app.mount("/static/locations", StaticFiles(directory=settings.locations_directory), name="locations")
 
 # Static 3D avatar files (GLB models + manifest.json + optional thumbnails)
 os.makedirs(settings.avatars_3d_directory, exist_ok=True)
