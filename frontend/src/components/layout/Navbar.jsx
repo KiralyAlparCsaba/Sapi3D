@@ -11,13 +11,16 @@ function resolveAvatarUrl(avatarUrl) {
   if (/^https?:\/\//i.test(avatarUrl)) return avatarUrl;
 
   const envBase = (import.meta.env.VITE_API_URL || "").trim();
-  const base = envBase || `${window.location.protocol}//${window.location.hostname}:8000`;
+  const base =
+    envBase || `${window.location.protocol}//${window.location.hostname}:8000`;
   const normalizedBase = base.replace(/\/$/, "");
-  const normalizedPath = avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`;
+  const normalizedPath = avatarUrl.startsWith("/")
+    ? avatarUrl
+    : `/${avatarUrl}`;
   return `${normalizedBase}${normalizedPath}`;
 }
 
-export default function Navbar({ theme, setTheme}) {
+export default function Navbar({ theme, setTheme }) {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -34,7 +37,9 @@ export default function Navbar({ theme, setTheme}) {
   }
 
   const initial = (username || "?").trim().charAt(0).toUpperCase() || "?";
-  const avatarSrc = avatarUrl ? `${avatarUrl}${avatarUrl.includes("?") ? "&" : "?"}v=${avatarVersion}` : "";
+  const avatarSrc = avatarUrl
+    ? `${avatarUrl}${avatarUrl.includes("?") ? "&" : "?"}v=${avatarVersion}`
+    : "";
 
   const loadAvatar = async () => {
     if (!isAuthenticated) {
@@ -117,15 +122,16 @@ export default function Navbar({ theme, setTheme}) {
 
   return (
     <>
-      
-
       <nav className="navbar">
-
         {/* LEFT WRAPPER */}
         <div className="nav-left-wrapper">
           <div className="nav-left">
             <Link to="/app">
-              <img src="/sapilogo.png" alt="Sapientia Logo" className="nav-logo" />
+              <img
+                src="/sapilogo.png"
+                alt="Sapientia Logo"
+                className="nav-logo"
+              />
             </Link>
           </div>
 
@@ -138,12 +144,26 @@ export default function Navbar({ theme, setTheme}) {
         {/* DESKTOP MENU */}
         <div className="nav-center desktop-only">
           <div className="nav-menu">
-            <Link to="/app" className="nav-link">Főoldal</Link>
-            <Link to="/app/model?marker=MarkerAula" className="nav-link">Modell</Link>
-            <Link to="/app/events" className="nav-link">Események</Link>
-            <Link to="/app/locations" className="nav-link">Helyszínek</Link>
-            <Link to="/app/profil" className="nav-link">Profil</Link>
-            {isAdmin && <Link to="/app/admin" className="nav-link">Admin</Link>}
+            <Link to="/app" className="nav-link">
+              Főoldal
+            </Link>
+            <Link to="/app/model?marker=MarkerAula" className="nav-link">
+              Modell
+            </Link>
+            <Link to="/app/events" className="nav-link">
+              Események
+            </Link>
+            <Link to="/app/locations" className="nav-link">
+              Helyszínek
+            </Link>
+            <Link to="/app/profil" className="nav-link">
+              Profil
+            </Link>
+            {isAdmin && (
+              <Link to="/app/admin" className="nav-link">
+                Admin
+              </Link>
+            )}
           </div>
         </div>
 
@@ -151,7 +171,9 @@ export default function Navbar({ theme, setTheme}) {
         <div className="nav-right desktop-only">
           <div className="theme-toggle" onClick={toggleTheme}>
             <span className="theme-label">Light</span>
-            <div className={`toggle-switch ${theme === "dark" ? "dark" : "light"}`}>
+            <div
+              className={`toggle-switch ${theme === "dark" ? "dark" : "light"}`}
+            >
               <div className="toggle-knob"></div>
             </div>
             <span className="theme-label">Dark</span>
@@ -166,45 +188,96 @@ export default function Navbar({ theme, setTheme}) {
               onError={() => setAvatarLoadFailed(true)}
             />
           ) : (
-            <div className="nav-profile nav-profile-fallback" aria-label="Profile initial">
+            <div
+              className="nav-profile nav-profile-fallback"
+              aria-label="Profile initial"
+            >
               {initial}
             </div>
           )}
-          <button className="nav-logout" onClick={handleLogout}>⏻</button>
+          <button
+            className="nav-logout"
+            onClick={handleLogout}
+            aria-label="Kijelentkezés"
+          >
+            <svg
+              width="1em"
+              height="1em"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+              <line x1="12" y1="2" x2="12" y2="12" />
+            </svg>
+          </button>
         </div>
 
         {/* MOBILE HAMBURGER */}
-        <div className="hamburger mobile-only" onClick={() => setDrawerOpen(true)}>
+        <div
+          className="hamburger mobile-only"
+          onClick={() => setDrawerOpen(true)}
+        >
           ☰
         </div>
-
       </nav>
 
       {/* MOBILE DRAWER OVERLAY */}
-      {drawerOpen && <div className="drawer-overlay" onClick={() => setDrawerOpen(false)} />}
+      {drawerOpen && (
+        <div className="drawer-overlay" onClick={() => setDrawerOpen(false)} />
+      )}
 
       {/* MOBILE DRAWER (RIGHT) */}
       <div className={`mobile-drawer ${drawerOpen ? "open" : ""}`}>
         <div className="drawer-header">
           <img src="/sapilogo.png" className="drawer-logo" />
-          <button className="drawer-close" onClick={() => setDrawerOpen(false)}>×</button>
+          <button className="drawer-close" onClick={() => setDrawerOpen(false)}>
+            ×
+          </button>
         </div>
 
-        <div className="drawer-brand">Sapientia EMTE<br />Marosvásárhelyi Kar</div>
+        <div className="drawer-brand">
+          Sapientia EMTE
+          <br />
+          Marosvásárhelyi Kar
+        </div>
 
         <div className="drawer-menu">
-          <Link to="/app" onClick={() => setDrawerOpen(false)}>Főoldal</Link>
-          <Link to="/app/model?marker=MarkerAula" onClick={() => setDrawerOpen(false)}>Modell</Link>
-          <Link to="/app/events" onClick={() => setDrawerOpen(false)}>Események</Link>
-          <Link to="/app/locations" onClick={() => setDrawerOpen(false)}>Helyszínek</Link>
-          <Link to="/app/profil" onClick={() => setDrawerOpen(false)}>Profil</Link>
-          {isAdmin && <Link to="/app/admin" onClick={() => setDrawerOpen(false)}>Admin</Link>}
+          <Link to="/app" onClick={() => setDrawerOpen(false)}>
+            Főoldal
+          </Link>
+          <Link
+            to="/app/model?marker=MarkerAula"
+            onClick={() => setDrawerOpen(false)}
+          >
+            Modell
+          </Link>
+          <Link to="/app/events" onClick={() => setDrawerOpen(false)}>
+            Események
+          </Link>
+          <Link to="/app/locations" onClick={() => setDrawerOpen(false)}>
+            Helyszínek
+          </Link>
+          <Link to="/app/profil" onClick={() => setDrawerOpen(false)}>
+            Profil
+          </Link>
+          {isAdmin && (
+            <Link to="/app/admin" onClick={() => setDrawerOpen(false)}>
+              Admin
+            </Link>
+          )}
         </div>
 
         <div className="drawer-footer">
           <div className="theme-toggle drawer-theme" onClick={toggleTheme}>
             <span>Light</span>
-            <div className={`toggle-switch ${theme === "dark" ? "dark" : "light"}`}>
+            <div
+              className={`toggle-switch ${theme === "dark" ? "dark" : "light"}`}
+            >
               <div className="toggle-knob"></div>
             </div>
             <span>Dark</span>
@@ -219,16 +292,20 @@ export default function Navbar({ theme, setTheme}) {
                 onError={() => setAvatarLoadFailed(true)}
               />
             ) : (
-              <div className="drawer-profile drawer-profile-fallback" aria-label="Profile initial">
+              <div
+                className="drawer-profile drawer-profile-fallback"
+                aria-label="Profile initial"
+              >
                 {initial}
               </div>
             )}
             <span>{username}</span>
           </div>
 
-          <button className="drawer-logout" onClick={handleLogout}>Kijelentkezés</button>
+          <button className="drawer-logout" onClick={handleLogout}>
+            Kijelentkezés
+          </button>
         </div>
-
       </div>
     </>
   );
