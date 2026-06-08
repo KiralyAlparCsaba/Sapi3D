@@ -29,6 +29,7 @@ function SceneContent({
   sendPosition,
   onModelReady,
   onSelectPlayer,
+  playMode,
 }) {
   const collisionRef = useRef(null);
   const { camera, scene } = useThree();
@@ -110,6 +111,7 @@ function SceneContent({
         locationsData={locationsData}
         onInfoPanelOpen={onInfoPanelOpen}
         onLocationVisit={onLocationVisit}
+        playMode={playMode}
         onWorldReady={(mesh) => {
           collisionRef.current = mesh;
 
@@ -594,6 +596,7 @@ export default function ThreeScene() {
           onSelectPlayer={
             isMobile && isMultiplayer ? openChat : undefined
           }
+          playMode={playMode}
         />
 
         {!isMobile && PointerLock && <PointerLock ref={controlsRef} />}

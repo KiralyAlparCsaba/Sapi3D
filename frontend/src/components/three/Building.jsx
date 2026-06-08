@@ -6,8 +6,10 @@ import * as THREE from "three";
 import Metrics from "./Metrics";
 import { metricsCollector } from "./metricsCollector";
 import { measureLatency } from "./Latency";
+import { weightedAverage } from "./weightedAverage";
 import HologramPanel from "./HologramPanel";
 import InteractiveDoor from "./InteractiveDoor";
+import api from "../../services/api";
 
 export default function Building({
   controlsRef,
@@ -18,6 +20,7 @@ export default function Building({
   sessionId,
   infoPanelsData,
   locationsData,
+  playMode,
 }) {
   // IMPORTANT (production): never default to "http://localhost:8000".
   // In the user's browser, "localhost" points to their own device and is often blocked
@@ -50,12 +53,48 @@ export default function Building({
 
   const latencyRef = useRef(0);
 
+  // Latency mérés 5 másodpercenként
   useEffect(() => {
     const interval = setInterval(async () => {
       latencyRef.current = await measureLatency(`${API_URL}/health`);
     }, 5000);
     return () => clearInterval(interval);
   }, [API_URL]);
+
+  // Periódikus metrika feltöltés 30 másodpercenként
+  // playMode ref: mindig az aktuális értéket olvassuk az intervalon belül,
+  // nem csak a mountkori értéket — így a mode váltás is követve van.
+  const playModeRef = useRef(playMode);
+  useEffect(() => { playModeRef.current = playMode; }, [playMode]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const interval = setInterval(async () => {
+      const samples = metricsCollector.getSamples();
+      if (samples.length < 2) return;
+
+      const avgFpsVal    = weightedAverage(samples, "fps");
+      const avgMemVal    = weightedAverage(samples, "memory_mb");
+      const avgLatVal    = weightedAverage(samples, "latency_ms");
+
+      try {
+        await api.post(`/sessions/${sessionId}/metrics`, {
+          session_id: Number(sessionId),
+          fps:        Math.round(avgFpsVal),
+          memory_mb:  Math.round(avgMemVal),
+          latency_ms: Math.round(avgLatVal),
+          timestamp:  new Date().toISOString(),
+          play_mode:  playModeRef.current ?? null,
+        });
+        metricsCollector.clearSamples();
+      } catch (err) {
+        console.error("[metrics] Periódikus feltöltés sikertelen:", err);
+      }
+    }, 30_000);
+
+    return () => clearInterval(interval);
+  }, [sessionId]);
 
   const raycaster = useRef(new THREE.Raycaster());
   const centerScreen = useRef(new THREE.Vector2(0, 0));
