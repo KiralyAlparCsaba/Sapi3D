@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
 
-from api.routers import health, model, user_router, auth_router, session_router, location_router, event_router, info_panels_router, achievement_router, multiplayer_router, avatars_router
+from api.routers import health, model, user_router, auth_router, session_router, location_router, event_router, info_panels_router, achievement_router, multiplayer_router, avatars_router, admin_router
 from core.config import settings
 from core.logging import logger
 from core.database import init_db, close_db
@@ -55,7 +55,8 @@ app = FastAPI(
         {"name": "Info Panels", "description": "Info Panel management and endpoints"},
         {"name": "Achievements", "description": "Achievement system and progress tracking"},
         {"name": "Multiplayer", "description": "Realtime multiplayer presence over WebSocket"},
-        {"name": "Avatars", "description": "3D avatar variants for multiplayer rendering (manifest + GLB files)"}
+        {"name": "Avatars", "description": "3D avatar variants for multiplayer rendering (manifest + GLB files)"},
+        {"name": "Admin", "description": "Admin-only dashboard aggregation endpoints"}
     ],
     docs_url="/docs",  # Swagger UI
     redoc_url="/redoc",  # ReDoc alternative documentation
@@ -99,6 +100,7 @@ app.include_router(info_panels_router.router, tags=["Info Panels"])
 app.include_router(achievement_router.router, tags=["Achievements"])
 app.include_router(multiplayer_router.router, tags=["Multiplayer"])
 app.include_router(avatars_router.router, tags=["Avatars"])
+app.include_router(admin_router.router, tags=["Admin"])
 
 
 
