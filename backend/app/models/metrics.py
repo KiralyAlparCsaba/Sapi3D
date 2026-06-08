@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from sqlalchemy import Integer, ForeignKey, DateTime, BigInteger, Float
+from sqlalchemy import Integer, ForeignKey, DateTime, BigInteger, Float, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -13,7 +13,7 @@ class PerfMetrics(Base):
     __tablename__ = "perf_metrics"
 
     metrics_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    session_id: Mapped[int] = mapped_column(Integer, ForeignKey("sessions.session_id"), nullable=False, index=True)
+    session_id: Mapped[int] = mapped_column(Integer, ForeignKey("sessions.session_id", ondelete="CASCADE"), nullable=False, index=True)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     fps: Mapped[int] = mapped_column(Integer, nullable=False)
     memory_mb: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -22,6 +22,7 @@ class PerfMetrics(Base):
     load_time_s: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     peak_memory_mb: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     quality_reductions: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    play_mode: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
     
     # Relationships
     session: Mapped["Session"] = relationship("Session", back_populates="perf_metrics")

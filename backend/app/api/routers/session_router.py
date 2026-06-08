@@ -20,8 +20,18 @@ router = APIRouter(prefix="/sessions")
 async def create_session(data: SessionCreate, db: AsyncSession = Depends(get_db)):
     """
     Start a new user session.
+    Automatically closes any previously open sessions for the same user
+    so only one active session exists per user at any time.
     """
+    from datetime import datetime, timezone
     repo = SessionRepository(db)
+
+    # Lezárjuk az összes korábbi nyitott session-t ennél a usernél
+    existing_active = await repo.get_active_sessions(user_id=data.user_id)
+    now = datetime.now(timezone.utc)
+    for old_session in existing_active:
+        await repo.end_session(old_session.session_id, ended_at=now)
+
     session = await repo.create(**data.dict())
     return session
 

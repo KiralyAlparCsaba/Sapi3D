@@ -19,6 +19,11 @@ class MetricsCollector {
     return this.samples;
   }
 
+  // Puffer ürítése periódikus küldés után (a már feltöltött mintákat dobja el)
+  clearSamples() {
+    this.samples = [];
+  }
+
   setLoadTime(seconds) {
     this.loadTimeS = seconds;
   }
