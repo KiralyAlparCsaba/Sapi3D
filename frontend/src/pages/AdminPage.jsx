@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
 import api from "../services/api";
 import "../styles/AdminPage.css";
+import "../styles/AdminDashboard.css";
+import DashboardTab from "../components/admin/DashboardTab";
 
 function resolveAvatarUrl(avatarUrl) {
   if (!avatarUrl) return "";
@@ -24,6 +29,8 @@ function fmtDate(value) {
 }
 
 export default function AdminPage() {
+  const [activeTab, setActiveTab] = useState("dashboard");
+
   const usersRequestRef = useRef(0);
   const sessionsRequestRef = useRef(0);
   const rawRequestRef = useRef(0);
@@ -435,9 +442,32 @@ export default function AdminPage() {
   return (
     <>
       <div className="admin-page">
-        <h1 className="admin-page__title">Admin – Sessionök és metrikák</h1>
+        <h1 className="admin-page__title" style={{ padding: "16px 20px 0", margin: 0 }}>
+          Admin
+        </h1>
 
-        <div className="admin-page__grid">
+        {/* TAB BAR */}
+        <div className="admin-tabs">
+          <button
+            className={`admin-tab-btn${activeTab === "dashboard" ? " active" : ""}`}
+            onClick={() => setActiveTab("dashboard")}
+          >
+            Dashboard
+          </button>
+          <button
+            className={`admin-tab-btn${activeTab === "users" ? " active" : ""}`}
+            onClick={() => setActiveTab("users")}
+          >
+            Felhasználók
+          </button>
+        </div>
+
+        {/* DASHBOARD TAB */}
+        {activeTab === "dashboard" && <DashboardTab />}
+
+        {/* FELHASZNÁLÓK TAB */}
+        {activeTab === "users" && (
+        <div className="admin-page__grid" style={{ padding: "16px 20px" }}>
           {/* ───────── LEFT: USERS ───────── */}
           <section className="admin-card">
             <div className="admin-card__header">
@@ -739,83 +769,85 @@ export default function AdminPage() {
             {selectedSessionId && (
               <>
                 <div className="admin-metrics-header">
-                  <h3 className="admin-metrics-title">Minták</h3>
+                  <h3 className="admin-metrics-title">Session teljesítmény</h3>
                   <button
-                    onClick={() =>
-                      selectedSessionId && loadRawMetrics(selectedSessionId)
-                    }
+                    onClick={() => selectedSessionId && loadRawMetrics(selectedSessionId)}
                     disabled={!selectedSessionId || rawLoading}
                   >
                     Frissítés
                   </button>
                 </div>
 
-                <div className="admin-metrics-meta">
-                  <span className="admin-pill">
-                    Kiválasztott session: #{selectedSessionId}
-                  </span>
-                </div>
+                {rawLoading && <p className="admin-status">Betöltés...</p>}
+                {rawError  && <p className="admin-status admin-error">{rawError}</p>}
 
-                {rawLoading && (
-                  <p className="admin-status">Minták betöltése...</p>
-                )}
-                {rawError && (
-                  <p className="admin-status admin-error">{rawError}</p>
+                {rawMetrics && rawMetrics.length === 0 && (
+                  <div className="admin-empty">Nincs metrika ehhez a sessionhöz.</div>
                 )}
 
-                {rawMetrics && (
-                  <div className="admin-metrics-list">
-                    {rawMetrics.map((m) => (
-                      <article key={m.metrics_id} className="admin-metric-card">
-                        <div className="admin-metric-row">
-                          <span className="admin-metric-label">Időpont</span>
-                          <span className="admin-metric-value admin-metric-value--time">
-                            {fmtDate(m.timestamp)}
-                          </span>
+                {rawMetrics && rawMetrics.length > 0 && (() => {
+                  // Összefoglaló számok
+                  const avgFps = Math.round(rawMetrics.reduce((s, m) => s + m.fps, 0) / rawMetrics.length);
+                  const avgMem = Math.round(rawMetrics.reduce((s, m) => s + m.memory_mb, 0) / rawMetrics.length);
+                  const avgLat = Math.round(rawMetrics.reduce((s, m) => s + m.latency_ms, 0) / rawMetrics.length);
+                  // Grafikon adatok: minden 30 mp-es pont egy tick
+                  const chartData = rawMetrics.map((m, i) => ({
+                    i: i + 1,
+                    label: new Date(m.timestamp).toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" }),
+                    fps: m.fps,
+                    mem: m.memory_mb,
+                    lat: m.latency_ms,
+                  }));
+
+                  return (
+                    <>
+                      {/* Összefoglaló sor */}
+                      <div className="admin-session-summary">
+                        <div className="admin-session-stat">
+                          <span className="admin-session-stat-label">Átlag FPS</span>
+                          <strong className="admin-session-stat-value" style={{ color: "#3fb950" }}>{avgFps}</strong>
                         </div>
-                        <div className="admin-metric-grid">
-                          <div className="admin-metric-stat">
-                            <span className="admin-metric-label">FPS</span>
-                            <strong className="admin-metric-value">
-                              {m.fps}
-                            </strong>
-                          </div>
-                          <div className="admin-metric-stat">
-                            <span className="admin-metric-label">
-                              Memória (MB)
-                            </span>
-                            <strong className="admin-metric-value">
-                              {m.memory_mb}
-                            </strong>
-                          </div>
-                          <div className="admin-metric-stat">
-                            <span className="admin-metric-label">
-                              Késleltetés (ms)
-                            </span>
-                            <strong className="admin-metric-value">
-                              {m.latency_ms}
-                            </strong>
-                          </div>
-                          <div className="admin-metric-stat">
-                            <span className="admin-metric-label">ID</span>
-                            <strong className="admin-metric-value">
-                              {m.metrics_id}
-                            </strong>
-                          </div>
+                        <div className="admin-session-stat">
+                          <span className="admin-session-stat-label">Átlag memória</span>
+                          <strong className="admin-session-stat-value" style={{ color: "#bc8cff" }}>{avgMem} MB</strong>
                         </div>
-                      </article>
-                    ))}
-                    {rawMetrics.length === 0 && (
-                      <div className="admin-empty">
-                        Nincs minta ehhez a sessionhöz.
+                        <div className="admin-session-stat">
+                          <span className="admin-session-stat-label">Átlag latency</span>
+                          <strong className="admin-session-stat-value" style={{ color: "#f0883e" }}>{avgLat} ms</strong>
+                        </div>
+                        <div className="admin-session-stat">
+                          <span className="admin-session-stat-label">Mért időszakok</span>
+                          <strong className="admin-session-stat-value">{rawMetrics.length} × 30s</strong>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                )}
+
+                      {/* FPS + memória trend a session során */}
+                      <div className="admin-session-chart-wrap">
+                        <div className="admin-session-chart-title">FPS és memória a session során</div>
+                        <ResponsiveContainer width="100%" height={160}>
+                          <LineChart data={chartData} margin={{ top: 4, right: 12, left: -10, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                            <YAxis yAxisId="fps" tick={{ fontSize: 10 }} domain={["auto", "auto"]} unit=" fps" />
+                            <YAxis yAxisId="mem" orientation="right" tick={{ fontSize: 10 }} domain={["auto", "auto"]} unit=" MB" />
+                            <Tooltip
+                              formatter={(v, name) =>
+                                name === "FPS" ? [`${v} fps`, "FPS"] : [`${v} MB`, "Memória"]
+                              }
+                            />
+                            <Line yAxisId="fps" type="monotone" dataKey="fps"  name="FPS"    stroke="#3fb950" strokeWidth={2} dot={{ r: 3 }} />
+                            <Line yAxisId="mem" type="monotone" dataKey="mem"  name="Memória" stroke="#bc8cff" strokeWidth={2} dot={{ r: 3 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </>
+                  );
+                })()}
               </>
             )}
           </section>
         </div>
+        )} {/* end users tab */}
       </div>
 
       {editOpen && (
