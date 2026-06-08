@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     event_image_max_size_bytes: int = 5 * 1024 * 1024  # 5MB
     event_image_allowed_mime_types: List[str] = ["image/jpeg", "image/png"]
     event_image_allowed_extensions: List[str] = ["jpg", "png"]
+
+    # Location Image Upload Settings
+    locations_directory: str = "static/locations"
+    location_image_max_size_bytes: int = 5 * 1024 * 1024  # 5MB
+    location_image_allowed_mime_types: List[str] = ["image/jpeg", "image/png"]
+    location_image_allowed_extensions: List[str] = ["jpg", "png"]
     
     # Database Settings
     database_url: str = "postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d"

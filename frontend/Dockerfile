@@ -14,8 +14,8 @@ RUN apk add --no-cache libqrencode-tools
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (npm install to pick up any new packages added to package.json)
+RUN npm install
 
 # Copy source code
 COPY . .

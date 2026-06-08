@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { closeSessionAndRedirect } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -15,8 +16,8 @@ export function AuthProvider({ children }) {
         const now = Date.now() / 1000;
 
         if (decoded.exp < now) {
-          // Token expired
-          sessionStorage.removeItem('token');
+          // Token expired — close session on backend then redirect to login
+          closeSessionAndRedirect();
           setToken(null);
           setUser(null);
         } else {
@@ -29,7 +30,7 @@ export function AuthProvider({ children }) {
         }
       } catch (e) {
         console.error('Token decode error:', e);
-        sessionStorage.removeItem('token');
+        closeSessionAndRedirect();
         setToken(null);
         setUser(null);
       }
@@ -47,14 +48,37 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
+  // Percenkénti token lejárat ellenőrzés — lefedi azt az esetet amikor
+  // a user nyitva hagyja a tabot és a token csendben lejár (nincs API hívás)
+  useEffect(() => {
+    if (!token) return;
+
+    const interval = setInterval(() => {
+      try {
+        const decoded = jwtDecode(token);
+        const now = Date.now() / 1000;
+        if (decoded.exp < now) {
+          closeSessionAndRedirect();
+          setToken(null);
+          setUser(null);
+        }
+      } catch {
+        closeSessionAndRedirect();
+        setToken(null);
+        setUser(null);
+      }
+    }, 60_000); // percenként ellenőriz
+
+    return () => clearInterval(interval);
+  }, [token]);
+
   const login = (newToken) => {
     setToken(newToken);
   };
 
   const logout = () => {
+    closeSessionAndRedirect();
     setToken(null);
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('session_id');
   };
 
   const updateToken = (newToken) => {

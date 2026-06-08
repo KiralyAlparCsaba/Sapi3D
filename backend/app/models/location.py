@@ -15,7 +15,8 @@ class Location(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     button_location: Mapped[str] = mapped_column(String(200), nullable=False)
     information: Mapped[str] = mapped_column(String(1000), nullable=False)
-    
+    image_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
     # Relationships
     events: Mapped[List["Event"]] = relationship("Event", back_populates="location", cascade="all, delete-orphan")
     

@@ -1,5 +1,5 @@
 .admin-page {
-  padding: 20px;
+  padding: 0;
 }
 
 .admin-page__title {
@@ -523,4 +523,77 @@
 [data-theme="dark"] .admin-avatar-button--danger:hover:not(:disabled) {
   background: #5a2424 !important;
   border-color: #9d5555 !important;
+}
+
+/* ── SESSION PERFORMANCE SUMMARY ── */
+.admin-session-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  margin-bottom: 16px;
+}
+
+.admin-session-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 16px;
+  border: 1px solid #cfe2d3;
+  border-radius: 10px;
+  background: #f4fcf6;
+  min-width: 110px;
+}
+
+.admin-session-stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #44614b;
+}
+
+.admin-session-stat-value {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  color: #173821;
+}
+
+.admin-session-chart-wrap {
+  margin-top: 4px;
+  padding: 12px;
+  border: 1px solid #cfe2d3;
+  border-radius: 10px;
+  background: #f4fcf6;
+}
+
+.admin-session-chart-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #44614b;
+  margin-bottom: 8px;
+}
+
+[data-theme="dark"] .admin-session-stat {
+  background: #0d1f12;
+  border-color: #1e3a24;
+}
+
+[data-theme="dark"] .admin-session-stat-label {
+  color: #7dbf8a;
+}
+
+[data-theme="dark"] .admin-session-stat-value {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .admin-session-chart-wrap {
+  background: #0d1f12;
+  border-color: #1e3a24;
+}
+
+[data-theme="dark"] .admin-session-chart-title {
+  color: #7dbf8a;
 }

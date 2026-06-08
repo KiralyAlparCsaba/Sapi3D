@@ -190,6 +190,18 @@ async def init_db() -> None:
         await conn.execute(text("""
             DO $$
             BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'locations' AND column_name = 'image_path'
+                ) THEN
+                    ALTER TABLE locations ADD COLUMN image_path VARCHAR(500);
+                END IF;
+            END
+            $$;
+        """))
+        await conn.execute(text("""
+            DO $$
+            BEGIN
                 -- achievement_requirements.requirement_data (JSONB) — added in achievement system v2
                 IF EXISTS (
                     SELECT 1 FROM information_schema.tables

@@ -22,6 +22,7 @@ class PerfMetricsBase(BaseModel):
     load_time_s: Optional[float] = Field(None, ge=0, description="Time in seconds from page load to model ready")
     peak_memory_mb: Optional[float] = Field(None, ge=0, description="Peak JS heap memory usage in MB during the session")
     quality_reductions: Optional[int] = Field(None, ge=0, description="Number of times the dynamic quality scaler reduced pixel ratio")
+    play_mode: Optional[str] = Field(None, description="Play mode at time of recording: 'single' or 'multi'")
 
 
 class PerfMetricsCreate(PerfMetricsBase):
