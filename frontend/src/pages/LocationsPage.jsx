@@ -1,5 +1,6 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import CTAButton from "../components/CTAButton";
@@ -342,6 +343,17 @@ export default function LocationsPage() {
     }
   };
 
+  // detail megnyitásakor: tetejére görget (navbar látható marad), body lockot állít
+  useEffect(() => {
+    if (selectedLocation) {
+      window.scrollTo({ top: 0, behavior: "instant" });
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [selectedLocation]);
+
   // ── carousel: apply layout whenever active or locations change ─────────────
   useEffect(() => {
     if (!locations.length || selectedLocation) return;
@@ -485,9 +497,52 @@ export default function LocationsPage() {
 
   const displayedLoc = locations[displayedIdx] || locations[0];
   const N = locations.length;
+  // A kiválasztott helyszín sorszáma a tömbben (1-alapú), nem a loc_id
+  const selectedLocationIndex = selectedLocation
+    ? locations.findIndex(l => l.loc_id === selectedLocation.loc_id) + 1
+    : 1;
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
+    <>
+      {/* ━━━ HÁTTÉR ALAKZATOK ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {createPortal(
+        <div className="loc-bg-shapes" aria-hidden="true">
+          {/* Bal oldal */}
+          <svg className="loc-shape loc-shape--s1" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="20" cy="20" r="18"/></svg>
+          <svg className="loc-shape loc-shape--s2" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
+          <span className="loc-shape loc-shape--s3" />
+          <svg className="loc-shape loc-shape--s4" viewBox="0 0 30 30" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="15" cy="15" r="13"/></svg>
+          <span className="loc-shape loc-shape--s5" />
+          <svg className="loc-shape loc-shape--s6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="12" cy="12" r="10"/></svg>
+          <svg className="loc-shape loc-shape--s7" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
+          {/* Jobb oldal */}
+          <svg className="loc-shape loc-shape--s8" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="20" cy="20" r="18"/></svg>
+          <svg className="loc-shape loc-shape--s9" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
+          <span className="loc-shape loc-shape--s10" />
+          <svg className="loc-shape loc-shape--s11" viewBox="0 0 50 50" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="25" cy="25" r="22"/></svg>
+          <span className="loc-shape loc-shape--s12" />
+          <svg className="loc-shape loc-shape--s13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="12" cy="12" r="10"/></svg>
+          <svg className="loc-shape loc-shape--s14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
+          {/* Also szoras */}
+          <svg className="loc-shape loc-shape--s15" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="20" cy="20" r="18"/></svg>
+          <span className="loc-shape loc-shape--s16" />
+          <svg className="loc-shape loc-shape--s17" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
+          <svg className="loc-shape loc-shape--s18" viewBox="0 0 50 50" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="25" cy="25" r="22"/></svg>
+          <span className="loc-shape loc-shape--s19" />
+          <svg className="loc-shape loc-shape--s20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="12" cy="12" r="10"/></svg>
+          {/* Extra bal oldal */}
+          <svg className="loc-shape loc-shape--s21" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
+          <svg className="loc-shape loc-shape--s22" viewBox="0 0 44 44" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="22" cy="22" r="19"/></svg>
+          <span className="loc-shape loc-shape--s23" />
+          {/* Extra jobb oldal */}
+          <span className="loc-shape loc-shape--s24" />
+          <svg className="loc-shape loc-shape--s25" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 2v14M2 9h14"/></svg>
+          <svg className="loc-shape loc-shape--s26" viewBox="0 0 44 44" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="22" cy="22" r="19"/></svg>
+        </div>,
+        document.body
+      )}
+
     <div className="loc-page">
 
       {/* ━━━ HERO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -555,54 +610,112 @@ export default function LocationsPage() {
         {locationsLoading && <p className="loc-state">Betöltés...</p>}
         {locationsError   && <p className="loc-error">{locationsError}</p>}
 
-        {/* ── DETAIL VIEW ── */}
+        {/* ── DETAIL OVERLAY ── */}
         {!locationsLoading && !locationsError && selectedLocation && (
-          <div className="loc-detail-view">
-            <button type="button" className="loc-back-btn" onClick={() => setSelectedLocation(null)}>
+          <div className="loc-detail-overlay">
+
+            {/* Háttér atmoszféra */}
+            <div className="loc-detail-atmo loc-detail-atmo--glow-l" aria-hidden="true" />
+            <div className="loc-detail-atmo loc-detail-atmo--glow-r" aria-hidden="true" />
+            <div className="loc-detail-atmo loc-detail-atmo--noise"  aria-hidden="true" />
+
+            {/* Dekoratív geometriai elemek */}
+            <div className="loc-detail-geo" aria-hidden="true">
+              <svg className="loc-geo loc-geo--plus-tr" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 5v14M5 12h14"/></svg>
+              <svg className="loc-geo loc-geo--plus-bl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 5v14M5 12h14"/></svg>
+              <svg className="loc-geo loc-geo--circle-1" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1"><circle cx="50" cy="50" r="46"/></svg>
+              <svg className="loc-geo loc-geo--circle-2" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1"><circle cx="50" cy="50" r="46"/></svg>
+              <svg className="loc-geo loc-geo--triangle" viewBox="0 0 52 46" fill="none" stroke="currentColor" strokeWidth="1"><path d="M26 2L50 44H2L26 2z"/></svg>
+            </div>
+
+            {/* Függőleges bal oldali címke */}
+            <div className="loc-detail-vert-label" aria-hidden="true">
+              HELYSZÍN · {String(selectedLocationIndex).padStart(2, "0")}
+            </div>
+
+            {/* Vissza gomb */}
+            <button type="button" className="loc-detail-back loc-anim-back" onClick={() => setSelectedLocation(null)}>
               <IconArrowLeft /> Vissza a kártyákhoz
             </button>
 
-            <div className="loc-detail-card">
-              {/* cover — photo if available, gradient fallback */}
-              <div className="loc-detail-cover" data-kind={getKind(selectedLocation.loc_id)}>
-                {selectedLocation.image_path ? (
-                  <img
-                    src={resolveImageUrl(selectedLocation.image_path)}
-                    alt={selectedLocation.name}
-                    className="loc-detail-cover-img"
-                  />
-                ) : (
-                  <div className="loc-detail-cover-icon">
-                    <IconBuilding />
+            <div className="loc-detail-split">
+
+              {/* ── BAL PANEL — kártya ── */}
+              <div className="loc-detail-left">
+                <div className="loc-detail-card-glow" aria-hidden="true" />
+                <div className="loc-detail-card-scene">
+                  <div className="loc-detail-card-wrap">
+                    <div className="loc-detail-tilt-group">
+                      <div
+                        className="loc-detail-tilt-card"
+                        data-kind={getKind(selectedLocation.loc_id)}
+                      >
+                        <div className="loc-detail-tilt-poster">
+                          {!selectedLocation.image_path && (
+                            <svg className="loc-card-topo" viewBox="0 0 300 540" preserveAspectRatio="none" aria-hidden="true">
+                              <path d="M-20 120 Q 80 80, 160 110 T 320 100" />
+                              <path d="M-20 200 Q 90 165, 170 195 T 320 185" />
+                              <path d="M-20 280 Q 80 250, 160 280 T 320 270" />
+                              <path d="M-20 360 Q 90 330, 170 360 T 320 350" />
+                              <path d="M-20 440 Q 80 410, 160 440 T 320 430" />
+                            </svg>
+                          )}
+                        </div>
+                        {selectedLocation.image_path && (
+                          <img
+                            src={resolveImageUrl(selectedLocation.image_path)}
+                            alt={selectedLocation.name}
+                            className="loc-detail-tilt-img"
+                          />
+                        )}
+                      </div>
+                      <span className="loc-detail-corner loc-detail-corner--tl" aria-hidden="true" />
+                      <span className="loc-detail-corner loc-detail-corner--tr" aria-hidden="true" />
+                      <span className="loc-detail-corner loc-detail-corner--bl" aria-hidden="true" />
+                      <span className="loc-detail-corner loc-detail-corner--br" aria-hidden="true" />
+                    </div>
+                    <div className="loc-detail-card-floor" aria-hidden="true" />
                   </div>
-                )}
-                <span className="loc-detail-marker">
-                  <span className="loc-detail-marker-dot" aria-hidden="true" />
-                  {selectedLocation.button_location}
-                </span>
+                </div>
               </div>
 
-              <div className="loc-detail-body">
-                <h2 className="loc-detail-name">{selectedLocation.name}</h2>
-                <div className="loc-detail-meta">
-                  <span className="loc-meta-chip"><IconPin /> Helyszín</span>
-                  <span className="loc-meta-chip"><IconCheck /> Elérhető a 3D modellben</span>
-                  {selectedLocation.image_path && (
-                    <span className="loc-meta-chip"><IconImage /> Fotó feltöltve</span>
-                  )}
+              {/* ── JOBB PANEL — tartalom ── */}
+              <div className="loc-detail-right">
+
+                {/* Nagy háttérszám */}
+                <div className="loc-detail-bg-num" aria-hidden="true">
+                  {String(selectedLocationIndex).padStart(2, "0")}
                 </div>
-                <p className="loc-detail-info">{selectedLocation.information}</p>
-                <div className="loc-detail-cta">
+
+                <div className="loc-detail-eyebrow loc-anim-item" style={{"--anim-delay":"0.15s"}}>
+                  <span className="loc-detail-eyebrow-line" />
+                  HELYSZÍN
+                </div>
+
+                <div className="loc-detail-title-line loc-anim-item" style={{"--anim-delay":"0.21s"}} aria-hidden="true">
+                  <span className="loc-detail-title-line-fill" />
+                </div>
+
+                <h1 className="loc-detail-title loc-anim-item" style={{"--anim-delay":"0.23s"}}>
+                  {selectedLocation.name}
+                </h1>
+
+                <div className="loc-detail-chip loc-anim-item" style={{"--anim-delay":"0.31s"}}>
+                  <IconPin />
+                  Marosvásárhelyi Kar
+                </div>
+
+                <p className="loc-detail-text loc-desc loc-anim-item" style={{"--anim-delay":"0.39s"}}>
+                  {selectedLocation.information}
+                </p>
+
+                <div className="loc-detail-cta loc-anim-item" style={{"--anim-delay":"0.48s"}}>
                   <CTAButton label="Teleport a helyszínre" onClick={handleTeleport} className="loc-teleport-cta" />
                 </div>
 
                 {isAdmin && (
                   <div className="loc-detail-admin-row">
-                    <button
-                      type="button"
-                      className="loc-btn-edit-detail"
-                      onClick={() => openEdit(selectedLocation)}
-                    >
+                    <button type="button" className="loc-btn-edit-detail" onClick={() => openEdit(selectedLocation)}>
                       Szerkesztés
                     </button>
                     <button
@@ -695,14 +808,10 @@ export default function LocationsPage() {
               {/* floating active info */}
               <div className={`loc-active-info${infoFlashing ? " loc-active-info-flash" : ""}`}>
                 <h3 className="loc-active-name">{displayedLoc?.name || ""}</h3>
-                <button
-                  type="button"
-                  className="loc-active-open"
+                <CTAButton
+                  label="Részletek megtekintése"
                   onClick={() => { if (displayedLoc) setSelectedLocation(displayedLoc); }}
-                >
-                  Részletek megtekintése
-                  <span className="loc-active-open-arrow" aria-hidden="true"><IconArrowRight /></span>
-                </button>
+                />
               </div>
             </div>
 
@@ -854,5 +963,6 @@ export default function LocationsPage() {
         </div>
       )}
     </div>
+    </>
   );
 }
