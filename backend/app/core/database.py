@@ -243,6 +243,19 @@ async def init_db() -> None:
             END
             $$;
         """))
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'perf_metrics'
+                      AND column_name = 'play_mode'
+                ) THEN
+                    ALTER TABLE perf_metrics ADD COLUMN play_mode VARCHAR(10);
+                END IF;
+            END
+            $$;
+        """))
     logger.info("Database tables created successfully")
     
     logger.info("About to call _seed_roles()...")
