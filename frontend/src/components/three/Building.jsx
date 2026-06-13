@@ -9,6 +9,16 @@ import { measureLatency } from "./Latency";
 import HologramPanel from "./HologramPanel";
 import InteractiveDoor from "./InteractiveDoor";
 
+// Per-floor trigger zones (set in Blender).
+//   TriggerZone_A → floor 0 (ground / földszint)
+//   TriggerZone_B → floor 1 (first floor / első emelet)
+//   TriggerZone_C → floor 2 (second floor / második emelet)
+const TRIGGER_TO_FLOOR = {
+  TriggerZone_A: 0,
+  TriggerZone_B: 1,
+  TriggerZone_C: 2,
+};
+
 export default function Building({
   controlsRef,
   onInsideChange,
@@ -29,9 +39,12 @@ export default function Building({
   const gltf = useGLTF(`${API_URL}/model`);
 
   const roofRef = useRef();
-  const interiorRef = useRef();
-  const triggerBoxes = useRef([]);
-  const isInsideRef = useRef(false);
+  // floorBoxes: { 0: Box3, 1: Box3, 2: Box3 } — per-floor trigger volumes.
+  const floorBoxes = useRef({});
+  // floorObjects: { 0: [...], 1: [...], 2: [...] } — every F0_/F1_/F2_-prefixed object.
+  const floorObjects = useRef({ 0: [], 1: [], 2: [] });
+  // currentFloorRef: undefined → not yet initialized; null → outside; 0/1/2 → floor index.
+  const currentFloorRef = useRef(undefined);
 
   const hoveredDoorRef = useRef(null);
   const [hoveredDoor, setHoveredDoor] = useState(null);
@@ -80,7 +93,9 @@ export default function Building({
   }, []);
 
   useEffect(() => {
-    triggerBoxes.current = [];
+    floorBoxes.current = {};
+    floorObjects.current = { 0: [], 1: [], 2: [] };
+    currentFloorRef.current = undefined;
     doorObjects.current = [];
     const foundHolograms = [];
     const foundLocationMarkers = [];
@@ -92,12 +107,19 @@ export default function Building({
 
     gltf.scene.traverse((child) => {
       if (child.name === "Roof") roofRef.current = child;
-      if (child.name === "Interior") interiorRef.current = child;
 
-      if (child.name.startsWith("TriggerZone")) {
-        const box = new THREE.Box3().setFromObject(child);
-        triggerBoxes.current.push(box);
+      const triggerFloor = TRIGGER_TO_FLOOR[child.name];
+      if (triggerFloor !== undefined) {
+        floorBoxes.current[triggerFloor] = new THREE.Box3().setFromObject(child);
         child.visible = false;
+      }
+
+      const floorMatch = child.name.match(/^F(\d+)_/);
+      if (floorMatch) {
+        const floor = parseInt(floorMatch[1], 10);
+        if (floorObjects.current[floor]) {
+          floorObjects.current[floor].push(child);
+        }
       }
 
       if (child.name.startsWith("COL")) {
@@ -155,6 +177,13 @@ export default function Building({
       }
     });
 
+    // Initial visibility: outside → all floor groups hidden, roof visible.
+    // useFrame's first tick will reconcile once the camera position is sampled.
+    for (const list of Object.values(floorObjects.current)) {
+      for (const obj of list) obj.visible = false;
+    }
+    if (roofRef.current) roofRef.current.visible = true;
+
     setHologramMarkers(foundHolograms);
     locationMarkersRef.current = foundLocationMarkers;
     proximityTriggeredRef.current = new Set();
@@ -191,20 +220,32 @@ export default function Building({
       setHoveredDoor(hoveredRoot);
     }
 
-    // 🏠 INSIDE CHECK
-    const camPos = camera.position;
-    let inside = false;
-    for (const box of triggerBoxes.current) {
-      if (box.containsPoint(camPos)) {
-        inside = true;
+    // 🏠 FLOOR DETECTION
+    // IMPORTANT: the camera is parented to playerRoot in ThreeScene.jsx, so
+    // `camera.position` is *local* to playerRoot (always (0, 1.7, 0)).
+    // The trigger-zone Box3 objects live in world space, so we must compare
+    // against the camera's *world* position.
+    const camPos = cameraWorldPosRef.current;
+    camera.getWorldPosition(camPos);
+    let detectedFloor = null;
+    for (const floor of [0, 1, 2]) {
+      const box = floorBoxes.current[floor];
+      if (box && box.containsPoint(camPos)) {
+        detectedFloor = floor;
         break;
       }
     }
 
-    if (inside !== isInsideRef.current) {
-      isInsideRef.current = inside;
+    if (detectedFloor !== currentFloorRef.current) {
+      currentFloorRef.current = detectedFloor;
+      const inside = detectedFloor !== null;
       if (roofRef.current) roofRef.current.visible = !inside;
-      if (interiorRef.current) interiorRef.current.visible = inside;
+      for (const floor of [0, 1, 2]) {
+        const list = floorObjects.current[floor];
+        if (!list) continue;
+        const visible = inside && floor === detectedFloor;
+        for (const obj of list) obj.visible = visible;
+      }
       onInsideChange?.(inside);
     }
 
