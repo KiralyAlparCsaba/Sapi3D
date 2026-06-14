@@ -117,9 +117,9 @@ export default function AdminPage() {
       return;
     }
 
-    const maxBytes = 3 * 1024 * 1024;
+    const maxBytes = 5 * 1024 * 1024;
     if (selectedFile.size > maxBytes) {
-      setUserActionError("A fájl túl nagy. Maximum méret: 3MB.");
+      setUserActionError("A fájl túl nagy. Maximum méret: 5MB.");
       event.target.value = "";
       return;
     }

@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     # Avatar Upload Settings (profile pictures — 2D images)
     avatars_directory: str = "static/avatars"
-    avatar_max_size_bytes: int = 3 * 1024 * 1024  # 3MB
+    avatar_max_size_bytes: int = 5 * 1024 * 1024  # 5MB
     avatar_allowed_mime_types: List[str] = ["image/jpeg", "image/png"]
     avatar_allowed_extensions: List[str] = ["jpg", "png"]
 
