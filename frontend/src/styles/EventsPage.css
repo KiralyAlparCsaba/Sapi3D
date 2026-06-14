@@ -291,6 +291,40 @@
   font-size: 12px;
 }
 
+.ev-expired-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(180, 50, 10, 0.82);
+  border: 1px solid rgba(220, 80, 30, 0.55);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  width: fit-content;
+}
+
+.ev-small-card-expired {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(180, 50, 10, 0.82);
+  border: 1px solid rgba(220, 80, 30, 0.5);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  z-index: 3;
+  text-transform: uppercase;
+}
+
 /* ───────────────────────────────
    BOTTOM NAV
 ─────────────────────────────── */
@@ -1082,6 +1116,42 @@
   flex-direction: column;
 }
 
+/* Lejárt esemény értesítő */
+.ev-expired-notice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(180, 50, 10, 0.1);
+  border: 1px solid rgba(200, 70, 20, 0.32);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+
+.ev-expired-notice-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.ev-expired-notice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ev-expired-notice-text strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #E05A20;
+}
+
+.ev-expired-notice-text span {
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.6;
+}
+
 /* Időpont + Helyszín kártyák egymás alatt */
 .ev-detail-info-row {
   display: flex;
@@ -1321,12 +1391,13 @@
   .ev-calendar-widget { flex: 1; min-width: 260px; }
   .ev-sidebar-more { flex: 1; min-width: 200px; }
 
-  .ev-detail-split { grid-template-columns: 1fr; grid-template-rows: 62vh 1fr; }
+  .ev-detail-overlay { overflow-y: auto; }
+  .ev-detail-split { grid-template-columns: 1fr; grid-template-rows: 45vh auto; flex: none; }
   .ev-detail-left-panel { padding: calc(85px + 10px) 20px 16px; gap: 8px; border-right: none; border-bottom: 1px solid rgba(61,170,122,0.2); }
   .ev-detail-left-header { display: none; }
   .ev-detail-left-institution { display: none; }
   .ev-detail-left-img-wrap { padding: 0; }
-  .ev-detail-right-panel { padding: 24px 20px 40px; }
+  .ev-detail-right-panel { padding: 24px 20px 40px; overflow-y: visible; }
   .ev-detail-info-row { max-width: 100%; }
   .ev-admin-panel { width: calc(100vw - 32px); }
 }
