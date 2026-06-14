@@ -4,7 +4,7 @@ from sqlalchemy import select, func, text, case, and_
 from sqlalchemy.sql import literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.session import Session
+from models.session import Session, GuestLogin
 from models.metrics import PerfMetrics
 from models.user import User
 from schemas.admin import (
@@ -103,6 +103,19 @@ class AdminRepository:
         )
         total_qr: int = int(qr_q.scalar() or 0)
 
+        # Guest logins today
+        guest_today_q = await self.db.execute(
+            select(func.count()).where(GuestLogin.logged_at >= today_start)
+        )
+        guest_logins_today: int = guest_today_q.scalar() or 0
+
+        # Guest logins this week
+        week_start = now - timedelta(days=7)
+        guest_week_q = await self.db.execute(
+            select(func.count()).where(GuestLogin.logged_at >= week_start)
+        )
+        guest_logins_week: int = guest_week_q.scalar() or 0
+
         return DashboardOverview(
             active_sessions=active_sessions,
             online_users=online_users,
@@ -112,6 +125,8 @@ class AdminRepository:
             avg_session_duration_minutes=round(avg_duration, 1),
             total_sessions_today=total_today,
             total_quality_reductions=total_qr,
+            guest_logins_today=guest_logins_today,
+            guest_logins_week=guest_logins_week,
         )
 
     # ─────────────────────────────────────────────

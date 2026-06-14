@@ -358,6 +358,12 @@ export default function DashboardTab() {
             sub="lezárt session-ök átlaga"
             accent="orange"
           />
+          <StatCard
+            label="Vendég belépések"
+            value={overview?.guest_logins_today ?? 0}
+            sub={`ezen a héten: ${overview?.guest_logins_week ?? 0}`}
+            accent="purple"
+          />
         </div>
       </div>
 

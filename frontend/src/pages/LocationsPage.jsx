@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import CTAButton from "../components/CTAButton";
 import "../styles/LocationsPage.css";
+import GuestWall from "../components/auth/GuestWall";
 
 // ── geometry constants ──────────────────────────────────────────────────────
 const ARC_R       = 660;
@@ -120,7 +121,7 @@ const IconImage = () => (
 );
 
 export default function LocationsPage() {
-  const { user }   = useAuth();
+  const { user, isGuest } = useAuth();
   const isAdmin    = user?.role_id === 2;
   const navigate   = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -503,6 +504,8 @@ export default function LocationsPage() {
     : 1;
 
   // ── render ─────────────────────────────────────────────────────────────────
+  if (isGuest) return <GuestWall label="a helyszíneket" />;
+
   return (
     <>
       {/* ━━━ HÁTTÉR ALAKZATOK ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}

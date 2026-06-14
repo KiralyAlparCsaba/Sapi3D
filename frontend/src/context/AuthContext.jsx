@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
             role_id: decoded.role_id,
           });
         }
+
       } catch (e) {
         console.error('Token decode error:', e);
         closeSessionAndRedirect();
@@ -85,6 +86,8 @@ export function AuthProvider({ children }) {
     setToken(newToken);
   };
 
+  const isGuest = !!token && user?.role_id === 0;
+
   return (
     <AuthContext.Provider
       value={{
@@ -94,6 +97,7 @@ export function AuthProvider({ children }) {
         logout,
         updateToken,
         isAuthenticated: !!token && !!user,
+        isGuest,
       }}
     >
       {children}
