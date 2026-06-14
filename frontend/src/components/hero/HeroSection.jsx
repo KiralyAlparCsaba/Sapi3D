@@ -104,7 +104,6 @@ export default function HeroSection() {
 
   const [profileInitial, setProfileInitial] = useState("?");
   const [progressPct, setProgressPct] = useState(0);
-  const [profileHovered, setProfileHovered] = useState(false);
 
   // ── Load events + locations ──
   useEffect(() => {
@@ -219,8 +218,15 @@ export default function HeroSection() {
     )
     .slice(0, 3);
 
+  const recentPastEvents = events
+    .filter((ev) => ev.event_date && ev.event_date < today)
+    .sort((a, b) =>
+      a.event_date > b.event_date ? -1 : a.event_date < b.event_date ? 1 : 0,
+    )
+    .slice(0, 3);
+
   // ── Profile ring ──
-  const ringOffset = profileHovered ? 75 : RING_C * (1 - progressPct / 100);
+  const ringOffset = RING_C * (1 - progressPct / 100);
 
   return (
     <div className="home-page">
@@ -371,20 +377,24 @@ export default function HeroSection() {
 
               <div className="home-feat-vis">
                 <div className="home-ev-stack">
-                  {eventsReady && upcomingEvents.length === 0 && (
+                  {eventsReady && upcomingEvents.length === 0 && recentPastEvents.length === 0 && (
                     <div className="home-ev-empty">Nincs közelgő esemény</div>
                   )}
-                  {upcomingEvents.map((ev, idx) => {
+                  {eventsReady && upcomingEvents.length === 0 && recentPastEvents.length > 0 && (
+                    <div className="home-ev-past-label">↩ Korábbi</div>
+                  )}
+                  {(upcomingEvents.length > 0 ? upcomingEvents : recentPastEvents).map((ev, idx) => {
                     const parsed = parseEvDate(ev.event_date);
                     const locName = (locMap[ev.loc_id] || "Ismeretlen").slice(
                       0,
                       18,
                     );
                     const title = (ev.name || "").slice(0, 25);
+                    const isPast = upcomingEvents.length === 0;
                     return (
                       <div
                         key={ev.event_id}
-                        className={`home-ev-tile home-ev-tile--${idx}`}
+                        className={`home-ev-tile home-ev-tile--${idx}${isPast ? " home-ev-tile--past" : ""}`}
                       >
                         <div className="home-ev-row">
                           <div className="home-ev-date">
@@ -495,8 +505,7 @@ export default function HeroSection() {
               to="/app/profil"
               className="home-feat home-feat-profile"
               ref={feat2Ref}
-              onMouseEnter={() => setProfileHovered(true)}
-              onMouseLeave={() => setProfileHovered(false)}
+
             >
               <div className="home-feat-head">
                 <span className="home-feat-num">03 — Profil</span>

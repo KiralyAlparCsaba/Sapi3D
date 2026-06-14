@@ -839,6 +839,30 @@
   padding: 16px;
 }
 
+.home-ev-past-label {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--h-ink-mute);
+  white-space: nowrap;
+  z-index: 10;
+  opacity: 0.65;
+}
+
+.home-ev-tile--past {
+  opacity: 0.55;
+}
+
+.home-ev-tile--past .home-ev-date {
+  background: rgba(128, 128, 128, 0.12);
+  color: var(--h-ink-mute);
+}
+
 .home-ev-tile {
   position: absolute;
   width: 64%;
