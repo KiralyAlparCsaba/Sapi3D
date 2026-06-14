@@ -89,7 +89,29 @@ class UserService:
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        updated_user = await self.user_repo.update(user_id, **data.model_dump(exclude_unset=True))
+        update_data = data.model_dump(exclude_unset=True)
+
+        # Check username uniqueness (only if it actually changed)
+        new_username = update_data.get("username")
+        if new_username and new_username != user.username:
+            existing = await self.user_repo.get_by_username(new_username)
+            if existing:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Ez a felhasználónév már foglalt."
+                )
+
+        # Check email uniqueness (only if it actually changed)
+        new_email = update_data.get("email")
+        if new_email and new_email != user.email:
+            existing = await self.user_repo.get_by_email(new_email)
+            if existing:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Ez az e-mail cím már foglalt."
+                )
+
+        updated_user = await self.user_repo.update(user_id, **update_data)
         await self.db.commit()
         await self.db.refresh(updated_user)
         logger.info(f"Updated user ID {user_id}")
@@ -114,7 +136,7 @@ class UserService:
             raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
         if len(file_bytes) > settings.avatar_max_size_bytes:
-            raise HTTPException(status_code=413, detail="Avatar file is too large. Max size is 3MB")
+            raise HTTPException(status_code=413, detail="Avatar file is too large. Max size is 5MB")
 
         extension_by_mime = {
             "image/jpeg": "jpg",
