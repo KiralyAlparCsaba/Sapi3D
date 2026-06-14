@@ -586,20 +586,32 @@
 }
 
 .ph-avatar-delete-btn {
-  font-size: 11px;
-  color: rgba(215, 75, 75, 0.72);
-  background: none;
-  border: none;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 500;
   font-family: 'Geist', sans-serif;
-  padding: 8px 0 0;
-  margin-top: 6px;
-  text-align: center;
-  transition: color 0.15s;
+  color: rgba(210, 65, 65, 0.9);
+  background: rgba(180, 40, 40, 0.07);
+  border: 1px solid rgba(200, 60, 60, 0.28);
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 10px 20px;
+  margin-top: 4px;
+  margin-bottom: 6px;
+  width: 220px;
+  align-self: center;
+  transition: background 0.16s, color 0.16s, border-color 0.16s;
   flex-shrink: 0;
 }
 
-.ph-avatar-delete-btn:hover:not(:disabled) { color: #d94444; }
+.ph-avatar-delete-btn:hover:not(:disabled) {
+  background: rgba(180, 40, 40, 0.14);
+  border-color: rgba(200, 60, 60, 0.5);
+  color: #d03030;
+}
 .ph-avatar-delete-btn:disabled { opacity: 0.38; cursor: not-allowed; }
 
 /* ═══════════════════════════════════════════════════════
@@ -617,17 +629,27 @@
 ═══════════════════════════════════════════════════════ */
 .profil-toast {
   position: fixed;
-  top: 80px;
+  top: calc(7vw + 14px);
   left: 50%;
   transform: translateX(-50%);
   padding: 10px 22px;
   border-radius: var(--p-r-sm);
   font-size: 13.5px;
   font-family: 'Geist', sans-serif;
-  z-index: 500;
+  z-index: 1100;
   white-space: nowrap;
   pointer-events: none;
   animation: p-reveal 0.22s ease both;
+}
+
+@media (max-width: 1100px) {
+  .profil-toast { top: calc(7.7vw + 14px); }
+}
+@media (max-width: 900px) {
+  .profil-toast { top: 99px; }
+}
+@media (min-width: 2000px) {
+  .profil-toast { top: 140px; }
 }
 
 .profil-toast--error {
