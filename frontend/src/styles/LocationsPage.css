@@ -2214,6 +2214,41 @@
   box-shadow: 0 0 12px color-mix(in srgb, var(--loc-accent) 25%, transparent);
 }
 
+/* ── Alacsony viewport (laptop) — csak desktop szélességen ── */
+@media (max-height: 860px) and (min-width: 901px) {
+  .loc-detail-back {
+    margin-top: 16px;
+  }
+  .loc-detail-left {
+    padding: 32px 40px;
+  }
+  .loc-detail-tilt-card {
+    width: 330px;
+  }
+  .loc-detail-right {
+    padding-top: 32px;
+    padding-bottom: 32px;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-height: 720px) and (min-width: 901px) {
+  .loc-detail-back {
+    margin-top: 8px;
+  }
+  .loc-detail-left {
+    padding: 16px 32px;
+  }
+  .loc-detail-tilt-card {
+    width: 260px;
+  }
+  .loc-detail-right {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    gap: 14px;
+  }
+}
+
 /* ── Reszponzív ─────────────────────────────────── */
 @media (max-width: 900px) {
   /*
