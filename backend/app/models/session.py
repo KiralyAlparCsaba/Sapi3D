@@ -44,3 +44,15 @@ class Session(Base):
     
     def __repr__(self) -> str:
         return f"<Session(session_id={self.session_id}, user_id={self.user_id}, started_at={self.started_at})>"
+
+
+class GuestLogin(Base):
+    """Lightweight record inserted each time a guest token is issued."""
+
+    __tablename__ = "guest_logins"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    logged_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<GuestLogin(id={self.id}, logged_at={self.logged_at})>"

@@ -29,6 +29,8 @@ class DashboardOverview(BaseModel):
     avg_session_duration_minutes: float
     total_sessions_today: int
     total_quality_reductions: int
+    guest_logins_today: int = 0
+    guest_logins_week: int = 0
 
 
 class MetricPoint(BaseModel):

@@ -22,7 +22,7 @@ function resolveAvatarUrl(avatarUrl) {
 
 export default function Navbar({ theme, setTheme }) {
   const navigate = useNavigate();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isGuest } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
@@ -144,26 +144,16 @@ export default function Navbar({ theme, setTheme }) {
         {/* DESKTOP MENU */}
         <div className="nav-center desktop-only">
           <div className="nav-menu">
-            <Link to="/app" className="nav-link">
-              Főoldal
-            </Link>
-            <Link to="/app/model?marker=MarkerAula" className="nav-link">
-              Modell
-            </Link>
-            <Link to="/app/events" className="nav-link">
-              Események
-            </Link>
-            <Link to="/app/locations" className="nav-link">
-              Helyszínek
-            </Link>
-            <Link to="/app/profil" className="nav-link">
-              Profil
-            </Link>
-            {isAdmin && (
-              <Link to="/app/admin" className="nav-link">
-                Admin
-              </Link>
-            )}
+            <>
+              <Link to="/app" className="nav-link">Főoldal</Link>
+              <Link to="/app/model?marker=MarkerAula" className="nav-link">Modell</Link>
+              <Link to="/app/events" className="nav-link">Események</Link>
+              <Link to="/app/locations" className="nav-link">Helyszínek</Link>
+              <Link to="/app/profil" className="nav-link">Profil</Link>
+              {isAdmin && (
+                <Link to="/app/admin" className="nav-link">Admin</Link>
+              )}
+            </>
           </div>
         </div>
 
@@ -171,50 +161,41 @@ export default function Navbar({ theme, setTheme }) {
         <div className="nav-right desktop-only">
           <div className="theme-toggle" onClick={toggleTheme}>
             <span className="theme-label">Light</span>
-            <div
-              className={`toggle-switch ${theme === "dark" ? "dark" : "light"}`}
-            >
+            <div className={`toggle-switch ${theme === "dark" ? "dark" : "light"}`}>
               <div className="toggle-knob"></div>
             </div>
             <span className="theme-label">Dark</span>
           </div>
 
-          <span className="nav-username">{username}</span>
-          {avatarSrc && !avatarLoadFailed ? (
-            <img
-              src={avatarSrc}
-              alt="Profile"
-              className="nav-profile"
-              onError={() => setAvatarLoadFailed(true)}
-            />
+          {isGuest ? (
+            <button className="nav-link nav-link--login-cta" onClick={handleLogout}>
+              Bejelentkezés
+            </button>
           ) : (
-            <div
-              className="nav-profile nav-profile-fallback"
-              aria-label="Profile initial"
-            >
-              {initial}
-            </div>
+            <>
+              <span className="nav-username">{username}</span>
+              {avatarSrc && !avatarLoadFailed ? (
+                <img
+                  src={avatarSrc}
+                  alt="Profile"
+                  className="nav-profile"
+                  onError={() => setAvatarLoadFailed(true)}
+                />
+              ) : (
+                <div className="nav-profile nav-profile-fallback" aria-label="Profile initial">
+                  {initial}
+                </div>
+              )}
+              <button className="nav-logout" onClick={handleLogout} aria-label="Kijelentkezés">
+                <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                  strokeLinejoin="round" aria-hidden="true">
+                  <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                  <line x1="12" y1="2" x2="12" y2="12" />
+                </svg>
+              </button>
+            </>
           )}
-          <button
-            className="nav-logout"
-            onClick={handleLogout}
-            aria-label="Kijelentkezés"
-          >
-            <svg
-              width="1em"
-              height="1em"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-              <line x1="12" y1="2" x2="12" y2="12" />
-            </svg>
-          </button>
         </div>
 
         {/* MOBILE HAMBURGER */}
@@ -247,29 +228,16 @@ export default function Navbar({ theme, setTheme }) {
         </div>
 
         <div className="drawer-menu">
-          <Link to="/app" onClick={() => setDrawerOpen(false)}>
-            Főoldal
-          </Link>
-          <Link
-            to="/app/model?marker=MarkerAula"
-            onClick={() => setDrawerOpen(false)}
-          >
-            Modell
-          </Link>
-          <Link to="/app/events" onClick={() => setDrawerOpen(false)}>
-            Események
-          </Link>
-          <Link to="/app/locations" onClick={() => setDrawerOpen(false)}>
-            Helyszínek
-          </Link>
-          <Link to="/app/profil" onClick={() => setDrawerOpen(false)}>
-            Profil
-          </Link>
-          {isAdmin && (
-            <Link to="/app/admin" onClick={() => setDrawerOpen(false)}>
-              Admin
-            </Link>
-          )}
+          <>
+            <Link to="/app" onClick={() => setDrawerOpen(false)}>Főoldal</Link>
+            <Link to="/app/model?marker=MarkerAula" onClick={() => setDrawerOpen(false)}>Modell</Link>
+            <Link to="/app/events" onClick={() => setDrawerOpen(false)}>Események</Link>
+            <Link to="/app/locations" onClick={() => setDrawerOpen(false)}>Helyszínek</Link>
+            <Link to="/app/profil" onClick={() => setDrawerOpen(false)}>Profil</Link>
+            {isAdmin && (
+              <Link to="/app/admin" onClick={() => setDrawerOpen(false)}>Admin</Link>
+            )}
+          </>
         </div>
 
         <div className="drawer-footer">
@@ -303,7 +271,7 @@ export default function Navbar({ theme, setTheme }) {
           </div>
 
           <button className="drawer-logout" onClick={handleLogout}>
-            Kijelentkezés
+            {isGuest ? "Bejelentkezés" : "Kijelentkezés"}
           </button>
         </div>
       </div>

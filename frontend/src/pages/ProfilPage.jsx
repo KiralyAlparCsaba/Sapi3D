@@ -3,6 +3,7 @@ import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import "../styles/ProfilPage.css";
 import AchievementsSection, { Medal } from "../components/achievements/AchievementsSection";
+import GuestWall from "../components/auth/GuestWall";
 
 // ─── Helpers (unchanged) ───
 function resolveAvatarUrl(avatarUrl) {
@@ -58,6 +59,14 @@ const IconEdit = (p) => (
     strokeLinecap="round" strokeLinejoin="round" {...p}>
     <path d="M4 20h4l11-11-4-4L4 16z" />
     <path d="M14 6l4 4" />
+  </svg>
+);
+
+const IconTrash = (p) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+    strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+    <path d="M10 11v6M14 11v6" />
   </svg>
 );
 
@@ -119,7 +128,7 @@ function AvatarWithRing({ initial, avatarSrc, avatarLoadFailed, onAvatarError,
 // ProfilPage
 // ════════════════════════════════════════
 export default function ProfilPage() {
-  const { updateToken } = useAuth();
+  const { updateToken, isGuest } = useAuth();
 
   // ── User profile state (unchanged) ──
   const [me, setMe]                           = useState(null);
@@ -191,7 +200,13 @@ export default function ProfilPage() {
       setIsEditing(false);
       setSuccess("Sikeresen mentve.");
     } catch (e) {
-      setError(e?.response?.data?.detail || "Sikertelen mentés.");
+      const detail = e?.response?.data?.detail;
+      const status = e?.response?.status;
+      if (status === 409 && detail) {
+        setError(detail);
+      } else {
+        setError(detail || "Sikertelen mentés. Kérjük próbáld újra.");
+      }
     } finally { setSaving(false); }
   };
 
@@ -207,8 +222,8 @@ export default function ProfilPage() {
     if (!["image/jpeg", "image/png"].includes(selectedFile.type)) {
       setError("Csak JPG vagy PNG képet tölthetsz fel."); event.target.value = ""; return;
     }
-    if (selectedFile.size > 3 * 1024 * 1024) {
-      setError("A fájl túl nagy. Maximum méret: 3MB."); event.target.value = ""; return;
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      setError("A fájl túl nagy. Maximum méret: 5MB."); event.target.value = ""; return;
     }
     setAvatarUploading(true); setError(""); setSuccess("");
     try {
@@ -230,7 +245,15 @@ export default function ProfilPage() {
       setAvatarVersion(Date.now());
       setSuccess("Profilkép sikeresen frissítve.");
     } catch (e) {
-      setError(e?.response?.data?.detail || "A profilkép feltöltése sikertelen.");
+      const detail = e?.response?.data?.detail;
+      const status = e?.response?.status;
+      if (status === 413 || (typeof detail === "string" && /large|size|too big/i.test(detail))) {
+        setError("A kép túl nagy. Maximum méret: 5 MB.");
+      } else if (typeof detail === "string" && /format|invalid|mime|type/i.test(detail)) {
+        setError("Érvénytelen képformátum. Csak JPG vagy PNG tölthető fel.");
+      } else {
+        setError(detail || "A profilkép feltöltése sikertelen.");
+      }
     } finally { setAvatarUploading(false); event.target.value = ""; }
   };
 
@@ -269,6 +292,8 @@ export default function ProfilPage() {
   // ── Hero derived values ──
   const { done, total, currentBadge } = achievementStats;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  if (isGuest) return <GuestWall label="a profil oldalt" />;
 
   return (
     <div className="profil-page">
@@ -323,6 +348,19 @@ export default function ProfilPage() {
                   onClickAvatar={triggerAvatarPicker}
                   uploading={avatarUploading}
                 />
+
+                {/* Delete avatar — only in edit mode, directly below avatar */}
+                {isEditing && me?.avatar_url && (
+                  <button
+                    type="button"
+                    className="ph-avatar-delete-btn"
+                    onClick={deleteAvatar}
+                    disabled={avatarUploading || avatarDeleting}
+                  >
+                    <IconTrash width="14" height="14" aria-hidden="true" />
+                    {avatarDeleting ? "Törlés..." : "Profilkép törlése"}
+                  </button>
+                )}
 
                 {/* Name row */}
                 <div className="ph-name-row">
@@ -429,17 +467,6 @@ export default function ProfilPage() {
                       {saving ? "Mentés..." : "Mentés"}
                     </button>
                   </div>
-                )}
-
-                {isEditing && me?.avatar_url && (
-                  <button
-                    type="button"
-                    className="ph-avatar-delete-btn"
-                    onClick={deleteAvatar}
-                    disabled={avatarUploading || avatarDeleting}
-                  >
-                    {avatarDeleting ? "Törlés..." : "Profilkép törlése"}
-                  </button>
                 )}
 
               </div>

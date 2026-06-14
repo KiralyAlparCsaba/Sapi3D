@@ -1,6 +1,7 @@
 import { useRef, useState, Suspense, useEffect } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import UsePlayerMovement from "./PlayerMovement";
 import { createMobileJoystick } from "./MobileJoystick";
 import Building from "./Building";
@@ -360,26 +361,31 @@ export default function ThreeScene() {
   // Re-added for the merged single/multi-mode selector (the marker still
   // comes from useSearchParams above; mode keeps using route state for now).
   const routeLocation = useLocation();
-  const initialMode =
-    routeLocation.state?.mode === "single" ||
-    routeLocation.state?.mode === "multi"
-      ? routeLocation.state.mode
-      : null;
+  const { isGuest, logout } = useAuth();
+  const initialMode = isGuest
+    ? "single"
+    : routeLocation.state?.mode === "single" ||
+      routeLocation.state?.mode === "multi"
+    ? routeLocation.state.mode
+    : null;
   const [playMode, setPlayMode] = useState(initialMode);
   const isMultiplayer = playMode === "multi";
 
- 
+
   const [defaultMode] = useState(() => {
+    if (isGuest) return "single";
     const v = sessionStorage.getItem("sapi3d.modelMode");
     return v === "single" || v === "multi" ? v : null;
   });
 
   const handleSelectMode = (mode) => {
     if (mode !== "single" && mode !== "multi") return;
+    // Guests can never enter multiplayer
+    if (isGuest && mode === "multi") return;
     try {
       sessionStorage.setItem("sapi3d.modelMode", mode);
     } catch {
-      
+
     }
     setPlayMode(mode);
   };

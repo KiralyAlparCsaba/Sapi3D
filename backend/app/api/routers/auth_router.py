@@ -1,3 +1,5 @@
+from datetime import timedelta, datetime, timezone
+
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,6 +44,20 @@ async def logout_user(
 async def get_me(current_user=Depends(get_current_user)):
     """Return the currently authenticated user's data."""
     return UserResponse.model_validate(current_user)
+
+
+@router.post("/guest", response_model=Token)
+async def guest_login(db: AsyncSession = Depends(get_db)):
+    """Issue a short-lived guest JWT (role_id=0) and record the visit."""
+    from models.session import GuestLogin
+    db.add(GuestLogin(logged_at=datetime.now(timezone.utc)))
+    await db.flush()
+
+    token = create_access_token(
+        {"sub": "guest", "username": "Vendég", "role_id": 0},
+        expires_delta=timedelta(hours=4),
+    )
+    return Token(access_token=token)
 
 
 @router.post("/refresh-token", response_model=Token)

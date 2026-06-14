@@ -1,0 +1,77 @@
+.guest-wall {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 60vh;
+  padding: 40px 20px;
+}
+
+.guest-wall-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 420px;
+  width: 100%;
+  padding: 48px 40px;
+  border-radius: 20px;
+  background: var(--card-bg, rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  text-align: center;
+}
+
+.guest-wall-icon {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.guest-wall-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.guest-wall-desc {
+  font-size: 15px;
+  color: var(--text-color);
+  opacity: 0.6;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.guest-wall-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.guest-wall-btn {
+  display: inline-block;
+  padding: 11px 28px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.guest-wall-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.88;
+}
+
+.guest-wall-btn--primary {
+  background: #2c7f2c;
+  color: #fff;
+}
+
+.guest-wall-btn--secondary {
+  background: transparent;
+  color: var(--text-color);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}

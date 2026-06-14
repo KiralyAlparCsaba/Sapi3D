@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import "../styles/EventsPage.css";
 import CTAButton from "../components/CTAButton";
+import GuestWall from "../components/auth/GuestWall";
 
 const EVENT_COLORS = [
   { color: "#1A3A6B", colorLight: "#2A52A0" },
@@ -191,7 +192,7 @@ function CalendarWidget({ events }) {
   );
 }
 
-function SmallCard({ event, locationName, colorIdx, onClick, animIdx }) {
+function SmallCard({ event, locationName, colorIdx, onClick, animIdx, expired }) {
   const { color, colorLight } = EVENT_COLORS[colorIdx % EVENT_COLORS.length];
   const pattern = PATTERNS[colorIdx % PATTERNS.length];
   const imageUrl = resolveImageUrl(event.image_path);
@@ -201,6 +202,7 @@ function SmallCard({ event, locationName, colorIdx, onClick, animIdx }) {
 
   return (
     <div onClick={onClick} className="ev-small-card" role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && onClick()} style={{ background: bg, animationDelay: `${animIdx * 0.07}s` }}>
+      {expired && <div className="ev-small-card-expired">LEJÁRT</div>}
       <div className="ev-small-card-hover-label">Részletek →</div>
       <div className="ev-small-card-content">
         <div className="ev-small-card-location"><IconPin /> {locationName || "Ismeretlen"}</div>
@@ -211,7 +213,7 @@ function SmallCard({ event, locationName, colorIdx, onClick, animIdx }) {
 }
 
 export default function EventsPage() {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const isAdmin = user?.role_id === 2;
 
   const [events, setEvents] = useState([]);
@@ -291,6 +293,9 @@ export default function EventsPage() {
   };
 
   const goTo = (idx) => { setCurrentIdx(idx); setAnimKey(k => k + 1); };
+
+  const todayStr = useMemo(() => toDateStr(new Date()), []);
+  const isExpired = (ev) => !!ev.event_date && ev.event_date < todayStr;
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -385,6 +390,8 @@ export default function EventsPage() {
       })
     : [];
 
+  if (isGuest) return <GuestWall label="az eseményeket" />;
+
   return (
     <div className="events-page">
       {/* ── Detail view ── */}
@@ -420,6 +427,15 @@ export default function EventsPage() {
               <h1 className="ev-detail-title">{selectedEvent.name}</h1>
               <p className="ev-detail-desc">{selectedEvent.description}</p>
               <div className="ev-detail-divider" />
+              {selectedEvent.event_date && selectedEvent.event_date < todayStr && (
+                <div className="ev-expired-notice">
+                  <span className="ev-expired-notice-icon">⏰</span>
+                  <div className="ev-expired-notice-text">
+                    <strong>Ez az esemény már lezárult.</strong>
+                    <span>Az esemény időpontja {formatDate(selectedEvent.event_date)} volt.</span>
+                  </div>
+                </div>
+              )}
               <div className="ev-detail-info-row">
                 {selectedEvent.event_date && (
                   <div className="ev-detail-info-card">
@@ -509,6 +525,7 @@ export default function EventsPage() {
                       <div className="ev-hero-card-vignette" />
                       {!heroImageUrl && <div className="ev-hero-placeholder">esemény borítókép</div>}
                       <div className="ev-hero-card-content">
+                        {isExpired(hero) && <div className="ev-expired-hero-badge">⏰ LEJÁRT</div>}
                         <div className="ev-hero-location"><IconPin /> {locationNameById.get(hero.loc_id) || "Ismeretlen helyszín"}</div>
                         <h2 className="ev-hero-title">{hero.name}</h2>
                         {hero.event_date && <div className="ev-hero-date"><IconCalendar /> {formatDate(hero.event_date)}</div>}
@@ -523,7 +540,7 @@ export default function EventsPage() {
                           <div className="ev-sidebar-more-label">TOVÁBBI ESEMÉNYEK</div>
                           <div className="ev-sidebar-cards">
                             {smallCards.map(({ event, idx }, i) => (
-                              <SmallCard key={`${animKey}-sm-${i}`} event={event} locationName={locationNameById.get(event.loc_id)} colorIdx={idx} onClick={() => goTo(idx)} animIdx={i} />
+                              <SmallCard key={`${animKey}-sm-${i}`} event={event} locationName={locationNameById.get(event.loc_id)} colorIdx={idx} onClick={() => goTo(idx)} animIdx={i} expired={isExpired(event)} />
                             ))}
                           </div>
                         </div>

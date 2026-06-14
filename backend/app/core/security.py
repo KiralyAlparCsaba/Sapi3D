@@ -1,5 +1,7 @@
 import bcrypt
+from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Optional
 from jose import JWTError, jwt
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -7,6 +9,18 @@ from core.config import settings
 from repositories.user_repository import UserRepository
 from core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
+
+
+@dataclass
+class GuestUser:
+    """Lightweight stand-in for a DB User when role_id == 0 (guest)."""
+    user_id: int = 0
+    username: str = "Vendég"
+    role_id: int = 0
+    session_id: Optional[str] = None
+    avatar_url: Optional[str] = None
+    email: Optional[str] = None
+    created_at: Optional[str] = None
 
 
 # --- BCRYPT HASH ---
@@ -66,6 +80,11 @@ async def get_current_user(
 ):
     token = credentials.credentials
     payload = decode_access_token(token)
+
+    # Guest token — no DB lookup needed
+    if payload.get("role_id") == 0:
+        return GuestUser()
+
     username = payload.get("username")
     session_id = payload.get("session_id")
 
@@ -79,5 +98,5 @@ async def get_current_user(
 
     # Attach session_id to user object for later use
     user.session_id = session_id
-    
+
     return user

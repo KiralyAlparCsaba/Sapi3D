@@ -38,7 +38,7 @@ async def init_db() -> None:
     from core.logging import logger
     
     from models.user import User, Role
-    from models.session import Session, Device
+    from models.session import Session, Device, GuestLogin
     from models.achievement import Achievement, UserAchievement, AchvProgress, AchvProgressPanel, AchvProgressLocation, AchievementRequirement
     from models.location import Location, Event, InfoPanel
     from models.metrics import PerfMetrics

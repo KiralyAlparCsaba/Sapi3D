@@ -59,6 +59,17 @@ function Login() {
     }
   };
 
+  const handleGuestLogin = async () => {
+    setError("");
+    try {
+      const res = await api.post("/auth/guest");
+      login(res.data.access_token);
+      navigate("/app");
+    } catch (err) {
+      setError("Vendég belépés sikertelen. Kérjük próbáld újra.");
+    }
+  };
+
   return (
     <div 
       className="login-container" 
@@ -97,9 +108,21 @@ function Login() {
           </div>
           
           <button type="submit" className="login-btn">Belépés</button>
-          
+
+          <div className="login-divider">
+            <span>vagy</span>
+          </div>
+
+          <button
+            type="button"
+            className="login-btn login-btn--guest"
+            onClick={handleGuestLogin}
+          >
+            Vendégként folytatom
+          </button>
+
           {error && <p className="error-text">{error}</p>}
-          
+
           <p className="register-text">
             Nincs még fiókod? <Link to="/register">Regisztrálj itt</Link>
           </p>
