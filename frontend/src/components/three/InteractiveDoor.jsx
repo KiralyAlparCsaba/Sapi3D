@@ -31,30 +31,61 @@ export default function InteractiveDoor({
 
   const meshName = mesh?.name || "";
 
-  // Match the door's mesh name against an info-panel entry. We try a few
-  // strategies in order of specificity so that small naming differences
-  // between Blender and the database do not break the link.
   const dbEntry = useMemo(() => {
-    if (!mesh || !databaseInfo || databaseInfo.length === 0) return null;
+    if (!mesh || !databaseInfo || databaseInfo.length === 0) {
+      console.log(" No database info available");
+      return null;
+    }
 
-    const meshLower = meshName.toLowerCase();
+    console.log(" Looking for door:", meshName);
+    console.log(" Available database entries:", databaseInfo);
+
     const found = databaseInfo.find((item) => {
-      const coord = item.coordinates_obj_name;
-      if (!coord) return false;
-      const coordLower = coord.toLowerCase();
-      if (coord === meshName) return true;
-      if (coordLower === meshLower) return true;
-      if (coordLower.includes(meshLower)) return true;
-      if (meshLower.includes(coordLower)) return true;
+
+      if (item.coordinates_obj_name === meshName) {
+        console.log(" Found exact match on 'coordinates_obj_name' field");
+        return true;
+      }
+
+      if (item.coordinates_obj_name?.toLowerCase() === meshName.toLowerCase()) {
+        console.log(
+          " Found case-insensitive match on 'coordinates_obj_name' field",
+        );
+        return true;
+      }
+
+      if (
+        item.coordinates_obj_name
+          ?.toLowerCase()
+          .includes(meshName.toLowerCase())
+      ) {
+        console.log(" Found partial match on 'coordinates_obj_name' field");
+        return true;
+      }
+
+      if (
+        meshName
+          .toLowerCase()
+          .includes(item.coordinates_obj_name?.toLowerCase() || "")
+      ) {
+        console.log(
+          " Found reverse partial match (door contains coordinates_obj_name)",
+        );
+        return true;
+      }
+
       return false;
     });
+
+    if (!found) {
+      console.log(" No database entry found for:", meshName);
+    }
 
     return found || null;
   }, [mesh, databaseInfo, meshName]);
 
   const mediaUrl = dbEntry?.media_url || null;
 
-  // Day abbreviation map for tab labels
   const DAY_ABBR = {
     Hétfő: "H",
     Kedd: "K",
@@ -72,7 +103,6 @@ export default function InteractiveDoor({
     "Szombat",
   ];
 
-  // Parse information: supports JSON (new format) and legacy string format
   const parsedInfo = useMemo(() => {
     const raw = dbEntry?.information || "";
     if (!raw)
@@ -84,7 +114,6 @@ export default function InteractiveDoor({
         subjects: [],
       };
 
-    // Try JSON first (new by-day format)
     try {
       const obj = JSON.parse(raw);
       if (obj && obj.schedule) {
@@ -97,10 +126,9 @@ export default function InteractiveDoor({
         };
       }
     } catch (_) {
-      /* not JSON, fall through */
+
     }
 
-    // Legacy string format
     const lines = raw.split("\n");
     const header = lines[0] || meshName;
     let subjects = [];
@@ -114,7 +142,6 @@ export default function InteractiveDoor({
     return { mode: "legacy", header, schedule: {}, teachers, subjects };
   }, [dbEntry, meshName]);
 
-  // Set default tab when panel opens or parsedInfo changes
   const activeDays = DAY_ORDER.filter(
     (d) => parsedInfo.schedule[d]?.length > 0,
   );
@@ -166,7 +193,7 @@ export default function InteractiveDoor({
               </button>
             ) : (
               <div className="door-hint">
-                {/* Objektum neve */}
+
                 <div className="door-hint-name">{meshName}</div>
                 Nyomd meg az <strong className="door-hint-key">E</strong> gombot
               </div>
@@ -216,7 +243,6 @@ export default function InteractiveDoor({
                 </div>
               )}
 
-              {/* Tab bar */}
               <div className="door-tabs">
                 {parsedInfo.mode === "byday" &&
                   activeDays.map((day) => (
@@ -256,12 +282,11 @@ export default function InteractiveDoor({
                 )}
               </div>
 
-              {/* Tab content */}
               <div
                 className="door-tab-content"
                 onWheel={(e) => e.stopPropagation()}
               >
-                {/* By-day mode: show schedule slots for the selected day */}
+
                 {parsedInfo.mode === "byday" &&
                   activeTab &&
                   activeTab !== "teachers" &&
@@ -289,7 +314,7 @@ export default function InteractiveDoor({
                       ))}
                     </div>
                   )}
-                {/* Legacy mode: subject chips */}
+
                 {parsedInfo.mode === "legacy" && activeTab === "subjects" && (
                   <div className="door-info-tags">
                     {parsedInfo.subjects.map((s, i) => (
@@ -299,7 +324,7 @@ export default function InteractiveDoor({
                     ))}
                   </div>
                 )}
-                {/* Teachers tab (both modes) */}
+
                 {activeTab === "teachers" && parsedInfo.teachers.length > 0 && (
                   <div className="door-info-tags">
                     {parsedInfo.teachers.map((t, i) => (

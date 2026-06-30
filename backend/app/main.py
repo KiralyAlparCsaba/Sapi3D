@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
 
-from api.routers import health, model, user_router, auth_router, session_router, location_router, event_router, info_panels_router, achievement_router, multiplayer_router, avatars_router
+from api.routers import health, model, user_router, auth_router, session_router, location_router, event_router, info_panels_router, achievement_router, multiplayer_router, avatars_router, admin_router
 from core.config import settings
 from core.logging import logger
 from core.database import init_db, close_db
@@ -14,11 +14,12 @@ from api.routers.device_router import router as device_router
 STATIC_DIRECTORIES = (
     settings.avatars_directory,
     settings.events_directory,
+    settings.locations_directory,
     settings.avatars_3d_directory,
 )
 
-# Create static directories at import time: StaticFiles validates the path at
-# mount, which runs before the lifespan startup hook.
+# Create static directories at import time so the StaticFiles mount validates
+# successfully — mount runs before the lifespan startup hook.
 for _directory in STATIC_DIRECTORIES:
     os.makedirs(_directory, exist_ok=True)
 
@@ -61,7 +62,8 @@ app = FastAPI(
         {"name": "Info Panels", "description": "Info Panel management and endpoints"},
         {"name": "Achievements", "description": "Achievement system and progress tracking"},
         {"name": "Multiplayer", "description": "Realtime multiplayer presence over WebSocket"},
-        {"name": "Avatars", "description": "3D avatar variants for multiplayer rendering (manifest + GLB files)"}
+        {"name": "Avatars", "description": "3D avatar variants for multiplayer rendering (manifest + GLB files)"},
+        {"name": "Admin", "description": "Admin-only dashboard aggregation endpoints"}
     ],
     docs_url="/docs",
     redoc_url="/redoc",
@@ -75,9 +77,6 @@ app.add_middleware(
     allow_headers=settings.cors_headers,
 )
 
-# Static mounts. The underlying directories are created in `lifespan`;
-# module-level os.makedirs is intentionally avoided so the directory creation
-# is not duplicated and stays inside the startup hook.
 app.mount(
     "/static/avatars",
     StaticFiles(directory=settings.avatars_directory),
@@ -89,12 +88,16 @@ app.mount(
     name="events",
 )
 app.mount(
+    "/static/locations",
+    StaticFiles(directory=settings.locations_directory),
+    name="locations",
+)
+app.mount(
     "/static/avatars-3d",
     StaticFiles(directory=settings.avatars_3d_directory),
     name="avatars-3d",
 )
 
-# Router registration. The order is only relevant for the OpenAPI schema layout.
 ROUTERS = (
     (health.router, "Health"),
     (model.router, "Model"),
@@ -108,6 +111,7 @@ ROUTERS = (
     (achievement_router.router, "Achievements"),
     (multiplayer_router.router, "Multiplayer"),
     (avatars_router.router, "Avatars"),
+    (admin_router.router, "Admin"),
 )
 for router, tag in ROUTERS:
     app.include_router(router, tags=[tag])

@@ -1,19 +1,21 @@
-from typing import List
-
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from core.database import get_db
-from schemas.location import (
-    LocationObjectResponse,
-    LocationCreate,
-    LocationResponse,
-    LocationUpdate,
-)
+from core.security import get_current_user
+from schemas.location import LocationObjectResponse, LocationCreate, LocationResponse, LocationUpdate
 from services.locations_service import LocationsService
+from typing import List
 
 
 router = APIRouter(prefix="/locations")
+
+
+def _ensure_admin(current_user) -> None:
+    if current_user.role_id != 2:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
 
 
 @router.get(
@@ -33,21 +35,13 @@ async def get_location_objects(db: AsyncSession = Depends(get_db)):
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(
-            status_code=500, detail="Failed to read location objects"
-        ) from exc
+        raise HTTPException(status_code=500, detail="Failed to read location objects") from exc
 
     return [LocationObjectResponse(object_name=name) for name in object_names]
 
 
-@router.post(
-    "/",
-    response_model=LocationResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_location(
-    location_data: LocationCreate, db: AsyncSession = Depends(get_db)
-):
+@router.post("/", response_model=LocationResponse, status_code=status.HTTP_201_CREATED)
+async def create_location(location_data: LocationCreate, db: AsyncSession = Depends(get_db)):
     """Create a new location."""
     service = LocationsService(db)
     return await service.create_location(location_data)
@@ -61,9 +55,7 @@ async def get_location(location_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/", response_model=List[LocationResponse])
-async def get_locations(
-    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
-):
+async def get_locations(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     """Get all locations with pagination."""
     service = LocationsService(db)
     return await service.get_all_locations(skip, limit)
@@ -85,3 +77,53 @@ async def delete_location(location_id: int, db: AsyncSession = Depends(get_db)):
     """Delete a location by its ID."""
     service = LocationsService(db)
     await service.delete_location(location_id)
+
+
+@router.post("/{location_id}/image", response_model=LocationResponse)
+async def upload_location_image(
+    location_id: int,
+    file: UploadFile = File(...),
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Upload location cover image (admin only)."""
+    _ensure_admin(current_user)
+    file_bytes = await file.read()
+    await file.close()
+    service = LocationsService(db)
+    return await service.upload_location_image(
+        location_id=location_id,
+        file_bytes=file_bytes,
+        content_type=file.content_type or "",
+    )
+
+
+@router.put("/{location_id}/image", response_model=LocationResponse)
+async def replace_location_image(
+    location_id: int,
+    file: UploadFile = File(...),
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Replace location cover image (admin only)."""
+    _ensure_admin(current_user)
+    file_bytes = await file.read()
+    await file.close()
+    service = LocationsService(db)
+    return await service.upload_location_image(
+        location_id=location_id,
+        file_bytes=file_bytes,
+        content_type=file.content_type or "",
+    )
+
+
+@router.delete("/{location_id}/image", response_model=LocationResponse)
+async def delete_location_image(
+    location_id: int,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete location cover image (admin only)."""
+    _ensure_admin(current_user)
+    service = LocationsService(db)
+    return await service.delete_location_image(location_id)
