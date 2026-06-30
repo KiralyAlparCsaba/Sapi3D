@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => sessionStorage.getItem('token'));
   const [user, setUser] = useState(null);
 
-  // Initialize user from token when component mounts or token changes
   useEffect(() => {
     if (token) {
       try {
@@ -16,12 +15,12 @@ export function AuthProvider({ children }) {
         const now = Date.now() / 1000;
 
         if (decoded.exp < now) {
-          // Token expired — close session on backend then redirect to login
+
           closeSessionAndRedirect();
           setToken(null);
           setUser(null);
         } else {
-          // Token valid
+
           setUser({
             user_id: decoded.user_id,
             username: decoded.username,
@@ -40,7 +39,6 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
-  // Save token to sessionStorage whenever it changes
   useEffect(() => {
     if (token) {
       sessionStorage.setItem('token', token);
@@ -49,8 +47,6 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
-  // Percenkénti token lejárat ellenőrzés — lefedi azt az esetet amikor
-  // a user nyitva hagyja a tabot és a token csendben lejár (nincs API hívás)
   useEffect(() => {
     if (!token) return;
 
@@ -68,7 +64,7 @@ export function AuthProvider({ children }) {
         setToken(null);
         setUser(null);
       }
-    }, 60_000); // percenként ellenőriz
+    }, 60_000);
 
     return () => clearInterval(interval);
   }, [token]);

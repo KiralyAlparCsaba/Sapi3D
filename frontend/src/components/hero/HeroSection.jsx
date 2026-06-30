@@ -105,7 +105,6 @@ export default function HeroSection() {
   const [profileInitial, setProfileInitial] = useState("?");
   const [progressPct, setProgressPct] = useState(0);
 
-  // ── Load events + locations ──
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -118,7 +117,7 @@ export default function HeroSection() {
         setEvents(Array.isArray(evRes.data) ? evRes.data : []);
         setLocations(Array.isArray(locRes.data) ? locRes.data : []);
       } catch {
-        /* stay with defaults */
+
       } finally {
         if (!cancelled) setEventsReady(true);
       }
@@ -128,7 +127,6 @@ export default function HeroSection() {
     };
   }, []);
 
-  // ── Load profile + achievements ──
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -161,7 +159,6 @@ export default function HeroSection() {
     };
   }, []);
 
-  // ── Magnetic CTA ──
   useEffect(() => {
     const btn = ctaBtnRef.current;
     if (!btn) return;
@@ -191,7 +188,6 @@ export default function HeroSection() {
     };
   }, []);
 
-  // ── Card spotlight ──
   useEffect(() => {
     const cards = [feat0Ref.current, feat1Ref.current, feat2Ref.current];
     const cleanups = [];
@@ -208,7 +204,6 @@ export default function HeroSection() {
     return () => cleanups.forEach((fn) => fn());
   }, []);
 
-  // ── Compute upcoming events ──
   const today = todayDateStr();
   const locMap = Object.fromEntries(locations.map((l) => [l.loc_id, l.name]));
   const upcomingEvents = events
@@ -225,7 +220,6 @@ export default function HeroSection() {
     )
     .slice(0, 3);
 
-  // ── Profile ring ──
   const ringOffset = RING_C * (1 - progressPct / 100);
 
   return (

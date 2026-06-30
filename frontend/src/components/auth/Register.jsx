@@ -92,13 +92,13 @@ export default function Register() {
   };
 
   return (
-    <div 
+    <div
       className="register-container"
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Háttér dekoráció - Blobok */}
+
       <div className="blob blob-1" aria-hidden="true" />
       <div className="blob blob-2" aria-hidden="true" />
       <div className="blob blob-3" aria-hidden="true" />

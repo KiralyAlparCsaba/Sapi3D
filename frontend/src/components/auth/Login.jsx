@@ -71,13 +71,13 @@ function Login() {
   };
 
   return (
-    <div 
-      className="login-container" 
+    <div
+      className="login-container"
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Háttér dekoráció - Blobok */}
+
       <div className="blob blob-1" aria-hidden="true" />
       <div className="blob blob-2" aria-hidden="true" />
       <div className="blob blob-3" aria-hidden="true" />
@@ -106,7 +106,7 @@ function Login() {
               required
             />
           </div>
-          
+
           <button type="submit" className="login-btn">Belépés</button>
 
           <div className="login-divider">

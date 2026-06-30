@@ -7,7 +7,6 @@ import {
   collectLocationIds,
 } from "./achievementUtils";
 
-// ─── Category dot colors ───
 const CATEGORY_COLORS = {
   "3D":       "oklch(0.65 0.180 280)",
   "HELYSZÍN": "oklch(0.65 0.150 145)",
@@ -15,7 +14,6 @@ const CATEGORY_COLORS = {
   "IDŐ":      "oklch(0.65 0.140  25)",
 };
 
-// ─── Inline SVG icons ───
 const IconMedal = (p) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
     strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -50,7 +48,6 @@ const IconCheck = (p) => (
   </svg>
 );
 
-// ─── Medal component (exported so ProfilPage can import it) ───
 export function Medal({ tier, locked, size = 56 }) {
   const cls = ["ph-medal", tier, locked ? "locked" : ""].filter(Boolean).join(" ");
   return (
@@ -65,7 +62,6 @@ export function Medal({ tier, locked, size = 56 }) {
   );
 }
 
-// ─── ChallengeCard ───
 function ChallengeCard({ item }) {
   const status = item.status === "unlocked" ? "done" : "progress";
   const ratio  = item.target > 0 ? Math.min(1, item.current / item.target) : 0;
@@ -118,15 +114,8 @@ function ChallengeCard({ item }) {
   );
 }
 
-// ════════════════════════════════════════
-// AchievementsSection
-//
-// Props:
-//   onStatsChange({ done, total, currentBadge }) — fires whenever
-//     achievement data changes so ProfilPage can update the hero.
-//   refreshKey — increment to re-fetch all data (e.g. on Refresh button).
-// ════════════════════════════════════════
 export default function AchievementsSection({ onStatsChange, refreshKey = 0 }) {
+
   const [dbAchievements, setDbAchievements]   = useState([]);
   const [loading, setLoading]                 = useState(false);
   const [dbAchievementsError, setDbAchievementsError] = useState("");
@@ -134,13 +123,11 @@ export default function AchievementsSection({ onStatsChange, refreshKey = 0 }) {
   const [filter, setFilter]                   = useState("all");
   const isFirstRender = useRef(true);
 
-  // ── Derived badge state ──
   const unlockedCount = dbAchievements.filter((a) => a.status === "unlocked").length;
   const earnedBadges  = BADGE_TIERS.filter((t) => unlockedCount >= t.threshold);
   const currentBadge  = earnedBadges.length ? earnedBadges[earnedBadges.length - 1] : null;
   const nextBadge     = BADGE_TIERS.find((t) => unlockedCount < t.threshold) ?? null;
 
-  // ── Fire stats upward whenever data changes ──
   useEffect(() => {
     const unlocked   = dbAchievements.filter((a) => a.status === "unlocked").length;
     const earned     = BADGE_TIERS.filter((t) => unlocked >= t.threshold);
@@ -155,7 +142,6 @@ export default function AchievementsSection({ onStatsChange, refreshKey = 0 }) {
     });
   }, [dbAchievements, onStatsChange]);
 
-  // ── Locations ──
   const loadLocations = async () => {
     try {
       const res = await api.get("/locations/?skip=0&limit=1000");
@@ -170,7 +156,6 @@ export default function AchievementsSection({ onStatsChange, refreshKey = 0 }) {
     }
   };
 
-  // ── Achievements ──
   const loadDbAchievements = async () => {
     setLoading(true);
     setDbAchievementsError("");
@@ -259,27 +244,23 @@ export default function AchievementsSection({ onStatsChange, refreshKey = 0 }) {
     }
   };
 
-  // ── Initial load ──
   useEffect(() => {
     loadLocations();
     loadDbAchievements();
   }, []);
 
-  // ── External refresh trigger ──
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return; }
     loadLocations();
     loadDbAchievements();
   }, [refreshKey]);
 
-  // ── Re-fetch when model closes and unlocks something ──
   useEffect(() => {
     const handler = () => loadDbAchievements();
     window.addEventListener("achievements-updated", handler);
     return () => window.removeEventListener("achievements-updated", handler);
   }, []);
 
-  // ── Filter logic ──
   const doneCount     = dbAchievements.filter((a) => a.status === "unlocked").length;
   const progressCount = dbAchievements.length - doneCount;
 
@@ -291,7 +272,7 @@ export default function AchievementsSection({ onStatsChange, refreshKey = 0 }) {
 
   return (
     <>
-      {/* ════ KITŰZŐK ════ */}
+
       <section className="ach-section ach-badges-section" aria-label="Kitűzők">
         <div className="ach-section-head">
           <div>
@@ -330,7 +311,6 @@ export default function AchievementsSection({ onStatsChange, refreshKey = 0 }) {
         </div>
       </section>
 
-      {/* ════ KIHÍVÁSOK ════ */}
       <section className="ach-section ach-challenges-section" aria-label="Kihívások">
         <div className="ach-section-head">
           <div>

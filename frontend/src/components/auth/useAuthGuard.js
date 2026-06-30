@@ -21,7 +21,6 @@ export default function useAuthGuard({ requireAdmin = false } = {}) {
         return;
       }
 
-      // Guest (role_id: 0) — can browse all pages, content is gated per-page
       if (decoded.role_id === 0) return;
 
       if (requireAdmin && decoded.role_id !== 2) {

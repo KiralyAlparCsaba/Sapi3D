@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { jwtDecode } from "jwt-decode"; // 1. Added import
+import { jwtDecode } from "jwt-decode";
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -23,7 +23,7 @@ import { metricsCollector } from "./components/three/metricsCollector";
 import { weightedAverage } from "./components/three/weightedAverage";
 
 export default function App() {
-  // 2. Added Auth Check Logic from MainApp.jsx
+
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     if (!token) return;
@@ -32,12 +32,10 @@ export default function App() {
       const decoded = jwtDecode(token);
       const now = Date.now() / 1000;
 
-      // If token is expired, clear everything immediately
       if (decoded.exp < now) {
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("session_id");
-        // We can't use navigate() here because we are outside the Router context,
-        // but removing the token will cause ProtectedLayout to redirect user to login.
+
       }
     } catch (e) {
       sessionStorage.removeItem("token");
@@ -45,11 +43,8 @@ export default function App() {
     }
   }, []);
 
-  // 3. Fixed Session Cleanup Logic
   useEffect(() => {
-    // Coerce any non-finite or negative value to 0 before sending.
-    // The backend schema rejects null / NaN / Infinity for int fields,
-    // and JSON.stringify silently turns Infinity/NaN into null.
+
     const safeInt = (n) =>
       Number.isFinite(n) && n >= 0 ? Math.round(n) : 0;
 
@@ -61,8 +56,7 @@ export default function App() {
       for (const s of rawSamples) {
         const t = Math.floor((s.timestamp - startTime) / BUCKET_MS) * 3;
         if (!buckets[t]) buckets[t] = { fps: [], memory_mb: [] };
-        // Guard at the source too — a single non-finite sample taints
-        // the bucket average otherwise.
+
         if (Number.isFinite(s.fps)) buckets[t].fps.push(s.fps);
         if (Number.isFinite(s.memory_mb)) buckets[t].memory_mb.push(s.memory_mb);
       }
@@ -90,16 +84,12 @@ export default function App() {
 
       if (!sessionId) return;
 
-      // --- Part A: Send Metrics (POST is okay for sendBeacon) ---
       const samples = metricsCollector.getSamples?.() || [];
       if (samples.length >= 2) {
         const avgFps = weightedAverage(samples, "fps");
         const avgMem = weightedAverage(samples, "memory_mb");
         const avgLat = weightedAverage(samples, "latency_ms");
 
-        // Same safety as buildSamplesArray — never let Infinity/NaN reach
-        // the wire as null. Required int fields → safeInt; optional float
-        // fields → null if not finite (Pydantic accepts null for Optional).
         const safeOptionalFloat = (n) =>
           n != null && Number.isFinite(n) && n >= 0 ? n : null;
         const safeOptionalInt = (n) =>
@@ -117,36 +107,30 @@ export default function App() {
           quality_reductions: safeOptionalInt(metricsCollector.getQualityReductions()),
         };
 
-        // sendBeacon is perfect for metrics (POST)
         navigator.sendBeacon(
           `/api/sessions/${sessionId}/metrics`,
           new Blob([JSON.stringify(payload)], { type: "application/json" })
         );
       }
 
-      // --- Part B: End Session (Must be PUT) ---
       const endPayload = {
         ended_at: new Date().toISOString(),
       };
 
-
-
-      //  ADDED: fetch with keepalive + PUT
       fetch(`/api/sessions/${sessionId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // Add token just in case
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(endPayload),
-        keepalive: true, // This is the magic flag that lets it survive page close
+        keepalive: true,
       });
 
       metricsCollector.clear();
       sessionStorage.removeItem("session_id");
     }
 
-    // Listen for page unload events
     window.addEventListener("pagehide", flushMetricsAndEndSession);
     return () =>
       window.removeEventListener("pagehide", flushMetricsAndEndSession);

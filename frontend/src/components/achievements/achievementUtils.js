@@ -22,10 +22,6 @@ export const BADGE_TIERS = [
   },
 ];
 
-// ════════════════════════════════════════
-// Requirement típus → megjelenítési szöveg
-// ════════════════════════════════════════
-
 export const requirementLabelMap = {
   model_view_count: "Modell megtekintese",
   location_count: "Helyszin megtekintese",
@@ -48,10 +44,6 @@ export const requirementCategoryMap = {
   panel_any_of: "Infó",
 };
 
-// ════════════════════════════════════════
-// Helper: requirement összefoglaló szöveg + target
-// ════════════════════════════════════════
-
 export function buildRequirementSummary(requirements) {
   if (!Array.isArray(requirements) || requirements.length === 0) {
     return { condition: "Nincs kovetelmeny", target: 1 };
@@ -63,8 +55,6 @@ export function buildRequirementSummary(requirements) {
     return acc;
   }, {});
 
-  // time_spent prioritása: ha van, mindig azt kezeljük elsőként
-  // (megakadályozza, hogy egy másodlagos requirement elvegye a fókuszt)
   if (byType.time_spent) {
     const targetSeconds = byType.time_spent[0]?.value ?? 600;
     const targetMinutes = Math.max(1, Math.round(targetSeconds / 60));
@@ -99,10 +89,6 @@ export function buildRequirementSummary(requirements) {
   return { condition: "Kovetelmeny teljesitese", target: 1 };
 }
 
-// ════════════════════════════════════════
-// Helper: achievement megjelenítési adatok összeállítása
-// ════════════════════════════════════════
-
 export function buildDbAchievementDisplay(requirements, progressPayload, locationsById) {
   if (!Array.isArray(requirements) || requirements.length === 0) {
     return {
@@ -129,7 +115,6 @@ export function buildDbAchievementDisplay(requirements, progressPayload, locatio
   const primaryType = types[0] || "";
   const category = requirementCategoryMap[primaryType] || "Egyéb";
 
-  // Helyszín-alapú achievement
   if (byType.location || byType.location_any_of) {
     const specificReqs = byType.location || [];
     const anyOfReq = (byType.location_any_of || [])[0];
@@ -168,7 +153,6 @@ export function buildDbAchievementDisplay(requirements, progressPayload, locatio
   const summary = buildRequirementSummary(requirements);
   const current = progressPayload?.visited ?? 0;
 
-  // time_spent: ha BÁRMELY requirement time_spent típusú, következetesen kezeljük
   const hasTimeSpent = !!byType.time_spent;
 
   if (primaryType === "time_spent" || hasTimeSpent) {
@@ -176,7 +160,6 @@ export function buildDbAchievementDisplay(requirements, progressPayload, locatio
     const targetSeconds = timeReq?.value || summary.target || 600;
     const targetMinutes = Math.max(1, Math.round(targetSeconds / 60));
 
-    // A backend mindig másodpercben adja vissza time_spent értékét
     const currentSeconds = current;
     const currentMinutes = Math.floor(currentSeconds / 60);
 
@@ -200,10 +183,6 @@ export function buildDbAchievementDisplay(requirements, progressPayload, locatio
     category,
   };
 }
-
-// ════════════════════════════════════════
-// Helper: location ID-k összegyűjtése requirement-ekből
-// ════════════════════════════════════════
 
 export function collectLocationIds(requirements) {
   if (!Array.isArray(requirements)) return [];

@@ -71,7 +71,7 @@ export default function useMultiplayer({ enabled = true } = {}) {
   }, []);
 
   useEffect(() => {
-    
+
     if (!enabled) {
       setStatus("disabled");
       setConnected(false);
@@ -263,7 +263,7 @@ export default function useMultiplayer({ enabled = true } = {}) {
       }
       wsRef.current = null;
     };
-    
+
   }, [enabled, updatePlayersState, appendChatMessage, replaceChatHistory]);
 
   const sendPosition = useCallback((position, rotY) => {

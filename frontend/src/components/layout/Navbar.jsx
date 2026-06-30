@@ -23,6 +23,7 @@ function resolveAvatarUrl(avatarUrl) {
 export default function Navbar({ theme, setTheme }) {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated, isGuest } = useAuth();
+
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
@@ -123,7 +124,7 @@ export default function Navbar({ theme, setTheme }) {
   return (
     <>
       <nav className="navbar">
-        {/* LEFT WRAPPER */}
+
         <div className="nav-left-wrapper">
           <div className="nav-left">
             <Link to="/app">
@@ -141,7 +142,6 @@ export default function Navbar({ theme, setTheme }) {
           </div>
         </div>
 
-        {/* DESKTOP MENU */}
         <div className="nav-center desktop-only">
           <div className="nav-menu">
             <>
@@ -157,7 +157,6 @@ export default function Navbar({ theme, setTheme }) {
           </div>
         </div>
 
-        {/* DESKTOP RIGHT */}
         <div className="nav-right desktop-only">
           <div className="theme-toggle" onClick={toggleTheme}>
             <span className="theme-label">Light</span>
@@ -198,7 +197,6 @@ export default function Navbar({ theme, setTheme }) {
           )}
         </div>
 
-        {/* MOBILE HAMBURGER */}
         <div
           className="hamburger mobile-only"
           onClick={() => setDrawerOpen(true)}
@@ -207,12 +205,10 @@ export default function Navbar({ theme, setTheme }) {
         </div>
       </nav>
 
-      {/* MOBILE DRAWER OVERLAY */}
       {drawerOpen && (
         <div className="drawer-overlay" onClick={() => setDrawerOpen(false)} />
       )}
 
-      {/* MOBILE DRAWER (RIGHT) */}
       <div className={`mobile-drawer ${drawerOpen ? "open" : ""}`}>
         <div className="drawer-header">
           <img src="/sapilogo.png" className="drawer-logo" />

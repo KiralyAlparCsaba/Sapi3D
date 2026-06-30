@@ -9,7 +9,6 @@ import {
 import api from "../../services/api";
 import "../../styles/AdminDashboard.css";
 
-// ── Colour palette ───────────────────────────────────────
 const C = {
   green:  "#3fb950",
   blue:   "#58a6ff",
@@ -22,15 +21,11 @@ const C = {
 const DEVICE_COLORS = [C.blue, C.green, C.orange, C.purple, C.yellow, C.red];
 const MODE_COLORS   = { single: C.blue, multi: C.green, unknown: "#555" };
 
-const POLL_INTERVAL = 30; // seconds — matches the 30s metric upload interval in Building.jsx
-
-// ── Helpers ──────────────────────────────────────────────
+const POLL_INTERVAL = 30;
 
 function fmtTime(isoString) {
   if (!isoString) return "–";
-  // A backend UTC időpontokat ad vissza timezone jelölés nélkül ("2026-06-08T18:00:00")
-  // JavaScript ezt helyi időként értelmezi → 3 órás eltolás EEST-ben.
-  // 'Z' suffix hozzáadásával UTC-ként kezeli → helyes helyi időt jelenít meg.
+
   const utc = isoString.endsWith("Z") || isoString.includes("+") ? isoString : isoString + "Z";
   return new Date(utc).toLocaleTimeString("hu-HU", {
     hour: "2-digit", minute: "2-digit",
@@ -53,7 +48,6 @@ function fpsClass(fps) {
   return "fps-bad";
 }
 
-// ── Custom Recharts tooltip ───────────────────────────────
 function ChartTooltip({ active, payload, label, unit = "" }) {
   if (!active || !payload?.length) return null;
 
@@ -85,7 +79,6 @@ function ChartTooltip({ active, payload, label, unit = "" }) {
   );
 }
 
-// ── Device × Mode teljesítmény táblázat ──────────────────
 const DEVICE_LABELS = { desktop: "Desktop", mobile: "Mobile", tablet: "Tablet", unknown: "Egyéb" };
 const DEVICE_ICONS  = { desktop: "🖥", mobile: "📱", tablet: "📲" };
 
@@ -121,14 +114,13 @@ function DeviceModeTable({ rows }) {
 
         return (
           <div key={device} className="dash-perf-card">
-            {/* Kártya fejléc */}
+
             <div className="dash-perf-device-header">
               <span className="dash-perf-device-icon">{DEVICE_ICONS[device] ?? "💻"}</span>
               <span className="dash-perf-device-name">{DEVICE_LABELS[device] ?? device}</span>
               <span className="dash-perf-period">elmúlt 24 óra</span>
             </div>
 
-            {/* Táblázat */}
             <table className="dash-perf-table">
               <thead>
                 <tr>
@@ -150,7 +142,6 @@ function DeviceModeTable({ rows }) {
                       const val    = data[col.key]?.[metric.key];
                       const refVal = overall?.[metric.key];
 
-                      // Összehasonlítás az összes átlagához képest
                       let badge = null;
                       if (col.key !== "overall" && val != null && refVal != null) {
                         const pct = ((val - refVal) / refVal) * 100;
@@ -184,7 +175,6 @@ function DeviceModeTable({ rows }) {
   );
 }
 
-// ── Stat card ─────────────────────────────────────────────
 function StatCard({ label, value, unit, sub, subType, accent }) {
   return (
     <div className={`dash-stat-card accent-${accent}`}>
@@ -200,7 +190,6 @@ function StatCard({ label, value, unit, sub, subType, accent }) {
   );
 }
 
-// ── Main component ────────────────────────────────────────
 export default function DashboardTab() {
   const [overview, setOverview]         = useState(null);
   const [activeSessions, setActiveSessions] = useState([]);
@@ -215,7 +204,6 @@ export default function DashboardTab() {
 
   const countdownRef = useRef(POLL_INTERVAL);
 
-  // ── Fetch all dashboard data ──────────────────────────
   const fetchAll = useCallback(async () => {
     setError("");
     try {
@@ -243,7 +231,6 @@ export default function DashboardTab() {
     }
   }, []);
 
-  // ── Initial load + polling ─────────────────────────────
   useEffect(() => {
     fetchAll();
 
@@ -264,9 +251,6 @@ export default function DashboardTab() {
     };
   }, [fetchAll]);
 
-  // ── Format history for charts ──────────────────────────
-  // Levágjuk az elején és végén lévő null blokkokat, hogy a grafikon
-  // ne legyen feleslegesen üres — csak az "aktív" időszakot mutatja.
   const chartHistory = useMemo(() => {
     const raw = history.map((p) => ({
       t:   fmtTime(p.timestamp),
@@ -286,14 +270,12 @@ export default function DashboardTab() {
     return raw.slice(start, end + 1);
   }, [history]);
 
-  // ── Device donut data ──────────────────────────────────
   const deviceData = (engagement?.device_breakdown ?? []).map((d) => ({
     name: d.device_type,
     value: d.count,
   }));
   const deviceTotal = deviceData.reduce((s, d) => s + d.value, 0);
 
-  // ── Mode donut data ────────────────────────────────────
   const MODE_LABELS = { single: "Singleplayer", multi: "Multiplayer" };
   const modeData = (engagement?.mode_breakdown ?? []).map((m) => ({
     name: m.mode,
@@ -303,13 +285,11 @@ export default function DashboardTab() {
   }));
   const modeTotal = modeData.reduce((s, m) => s + m.value, 0);
 
-  // ── Duration bars ──────────────────────────────────────
   const durationData = (engagement?.duration_buckets ?? []).map((b) => ({
     name: b.label,
     count: b.count,
   }));
 
-  // ── Loading / error states ─────────────────────────────
   if (loading) {
     return <div className="dash-loading">Dashboard adatok betöltése…</div>;
   }
@@ -325,16 +305,12 @@ export default function DashboardTab() {
   return (
     <div className="dash">
 
-      {/* ── Refresh indicator ── */}
       <div className="dash-refresh-row">
         <span className="dash-live-badge">LIVE</span>
         Utolsó frissítés: {lastUpdate?.toLocaleTimeString("hu-HU")} &nbsp;·&nbsp;
         Következő: <span className="dash-refresh-countdown">&nbsp;{countdown}s</span>
       </div>
 
-      {/* ══════════════════════════════════════
-          1. ÁTTEKINTÉS — 3 stat kártya
-      ══════════════════════════════════════ */}
       <div>
         <div className="dash-section-title">Áttekintés — most</div>
         <div className="dash-stat-grid dash-stat-grid--small">
@@ -367,14 +343,10 @@ export default function DashboardTab() {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════
-          2. ELOSZLÁS — session hossz + eszköz + mód
-      ══════════════════════════════════════ */}
       <div>
         <div className="dash-section-title">Eloszlás</div>
         <div className="dash-distrib-grid">
 
-          {/* Session hossz bar chart */}
           <div className="dash-chart-card">
             <div className="dash-chart-header">
               <div>
@@ -397,7 +369,6 @@ export default function DashboardTab() {
             )}
           </div>
 
-          {/* Eszköz donut */}
           <div className="dash-chart-card">
             <div className="dash-chart-header">
               <div>
@@ -438,7 +409,6 @@ export default function DashboardTab() {
             )}
           </div>
 
-          {/* Játékmód donut */}
           <div className="dash-chart-card">
             <div className="dash-chart-header">
               <div>
@@ -480,17 +450,11 @@ export default function DashboardTab() {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════
-          3. TELJESÍTMÉNY — eszköz × mód táblázat
-      ══════════════════════════════════════ */}
       <div>
         <div className="dash-section-title">Teljesítmény — eszköz és mód szerint · elmúlt 24 óra</div>
         <DeviceModeTable rows={deviceMetrics} />
       </div>
 
-      {/* ══════════════════════════════════════
-          4. TRENDEK — FPS + Memória 24 óra
-      ══════════════════════════════════════ */}
       <div>
         <div className="dash-section-title">Trendek — elmúlt 24 óra</div>
         <div className="dash-section-subtitle">Az egyenes szakaszok olyan időszakokat jelölnek ahol nem volt aktív felhasználó</div>
@@ -567,9 +531,6 @@ export default function DashboardTab() {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════
-          5. ÉLŐ SESSION FEED
-      ══════════════════════════════════════ */}
       <div>
         <div className="dash-live-feed-header">
           <div className="dash-section-title">
