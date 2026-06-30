@@ -31,7 +31,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """Schema for creating a User."""
     password: str = Field(..., min_length=8, max_length=100)
-    role_id: int = Field(default=1)  # Default to regular user role
+    role_id: int = Field(default=1) 
 
     @field_validator("password")
     @classmethod

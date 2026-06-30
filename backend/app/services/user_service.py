@@ -73,7 +73,7 @@ class UserService:
 
         update_data = data.model_dump(exclude_unset=True)
 
-        # Check username uniqueness (only if it actually changed)
+       
         new_username = update_data.get("username")
         if new_username and new_username != user.username:
             existing = await self.user_repo.get_by_username(new_username)
@@ -83,7 +83,7 @@ class UserService:
                     detail="Ez a felhasználónév már foglalt."
                 )
 
-        # Check email uniqueness (only if it actually changed)
+        
         new_email = update_data.get("email")
         if new_email and new_email != user.email:
             existing = await self.user_repo.get_by_email(new_email)
@@ -128,7 +128,6 @@ class UserService:
         avatars_dir = settings.avatars_directory
         os.makedirs(avatars_dir, exist_ok=True)
 
-        # Keep exactly one avatar file per user by removing previous extension variants.
         for allowed_ext in settings.avatar_allowed_extensions:
             candidate = os.path.join(avatars_dir, f"{base_name}.{allowed_ext}")
             if os.path.exists(candidate) and candidate != os.path.join(avatars_dir, avatar_filename):

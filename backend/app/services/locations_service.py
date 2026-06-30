@@ -114,7 +114,7 @@ class LocationsService:
 
         os.makedirs(settings.locations_directory, exist_ok=True)
 
-        # Remove old file with the other extension if it exists
+        
         for allowed_ext in settings.location_image_allowed_extensions:
             candidate = os.path.join(settings.locations_directory, f"{base_name}.{allowed_ext}")
             if os.path.exists(candidate) and candidate != os.path.join(settings.locations_directory, image_filename):

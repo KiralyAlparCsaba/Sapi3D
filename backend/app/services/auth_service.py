@@ -35,7 +35,7 @@ class AuthService:
         user_agent = request.headers.get("user-agent")
         device_data = extract_device_from_user_agent(user_agent)
 
-        # Dedupe devices by browser/os fingerprint so one row per real device.
+        
         device = await self.device_repo.get_or_create(**device_data)
 
         session_data = SessionCreate(

@@ -22,8 +22,7 @@ from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 
-# Per-user inbound message rate limit (token bucket-ish).
-# Normal client sends ~10Hz, this gives headroom for bursts but stops abuse.
+
 RATE_LIMIT_PER_SEC = 15
 RATE_LIMIT_WINDOW = 1.0  # seconds
 
@@ -39,13 +38,7 @@ class PlayerState:
     y: float = 0.0
     z: float = 0.0
     rot_y: float = 0.0
-    # True once the client has sent at least one real position. Until then the
-    # player is "invisible" to others — we don't broadcast user_joined with the
-    # fake default (0,0,0) coordinate, which would otherwise make capsules
-    # briefly appear at the world origin.
     has_position: bool = False
-    # Sliding window of inbound message timestamps (monotonic seconds). Used
-    # for per-user rate limiting so one bad client can't flood the server.
     msg_times: Deque[float] = field(default_factory=deque)
 
     def public_dict(self) -> dict:
@@ -77,7 +70,7 @@ class ConnectionManager:
     ) -> PlayerState:
         """Register a new connection. The websocket must already be accepted."""
         async with self._lock:
-            # If the same user reconnects, drop the old socket first.
+           
             existing = self._players.get(user_id)
             if existing is not None:
                 try:
@@ -99,20 +92,6 @@ class ConnectionManager:
         """
         Remove a user from the registry, but ONLY if the given websocket is
         still the currently registered one for that user.
-
-        Identity check is critical: when the same user reconnects (new tab,
-        React StrictMode double-mount, etc.) we replace the entry in
-        `connect()`. The OLD websocket then receives a close event and runs
-        its finally block; without this check, that would delete the NEW
-        connection's entry, orphaning the live websocket.
-
-        Returns:
-            (removed, was_visible)
-            - removed: True if we actually deleted the entry
-            - was_visible: True if the user had been broadcast to others
-              (i.e., had_position was True). When False, the caller should
-              NOT broadcast user_left — others never saw them in the first
-              place.
         """
         async with self._lock:
             current = self._players.get(user_id)
@@ -121,19 +100,12 @@ class ConnectionManager:
                 del self._players[user_id]
                 logger.info(f"[MP] User {user_id} disconnected. Online: {len(self._players)}")
                 return True, was_visible
-            # The websocket was already replaced by a newer connection — leave it alone.
+          
             logger.info(f"[MP] Stale disconnect for user {user_id} ignored (newer connection active)")
             return False, False
 
     def update_position(self, user_id: int, x: float, y: float, z: float, rot_y: float) -> bool:
-        """
-        Cheap, lock-free update of player position. Safe because asyncio is
-        single-threaded.
-
-        Returns True if this was the player's *first* real position update —
-        the caller should then broadcast a user_joined event so that others
-        learn about this player at their actual location (not (0,0,0)).
-        """
+        """Update a player's position and rotation. Returns True if this is the first real position."""
         p = self._players.get(user_id)
         if p is None:
             return False
@@ -228,5 +200,5 @@ class ConnectionManager:
                 )
 
 
-# Module-level singleton. Import this from routers.
+
 connection_manager = ConnectionManager()

@@ -27,7 +27,7 @@ class AdminRepository:
         now = datetime.now(timezone.utc)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        # Valóban aktív session-ök: ended_at IS NULL ÉS friss metrika vagy új session
+        
         metric_cutoff  = now - timedelta(minutes=20)
         session_cutoff = now - timedelta(minutes=20)
 
@@ -46,7 +46,7 @@ class AdminRepository:
         )
         active_sessions: int = active_q.scalar() or 0
 
-        # Distinct online users (ugyanolyan szűréssel)
+        
         online_q = await self.db.execute(
             select(func.count(func.distinct(Session.user_id)))
             .where(
@@ -63,7 +63,7 @@ class AdminRepository:
         )
         online_users: int = online_q.scalar() or 0
 
-        # Global avg fps / memory / latency — csak az elmúlt 1 óra metrikáiból
+        # Global avg fps / memory / latency 
         one_hour_ago = now - timedelta(hours=1)
         avg_q = await self.db.execute(
             select(
@@ -136,10 +136,10 @@ class AdminRepository:
         nem érkezett semmi, zombie session-nek tekintjük.
         """
         now = datetime.now(timezone.utc)
-        metric_cutoff   = now - timedelta(minutes=20)  # legutóbbi metrika határ
-        session_cutoff  = now - timedelta(minutes=20)  # friss session (még nem küldött metrikát)
+        metric_cutoff   = now - timedelta(minutes=20)  
+        session_cutoff  = now - timedelta(minutes=20)  
 
-        # Subquery: legutolsó metrika per session
+        
         latest_metric_sq = (
             select(
                 PerfMetrics.session_id,
@@ -170,7 +170,7 @@ class AdminRepository:
             .outerjoin(latest_metric_sq, Session.session_id == latest_metric_sq.c.session_id)
             .where(
                 Session.ended_at.is_(None),
-                # Valóban aktív: friss metrika VAGY éppen most kezdett session
+                
                 and_(
                     Session.ended_at.is_(None),
                     (

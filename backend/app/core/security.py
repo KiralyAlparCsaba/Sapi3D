@@ -78,7 +78,7 @@ async def get_current_user(
     token = credentials.credentials
     payload = decode_access_token(token)
 
-    # Guest token — no DB lookup needed
+    
     if payload.get("role_id") == 0:
         return GuestUser()
 
@@ -93,7 +93,7 @@ async def get_current_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Attach session_id to user object for later use
+    
     user.session_id = session_id
 
     return user

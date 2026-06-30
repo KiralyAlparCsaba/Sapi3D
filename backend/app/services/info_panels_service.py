@@ -44,7 +44,7 @@ class InfoPanelsService:
         if not panel:
             raise HTTPException(status_code=404, detail="InfoPanel not found")
 
-        # Csak a megadott mezőket frissítjük
+        
         if panel_data.information is not None:
             panel.information = panel_data.information
         if panel_data.coordinates_obj_name is not None:

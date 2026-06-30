@@ -15,15 +15,13 @@ class Settings(BaseSettings):
     models_directory: str = "static/models"
     default_model_filename: str = "sapi3D_V1.6.1.glb"
 
-    # Avatar Upload Settings (profile pictures — 2D images)
+    # Avatar Upload Settings 
     avatars_directory: str = "static/avatars"
     avatar_max_size_bytes: int = 5 * 1024 * 1024  # 5MB
     avatar_allowed_mime_types: List[str] = ["image/jpeg", "image/png"]
     avatar_allowed_extensions: List[str] = ["jpg", "png"]
 
-    # 3D Avatar Settings (multiplayer — GLB models)
-    # Separate from `avatars_directory` above (which is for profile photos).
-    # Holds GLB binaries + manifest.json describing the available variants.
+   
     avatars_3d_directory: str = "static/avatars-3d"
 
     # Event Image Upload Settings
@@ -40,9 +38,9 @@ class Settings(BaseSettings):
     
     # Database Settings
     database_url: str = "postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d"
-    database_echo: bool = False          # SQL query logging
-    database_pool_size: int = 5          # Connection pool size
-    database_max_overflow: int = 10      # Extra connections beyond pool
+    database_echo: bool = False          
+    database_pool_size: int = 5          
+    database_max_overflow: int = 10      
 
     
     # CORS Settings
@@ -64,5 +62,5 @@ class Settings(BaseSettings):
         return f"{self.models_directory}/{self.default_model_filename}"
 
 
-# Singleton instance
+
 settings = Settings()

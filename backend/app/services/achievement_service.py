@@ -51,8 +51,7 @@ class AchievementService:
         user_progress = await self.progress_repo.get_all_by_user(user_id)
         
         unlocked_ids = {ua.achv_id for ua in unlocked_achievements}
-        # Deduplicate by achv_id in case concurrent requests created duplicate rows.
-        # Keep the record with the highest model_view_count so display is correct.
+        
         progress_by_achv_id: dict = {}
         for p in user_progress:
             existing = progress_by_achv_id.get(p.achv_id)
@@ -91,14 +90,14 @@ class AchievementService:
         """
         # Check if already unlocked
         if await self.user_achievement_repo.check_achievement_unlocked(user_id, achv_id):
-            return False  # Already unlocked
+            return False  
         
         # Get progress
         progress = await self.progress_repo.get_by_user_and_achievement(user_id, achv_id)
         if not progress:
-            return False  # No progress yet
+            return False  
         
-        # Check if achievement should be unlocked
+       
         should_unlock = await self._evaluate_unlock_condition(achv_id, progress)
         
         if should_unlock:
@@ -127,7 +126,7 @@ class AchievementService:
         requirements = await self.requirement_repo.get_by_achievement(achv_id)
         
         if not requirements:
-            return False  # No requirements = cannot unlock
+            return False  
         
         # Group requirements by type
         by_type = {}
@@ -205,15 +204,7 @@ class AchievementService:
         return True
 
     async def track_model_open(self, user_id: int) -> List[int]:
-        """
-        Track model open event.
-        - Increments model_view_count for all achievements
-        - If session_start was already set (previous model-close was missed),
-          flushes the accumulated time first to avoid losing it
-        - Creates/updates session_start for time tracking
-        - Checks if any achievement is newly unlocked
-        - Returns: List of newly unlocked achievement IDs
-        """
+       
         unlocked = []
 
         all_achievements = await self.achievement_repo.get_all_achievements()
@@ -221,8 +212,7 @@ class AchievementService:
         for achievement in all_achievements:
             progress = await self.progress_repo.get_or_create_progress(user_id, achievement.achv_id)
 
-            # Atomic increment avoids read-modify-write race when concurrent
-            # requests (e.g. LocationsPage + ThreeScene) fire simultaneously.
+            
             await self.progress_repo.increment_model_view_count(progress.id)
 
             # Handle time_spent achievements
@@ -231,35 +221,27 @@ class AchievementService:
                 "time_spent"
             )
             if time_requirement is not None:
-                # Ha maradt nyitott session_start (pl. a model-close nem érkezett meg),
-                # akkor először flush-oljuk az előző session idejét, hogy ne vesszen el
+               
                 progress = await self.progress_repo.get_by_id(progress.id)
                 if progress.session_start is not None:
                     elapsed = (datetime.now(timezone.utc) - progress.session_start).total_seconds()
                     flushed_time = (progress.time_spent or 0) + int(elapsed)
                     await self.progress_repo.update(progress.id, time_spent=flushed_time)
 
-                # Új session_start beállítása
+                
                 await self.progress_repo.update(
                     progress.id,
                     session_start=datetime.now(timezone.utc)
                 )
 
-            # Check if model_view_count unlock condition is now met
+          
             if await self.check_and_unlock_achievement(user_id, achievement.achv_id):
                 unlocked.append(achievement.achv_id)
 
         return unlocked
     
     async def track_model_close(self, user_id: int) -> List[int]:
-        """
-        Track model close event.
-        - Calculate elapsed time from session_start
-        - Add to time_spent
-        - Clear session_start
-        - Check for unlock
-        - Returns: List of newly unlocked achievement IDs
-        """
+        
         unlocked = []
         
         user_progress_list = await self.progress_repo.get_all_by_user(user_id)
@@ -282,7 +264,7 @@ class AchievementService:
                     session_start=None
                 )
 
-                # Check if unlock
+               
                 updated_progress = await self.progress_repo.get_by_id(progress.id)
                 if await self.check_and_unlock_achievement(user_id, progress.achv_id):
                     unlocked.append(progress.achv_id)
@@ -290,16 +272,10 @@ class AchievementService:
         return unlocked
     
     async def track_location_visit(self, user_id: int, location_id: int) -> List[int]:
-        """
-        Track location visit.
-        - Finds achievements requiring location tracking
-        - Adds to achv_progress_locations
-        - Check for unlock
-        - Returns: List of newly unlocked achievement IDs
-        """
+        
         unlocked = []
         
-        # Get all achievements that track locations
+        
         all_achievements = await self.achievement_repo.get_all_achievements()
 
         for achievement in all_achievements:
@@ -323,13 +299,7 @@ class AchievementService:
         return unlocked
     
     async def track_panel_view(self, user_id: int, panel_id: int) -> List[int]:
-        """
-        Track panel view event.
-        - Finds achievements requiring panel tracking
-        - Adds to achv_progress_panels
-        - Check for unlock
-        - Returns: List of newly unlocked achievement IDs
-        """
+        
         unlocked = []
         
         # Get all achievements that track panels
@@ -349,19 +319,7 @@ class AchievementService:
         return unlocked
     
     async def get_achievement_progress(self, user_id: int, achv_id: int) -> Optional[dict]:
-        """
-        Get detailed progress for a specific achievement.
         
-        Returns:
-            {
-                "progress": AchvProgressResponse,
-                "locations": [AchvProgressLocationResponse, ...],
-                "panels": [AchvProgressPanelResponse, ...],
-                "visited": 3,
-                "required": 5,
-                "percentage": 60
-            }
-        """
         progress = await self.progress_repo.get_by_user_and_achievement(user_id, achv_id)
         if not progress:
             return None
