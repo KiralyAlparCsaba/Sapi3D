@@ -5,7 +5,6 @@ from typing import AsyncGenerator
 from core.config import settings
 from models.base import Base
 
-# Create async engine
 engine = create_async_engine(
     settings.database_url,
     echo=settings.database_echo,
@@ -14,7 +13,6 @@ engine = create_async_engine(
     max_overflow=settings.database_max_overflow,
 )
 
-# Create async session factory
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
@@ -23,11 +21,10 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
-
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Dependency function to get database session.
-    
+
     Yields:
         AsyncSession: Database session
     """
@@ -41,27 +38,23 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
-
 async def init_db() -> None:
     """
     Initialize database tables and seed initial data.
     Should be called on application startup.
     """
     from core.logging import logger
-    
-    # Import all models to ensure they are registered with Base
+
     from models.user import User, Role
     from models.session import Session, Device
     from models.achievement import Achievement, UserAchievement, AchvProgress
     from models.location import Location, Event, InfoPanel
     from models.metrics import PerfMetrics
-    
+
     logger.info("Creating database tables...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        # Backward-compatibility patch:
-        # legacy databases may still have cpu_gpu_usage from earlier schema.
-        # We no longer use that field, so remove it if present.
+
         await conn.execute(text("""
             DO $$
             BEGIN
@@ -77,7 +70,34 @@ async def init_db() -> None:
             END
             $$;
         """))
-        # Backward-compatibility patch for email verification fields.
+
+        await conn.execute(text("""
+            DO $$
+            DECLARE
+                col record;
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'devices'
+                      AND column_name = 'device_name'
+                ) THEN
+                    ALTER TABLE devices
+                    ADD COLUMN device_name VARCHAR(100) NOT NULL DEFAULT 'unknown';
+                END IF;
+
+                FOR col IN
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_name = 'devices'
+                      AND column_name NOT IN ('device_id', 'device_type', 'device_name', 'os_name')
+                LOOP
+                    EXECUTE format('ALTER TABLE devices DROP COLUMN %I', col.column_name);
+                END LOOP;
+            END
+            $$;
+        """))
+
         await conn.execute(text("""
             DO $$
             BEGIN
@@ -172,37 +192,34 @@ async def init_db() -> None:
               AND email_verification_expires_at IS NULL;
         """))
     logger.info("Database tables created successfully")
-    
-    # Seed initial roles if they don't exist
+
     logger.info("About to call _seed_roles()...")
     await _seed_roles()
     logger.info("_seed_roles() completed")
 
-
 async def _seed_roles() -> None:
     """Seed initial roles into the database."""
     from core.logging import logger
-    
+
     logger.info("Starting role seeding process...")
-    
+
     try:
         from models.user import Role
         from sqlalchemy import select
-        
+
         logger.info("Imports successful, creating session...")
-        
+
         async with AsyncSessionLocal() as session:
             logger.info("Session created, checking for existing roles...")
-            
-            # Check if roles already exist
+
             result = await session.execute(select(Role))
             existing_roles = result.scalars().all()
-            
+
             logger.info(f"Found {len(existing_roles)} existing roles")
-            
+
             if not existing_roles:
                 logger.info("No roles found, creating default roles...")
-                # Create default roles
+
                 roles = [
                     Role(role_id=1, role_name="user"),
                     Role(role_id=2, role_name="admin"),
@@ -215,9 +232,6 @@ async def _seed_roles() -> None:
                 logger.info(f"✅ Roles already exist ({len(existing_roles)} roles found), skipping seed")
     except Exception as e:
         logger.error(f"❌ Failed to seed roles: {type(e).__name__}: {e}", exc_info=True)
-        # Don't raise - we want the app to start even if seeding fails
-        # The error will be logged and visible
-
 
 async def close_db() -> None:
     """
