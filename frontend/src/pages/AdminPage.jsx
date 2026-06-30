@@ -29,13 +29,13 @@ function fmtDate(value) {
 }
 
 export default function AdminPage() {
+
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const usersRequestRef = useRef(0);
   const sessionsRequestRef = useRef(0);
   const rawRequestRef = useRef(0);
 
-  // ───────── USERS ─────────
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState("");
@@ -57,18 +57,15 @@ export default function AdminPage() {
 
   const [selectedUserId, setSelectedUserId] = useState(null);
 
-  // ───────── SESSIONS ─────────
   const [sessions, setSessions] = useState([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessionsError, setSessionsError] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState(null);
 
-  // ───────── METRICS (RAW) ─────────
   const [rawMetrics, setRawMetrics] = useState(null);
   const [rawLoading, setRawLoading] = useState(false);
   const [rawError, setRawError] = useState("");
 
-  // ───────── USER ADMIN ACTIONS ─────────
   const [userActionLoading, setUserActionLoading] = useState(false);
   const [userActionError, setUserActionError] = useState("");
   const [userActionSuccess, setUserActionSuccess] = useState("");
@@ -214,7 +211,6 @@ export default function AdminPage() {
     }
   };
 
-  // ───────── DERIVED ─────────
   const selectedUser = useMemo(
     () => users.find((u) => u.user_id === Number(selectedUserId)) ?? null,
     [users, selectedUserId],
@@ -236,7 +232,6 @@ export default function AdminPage() {
   const canPrevUsers = page > 1;
   const canNextUsers = users.length === limit;
 
-  // ───────── LOADERS ─────────
   const resetSessionAndMetrics = () => {
     rawRequestRef.current += 1;
     setSessions([]);
@@ -428,7 +423,6 @@ export default function AdminPage() {
     }
   };
 
-  // ───────── EFFECTS ─────────
   useEffect(() => {
     loadUsersPage();
   }, [limit, page]);
@@ -438,7 +432,6 @@ export default function AdminPage() {
     setAvatarVersion(0);
   }, [selectedUserId]);
 
-  // ───────── UI ─────────
   return (
     <>
       <div className="admin-page">
@@ -446,7 +439,6 @@ export default function AdminPage() {
           Admin
         </h1>
 
-        {/* TAB BAR */}
         <div className="admin-tabs">
           <button
             className={`admin-tab-btn${activeTab === "dashboard" ? " active" : ""}`}
@@ -462,13 +454,11 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* DASHBOARD TAB */}
         {activeTab === "dashboard" && <DashboardTab />}
 
-        {/* FELHASZNÁLÓK TAB */}
         {activeTab === "users" && (
         <div className="admin-page__grid" style={{ padding: "16px 20px" }}>
-          {/* ───────── LEFT: USERS ───────── */}
+
           <section className="admin-card">
             <div className="admin-card__header">
               <h2 className="admin-card__title">Felhasználók</h2>
@@ -560,7 +550,6 @@ export default function AdminPage() {
             )}
           </section>
 
-          {/* ───────── MIDDLE: SESSIONS ───────── */}
           <section className="admin-card">
             <div className="admin-card__header">
               <h2 className="admin-card__title">
@@ -643,7 +632,6 @@ export default function AdminPage() {
             )}
           </section>
 
-          {/* ───────── RIGHT: METRICS ───────── */}
           <section className="admin-card">
             <div className="admin-card__header admin-card__header--row">
               <h2 className="admin-card__title">Session részletek</h2>
@@ -786,11 +774,11 @@ export default function AdminPage() {
                 )}
 
                 {rawMetrics && rawMetrics.length > 0 && (() => {
-                  // Összefoglaló számok
+
                   const avgFps = Math.round(rawMetrics.reduce((s, m) => s + m.fps, 0) / rawMetrics.length);
                   const avgMem = Math.round(rawMetrics.reduce((s, m) => s + m.memory_mb, 0) / rawMetrics.length);
                   const avgLat = Math.round(rawMetrics.reduce((s, m) => s + m.latency_ms, 0) / rawMetrics.length);
-                  // Grafikon adatok: minden 30 mp-es pont egy tick
+
                   const chartData = rawMetrics.map((m, i) => ({
                     i: i + 1,
                     label: new Date(m.timestamp).toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" }),
@@ -801,7 +789,7 @@ export default function AdminPage() {
 
                   return (
                     <>
-                      {/* Összefoglaló sor */}
+
                       <div className="admin-session-summary">
                         <div className="admin-session-stat">
                           <span className="admin-session-stat-label">Átlag FPS</span>
@@ -821,7 +809,6 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {/* FPS + memória trend a session során */}
                       <div className="admin-session-chart-wrap">
                         <div className="admin-session-chart-title">FPS és memória a session során</div>
                         <ResponsiveContainer width="100%" height={160}>
@@ -847,7 +834,7 @@ export default function AdminPage() {
             )}
           </section>
         </div>
-        )} {/* end users tab */}
+        )}
       </div>
 
       {editOpen && (

@@ -5,7 +5,6 @@ import "../styles/ProfilPage.css";
 import AchievementsSection, { Medal } from "../components/achievements/AchievementsSection";
 import GuestWall from "../components/auth/GuestWall";
 
-// ─── Helpers (unchanged) ───
 function resolveAvatarUrl(avatarUrl) {
   if (!avatarUrl) return "";
   if (/^https?:\/\//i.test(avatarUrl)) return avatarUrl;
@@ -29,7 +28,6 @@ function fmtDateShort(value) {
   return `${d.getFullYear()}. ${HU_MONTHS[d.getMonth()]} ${d.getDate()}.`;
 }
 
-// ─── Inline SVG icons ───
 const IconMail = (p) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
     strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -70,7 +68,6 @@ const IconTrash = (p) => (
   </svg>
 );
 
-// ─── Avatar with SVG progress ring ───
 function AvatarWithRing({ initial, avatarSrc, avatarLoadFailed, onAvatarError,
   percent, canClick, onClickAvatar, uploading }) {
   const size   = 220;
@@ -124,13 +121,9 @@ function AvatarWithRing({ initial, avatarSrc, avatarLoadFailed, onAvatarError,
   );
 }
 
-// ════════════════════════════════════════
-// ProfilPage
-// ════════════════════════════════════════
 export default function ProfilPage() {
   const { updateToken, isGuest } = useAuth();
 
-  // ── User profile state (unchanged) ──
   const [me, setMe]                           = useState(null);
   const [loading, setLoading]                 = useState(false);
   const [saving, setSaving]                   = useState(false);
@@ -144,11 +137,9 @@ export default function ProfilPage() {
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const avatarInputRef = useRef(null);
 
-  // ── Achievement stats received from AchievementsSection via onStatsChange ──
   const [achievementStats, setAchievementStats] = useState({ done: 0, total: 0, currentBadge: null });
   const [achievementRefreshKey, setAchievementRefreshKey] = useState(0);
 
-  // ── Load profile (unchanged) ──
   const loadMe = async () => {
     setLoading(true); setError(""); setSuccess("");
     try {
@@ -169,7 +160,6 @@ export default function ProfilPage() {
     return () => window.clearTimeout(id);
   }, [success]);
 
-  // ── Edit (unchanged) ──
   const startEdit = () => {
     if (!me) return;
     setError(""); setSuccess("");
@@ -210,7 +200,6 @@ export default function ProfilPage() {
     } finally { setSaving(false); }
   };
 
-  // ── Avatar (unchanged) ──
   const triggerAvatarPicker = () => {
     if (avatarUploading || avatarDeleting || loading || !me) return;
     avatarInputRef.current?.click();
@@ -273,7 +262,6 @@ export default function ProfilPage() {
     } finally { setAvatarDeleting(false); }
   };
 
-  // ── Derived avatar values (unchanged) ──
   const initials  = ((me?.username || "").trim().charAt(0) || "?").toUpperCase();
   const avatarUrl = resolveAvatarUrl(me?.avatar_url || "");
   const avatarSrc = avatarUrl
@@ -283,13 +271,11 @@ export default function ProfilPage() {
 
   const canClickAvatar = isEditing || !me?.avatar_url;
 
-  // ── Refresh: user profile + achievements ──
   const handleRefresh = () => {
     loadMe();
     setAchievementRefreshKey((k) => k + 1);
   };
 
-  // ── Hero derived values ──
   const { done, total, currentBadge } = achievementStats;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
@@ -297,7 +283,7 @@ export default function ProfilPage() {
 
   return (
     <div className="profil-page">
-      {/* Toasts */}
+
       {error   && <p className="profil-toast profil-toast--error"  role="alert">{error}</p>}
       {success && <p className="profil-toast profil-toast--success" role="status">{success}</p>}
 
@@ -305,7 +291,7 @@ export default function ProfilPage() {
 
       {me && (
         <>
-          {/* Hidden file input */}
+
           <input
             ref={avatarInputRef}
             type="file"
@@ -314,14 +300,11 @@ export default function ProfilPage() {
             className="profil-avatar-input"
           />
 
-          {/* Two-column grid */}
           <div className="profil-grid">
 
-            {/* ══ LEFT — Profile Hero ══ */}
             <aside className="profil-hero">
               <div className="profil-hero-inner">
 
-                {/* Progress strip */}
                 <div className="ph-strip">
                   <div className="ph-strip-left">
                     <div className="ph-strip-num">
@@ -337,7 +320,6 @@ export default function ProfilPage() {
                   </div>
                 </div>
 
-                {/* Avatar with progress ring */}
                 <AvatarWithRing
                   initial={initials}
                   avatarSrc={avatarSrc}
@@ -349,7 +331,6 @@ export default function ProfilPage() {
                   uploading={avatarUploading}
                 />
 
-                {/* Delete avatar — only in edit mode, directly below avatar */}
                 {isEditing && me?.avatar_url && (
                   <button
                     type="button"
@@ -362,7 +343,6 @@ export default function ProfilPage() {
                   </button>
                 )}
 
-                {/* Name row */}
                 <div className="ph-name-row">
                   <div className="ph-greeting">Üdvözlünk újra</div>
                   {!isEditing ? (
@@ -382,7 +362,6 @@ export default function ProfilPage() {
                   </div>
                 </div>
 
-                {/* Meta cells */}
                 <div className="ph-meta-grid">
                   <div className="ph-meta-cell">
                     <div className="ph-meta-lbl">
@@ -410,10 +389,8 @@ export default function ProfilPage() {
                   </div>
                 </div>
 
-                {/* Divider */}
                 <div className="ph-divider"><span>Jelenlegi kitűző</span></div>
 
-                {/* Current badge */}
                 {currentBadge ? (
                   <div className={`ph-current-badge ph-current-badge--${currentBadge.tier}`}>
                     <div className="ph-current-badge-spin" aria-hidden="true" />
@@ -430,7 +407,6 @@ export default function ProfilPage() {
                   </div>
                 )}
 
-                {/* Action buttons */}
                 {!isEditing ? (
                   <div className="ph-actions">
                     <button
@@ -472,7 +448,6 @@ export default function ProfilPage() {
               </div>
             </aside>
 
-            {/* ══ RIGHT — Badges + Challenges ══ */}
             <div className="profil-right-col">
               <AchievementsSection
                 onStatsChange={setAchievementStats}

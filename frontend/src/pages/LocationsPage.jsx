@@ -7,7 +7,6 @@ import CTAButton from "../components/CTAButton";
 import "../styles/LocationsPage.css";
 import GuestWall from "../components/auth/GuestWall";
 
-// ── geometry constants ──────────────────────────────────────────────────────
 const ARC_R       = 660;
 const STEP_DEG    = 24;
 const STEP_RAD    = STEP_DEG * Math.PI / 180;
@@ -53,7 +52,6 @@ function resolveImageUrl(imagePath) {
   return `${base.replace(/\/$/, "")}${imagePath.startsWith("/") ? imagePath : `/${imagePath}`}`;
 }
 
-// ── SVG icons ───────────────────────────────────────────────────────────────
 const IconArrowLeft = () => (
   <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
     <path d="M19 12H5M12 5l-7 7 7 7" />
@@ -130,13 +128,11 @@ export default function LocationsPage() {
   const getObjectName = (obj) =>
     typeof obj === "string" ? obj : obj?.object_name || "";
 
-  // ── locations state ────────────────────────────────────────────────────────
   const [locations, setLocations]               = useState([]);
   const [locationsLoading, setLocationsLoading] = useState(false);
   const [locationsError, setLocationsError]     = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);
 
-  // ── admin state ────────────────────────────────────────────────────────────
   const [locationObjects, setLocationObjects]       = useState([]);
   const [objectsLoading, setObjectsLoading]         = useState(false);
   const [objectsError, setObjectsError]             = useState("");
@@ -158,10 +154,8 @@ export default function LocationsPage() {
   const [deletingId, setDeletingId]                 = useState(null);
   const [imageDeleteId, setImageDeleteId]           = useState(null);
 
-  // ── admin overlay state ────────────────────────────────────────────────────
   const [showAdminPanel, setShowAdminPanel] = useState(false);
 
-  // ── carousel state ─────────────────────────────────────────────────────────
   const [active, setActive]           = useState(0);
   const [displayedIdx, setDisplayedIdx] = useState(0);
   const [infoFlashing, setInfoFlashing] = useState(false);
@@ -173,7 +167,6 @@ export default function LocationsPage() {
   const didDrag      = useRef(false);
   locationsRef.current = locations;
 
-  // ── admin helpers ──────────────────────────────────────────────────────────
   const openEdit = (loc) => {
     setEditingLoc(loc);
     setEditName(loc.name);
@@ -214,7 +207,7 @@ export default function LocationsPage() {
     try {
       setImageDeleteId(locId);
       const res = await api.delete(`/locations/${locId}/image`);
-      // Update selectedLocation in-place so detail view reflects change
+
       if (selectedLocation?.loc_id === locId) {
         setSelectedLocation(res.data);
       }
@@ -226,7 +219,6 @@ export default function LocationsPage() {
     }
   };
 
-  // ── data fetching ──────────────────────────────────────────────────────────
   const fetchLocations = useCallback(async () => {
     setLocationsLoading(true);
     setLocationsError("");
@@ -255,7 +247,6 @@ export default function LocationsPage() {
 
   useEffect(() => { fetchLocations(); }, [fetchLocations]);
 
-  // ── deep link handler ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!locations.length) return;
     const requestedLocIdRaw = searchParams.get("loc_id");
@@ -271,7 +262,6 @@ export default function LocationsPage() {
     );
   }, [locations, searchParams, setSearchParams]);
 
-  // ── admin location objects ─────────────────────────────────────────────────
   useEffect(() => {
     if (!isAdmin) return;
     const fetchLocationObjects = async () => {
@@ -300,7 +290,7 @@ export default function LocationsPage() {
     try {
       setCreateLoading(true);
       const res = await api.post("/locations/", { name, button_location: buttonLocation, information });
-      // Upload image if provided
+
       if (newImageFile && res.data?.loc_id) {
         const fd = new FormData();
         fd.append("file", newImageFile);
@@ -344,7 +334,6 @@ export default function LocationsPage() {
     }
   };
 
-  // detail megnyitásakor: tetejére görget (navbar látható marad), body lockot állít
   useEffect(() => {
     if (selectedLocation) {
       window.scrollTo({ top: 0, behavior: "instant" });
@@ -355,7 +344,6 @@ export default function LocationsPage() {
     return () => { document.body.style.overflow = ""; };
   }, [selectedLocation]);
 
-  // ── carousel: apply layout whenever active or locations change ─────────────
   useEffect(() => {
     if (!locations.length || selectedLocation) return;
     const id = setTimeout(() => {
@@ -364,7 +352,6 @@ export default function LocationsPage() {
     return () => clearTimeout(id);
   }, [active, locations, selectedLocation]);
 
-  // ── carousel: active info flash animation ──────────────────────────────────
   const prevActiveRef = useRef(-1);
   useEffect(() => {
     if (!locations.length) return;
@@ -384,7 +371,6 @@ export default function LocationsPage() {
     return () => clearTimeout(t1);
   }, [active, locations]);
 
-  // ── carousel: drag and keyboard events ────────────────────────────────────
   const goTo = useCallback((newActive) => {
     const locs = locationsRef.current;
     if (!locs.length) return;
@@ -474,7 +460,6 @@ export default function LocationsPage() {
     };
   }, [locations, selectedLocation]);
 
-  // ── keyboard navigation ────────────────────────────────────────────────────
   useEffect(() => {
     if (selectedLocation) return;
     const handleKey = (e) => {
@@ -489,7 +474,6 @@ export default function LocationsPage() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [selectedLocation, goTo]);
 
-  // ── teleport handler ───────────────────────────────────────────────────────
   const handleTeleport = () => {
     if (!selectedLocation) return;
     trackLocationTeleport(selectedLocation.loc_id);
@@ -498,20 +482,19 @@ export default function LocationsPage() {
 
   const displayedLoc = locations[displayedIdx] || locations[0];
   const N = locations.length;
-  // A kiválasztott helyszín sorszáma a tömbben (1-alapú), nem a loc_id
+
   const selectedLocationIndex = selectedLocation
     ? locations.findIndex(l => l.loc_id === selectedLocation.loc_id) + 1
     : 1;
 
-  // ── render ─────────────────────────────────────────────────────────────────
   if (isGuest) return <GuestWall label="a helyszíneket" />;
 
   return (
     <>
-      {/* ━━━ HÁTTÉR ALAKZATOK ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+
       {createPortal(
         <div className="loc-bg-shapes" aria-hidden="true">
-          {/* Bal oldal */}
+
           <svg className="loc-shape loc-shape--s1" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="20" cy="20" r="18"/></svg>
           <svg className="loc-shape loc-shape--s2" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
           <span className="loc-shape loc-shape--s3" />
@@ -519,7 +502,7 @@ export default function LocationsPage() {
           <span className="loc-shape loc-shape--s5" />
           <svg className="loc-shape loc-shape--s6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="12" cy="12" r="10"/></svg>
           <svg className="loc-shape loc-shape--s7" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
-          {/* Jobb oldal */}
+
           <svg className="loc-shape loc-shape--s8" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="20" cy="20" r="18"/></svg>
           <svg className="loc-shape loc-shape--s9" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
           <span className="loc-shape loc-shape--s10" />
@@ -527,18 +510,18 @@ export default function LocationsPage() {
           <span className="loc-shape loc-shape--s12" />
           <svg className="loc-shape loc-shape--s13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="12" cy="12" r="10"/></svg>
           <svg className="loc-shape loc-shape--s14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
-          {/* Also szoras */}
+
           <svg className="loc-shape loc-shape--s15" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="20" cy="20" r="18"/></svg>
           <span className="loc-shape loc-shape--s16" />
           <svg className="loc-shape loc-shape--s17" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
           <svg className="loc-shape loc-shape--s18" viewBox="0 0 50 50" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="25" cy="25" r="22"/></svg>
           <span className="loc-shape loc-shape--s19" />
           <svg className="loc-shape loc-shape--s20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="12" cy="12" r="10"/></svg>
-          {/* Extra bal oldal */}
+
           <svg className="loc-shape loc-shape--s21" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2v12M2 8h12"/></svg>
           <svg className="loc-shape loc-shape--s22" viewBox="0 0 44 44" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="22" cy="22" r="19"/></svg>
           <span className="loc-shape loc-shape--s23" />
-          {/* Extra jobb oldal */}
+
           <span className="loc-shape loc-shape--s24" />
           <svg className="loc-shape loc-shape--s25" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 2v14M2 9h14"/></svg>
           <svg className="loc-shape loc-shape--s26" viewBox="0 0 44 44" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="22" cy="22" r="19"/></svg>
@@ -548,7 +531,6 @@ export default function LocationsPage() {
 
     <div className="loc-page">
 
-      {/* ━━━ HERO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="loc-hero">
         <div className="loc-eyebrow-rail">
           <span className="loc-eyebrow-pill">
@@ -581,7 +563,6 @@ export default function LocationsPage() {
         </div>
       </header>
 
-      {/* ━━━ STEPS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section className="loc-steps" aria-label="Használati lépések">
         <div className="loc-steps-inner">
           <div className="loc-steps-connector" aria-hidden="true">
@@ -608,21 +589,17 @@ export default function LocationsPage() {
         </div>
       </section>
 
-      {/* ━━━ LOCATIONS SECTION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section className="loc-locations">
         {locationsLoading && <p className="loc-state">Betöltés...</p>}
         {locationsError   && <p className="loc-error">{locationsError}</p>}
 
-        {/* ── DETAIL OVERLAY ── */}
         {!locationsLoading && !locationsError && selectedLocation && (
           <div className="loc-detail-overlay">
 
-            {/* Háttér atmoszféra */}
             <div className="loc-detail-atmo loc-detail-atmo--glow-l" aria-hidden="true" />
             <div className="loc-detail-atmo loc-detail-atmo--glow-r" aria-hidden="true" />
             <div className="loc-detail-atmo loc-detail-atmo--noise"  aria-hidden="true" />
 
-            {/* Dekoratív geometriai elemek */}
             <div className="loc-detail-geo" aria-hidden="true">
               <svg className="loc-geo loc-geo--plus-tr" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 5v14M5 12h14"/></svg>
               <svg className="loc-geo loc-geo--plus-bl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 5v14M5 12h14"/></svg>
@@ -631,19 +608,16 @@ export default function LocationsPage() {
               <svg className="loc-geo loc-geo--triangle" viewBox="0 0 52 46" fill="none" stroke="currentColor" strokeWidth="1"><path d="M26 2L50 44H2L26 2z"/></svg>
             </div>
 
-            {/* Függőleges bal oldali címke */}
             <div className="loc-detail-vert-label" aria-hidden="true">
               HELYSZÍN · {String(selectedLocationIndex).padStart(2, "0")}
             </div>
 
-            {/* Vissza gomb */}
             <button type="button" className="loc-detail-back loc-anim-back" onClick={() => setSelectedLocation(null)}>
               <IconArrowLeft /> Vissza a kártyákhoz
             </button>
 
             <div className="loc-detail-split">
 
-              {/* ── BAL PANEL — kártya ── */}
               <div className="loc-detail-left">
                 <div className="loc-detail-card-glow" aria-hidden="true" />
                 <div className="loc-detail-card-scene">
@@ -682,10 +656,8 @@ export default function LocationsPage() {
                 </div>
               </div>
 
-              {/* ── JOBB PANEL — tartalom ── */}
               <div className="loc-detail-right">
 
-                {/* Nagy háttérszám */}
                 <div className="loc-detail-bg-num" aria-hidden="true">
                   {String(selectedLocationIndex).padStart(2, "0")}
                 </div>
@@ -746,11 +718,9 @@ export default function LocationsPage() {
           </div>
         )}
 
-        {/* ── CAROUSEL VIEW ── */}
         {!locationsLoading && !locationsError && !selectedLocation && N > 0 && (
           <div className="loc-carousel-wrap">
 
-            {/* meta header */}
             <div className="loc-carousel-meta" aria-live="polite">
               <span className="loc-pulse-dot" aria-hidden="true" />
               <span className="loc-meta-counter">
@@ -763,13 +733,11 @@ export default function LocationsPage() {
               <span className="loc-meta-label">HÚZD A KÁRTYÁKAT</span>
             </div>
 
-            {/* stage */}
             <div className="loc-stage">
               <div className="loc-stage-fade-l" aria-hidden="true" />
               <div className="loc-stage-fade-r" aria-hidden="true" />
               <div className="loc-stage-spotlight" aria-hidden="true" />
 
-              {/* 3D track */}
               <div className="loc-track" ref={trackRef} role="region" aria-label="Helyszínek körkörösen">
                 {locations.map((loc, i) => {
                   const imgUrl = resolveImageUrl(loc.image_path);
@@ -785,13 +753,13 @@ export default function LocationsPage() {
                       }}
                     >
                       {imgUrl ? (
-                        /* photo background */
+
                         <div
                           className="loc-card-poster loc-card-poster--photo"
                           style={{ backgroundImage: `url(${imgUrl})` }}
                         />
                       ) : (
-                        /* gradient + topo fallback */
+
                         <div className="loc-card-poster">
                           <svg className="loc-card-topo" viewBox="0 0 300 540" preserveAspectRatio="none" aria-hidden="true">
                             <path d="M-20 120 Q 80 80, 160 110 T 320 100" />
@@ -808,7 +776,6 @@ export default function LocationsPage() {
                 })}
               </div>
 
-              {/* floating active info */}
               <div className={`loc-active-info${infoFlashing ? " loc-active-info-flash" : ""}`}>
                 <h3 className="loc-active-name">{displayedLoc?.name || ""}</h3>
                 <CTAButton
@@ -818,7 +785,6 @@ export default function LocationsPage() {
               </div>
             </div>
 
-            {/* dots */}
             <div className="loc-dots" role="tablist" aria-label="Helyszín kiválasztása">
               {locations.map((_, i) => (
                 <button
@@ -839,7 +805,6 @@ export default function LocationsPage() {
         )}
       </section>
 
-      {/* ━━━ ADMIN FAB ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {isAdmin && (
         <button
           type="button"
@@ -851,7 +816,6 @@ export default function LocationsPage() {
         </button>
       )}
 
-      {/* ━━━ ADMIN OVERLAY ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {isAdmin && showAdminPanel && (
         <div className="loc-admin-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeAdminPanel(); }}>
           <div className="loc-admin-panel">
@@ -860,7 +824,6 @@ export default function LocationsPage() {
               <button type="button" onClick={closeAdminPanel} aria-label="Bezárás"><IconClose /></button>
             </div>
 
-            {/* available objects */}
             {locationObjects.length > 0 && (
               <div className="loc-admin-objects-list">
                 <p className="loc-admin-objects-title">Elérhető location objectek</p>
@@ -875,7 +838,7 @@ export default function LocationsPage() {
             {objectsError && <p className="loc-admin-form-error">{objectsError}</p>}
 
             {editingLoc ? (
-              /* ── edit form ── */
+
               <form onSubmit={handleEditLocation} className="loc-admin-form">
                 <input
                   type="text"
@@ -922,7 +885,7 @@ export default function LocationsPage() {
                 </div>
               </form>
             ) : (
-              /* ── create form ── */
+
               <form onSubmit={handleCreateLocation} className="loc-admin-form">
                 <input
                   type="text"

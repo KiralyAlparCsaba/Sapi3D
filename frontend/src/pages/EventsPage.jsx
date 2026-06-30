@@ -84,7 +84,6 @@ const IconCalendar = () => (
   </svg>
 );
 
-
 function CalendarWidget({ events }) {
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => toDateStr(today), [today]);
@@ -394,7 +393,7 @@ export default function EventsPage() {
 
   return (
     <div className="events-page">
-      {/* ── Detail view ── */}
+
       {selectedEvent && (
         <div className="ev-detail-overlay">
           <div className="ev-detail-split">
@@ -480,7 +479,6 @@ export default function EventsPage() {
         </div>
       )}
 
-      {/* ── Main view ── */}
       {!selectedEvent && (
         <>
           {loading && <div className="ev-state-msg">Betöltés...</div>}
@@ -582,7 +580,6 @@ export default function EventsPage() {
         </>
       )}
 
-      {/* ── Admin panel overlay ── */}
       {isAdmin && showAdminPanel && (
         <div className="ev-admin-overlay">
           <div className="ev-admin-panel">
