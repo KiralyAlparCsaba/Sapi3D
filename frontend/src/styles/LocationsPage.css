@@ -1,10 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap");
 
-/* ── Design tokens (mapped to existing theme) ───────────────────────────────
-   The page background must match --navbar-bg.  Surfaces pull from --bg-color.
-   Accents, lines and ink use the codebase's green palette.
-   We keep local --loc-* names so they're easy to find + override.
-────────────────────────────────────────────────────────────────────────────── */
 .loc-page {
   --loc-bg: var(--navbar-bg);
   --loc-surface: var(--bg-color);
@@ -20,7 +15,6 @@
   --loc-shadow: var(--shadow-color);
 }
 
-/* ── Page shell ─────────────────────────────────────────────────────────────*/
 .loc-page {
   padding: 48px 64px 64px;
   max-width: 1380px;
@@ -30,9 +24,6 @@
   position: relative;
 }
 
-/* ── Reduced-motion keyframes ───────────────────────────────────────────────
-   All animations wrapped in this media query per spec.
-────────────────────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes loc-pulse {
     0% {
@@ -137,7 +128,7 @@
   .loc-stage-spotlight {
     animation: loc-spotPulse 3.6s ease-in-out infinite;
   }
-  /* shimmer sweep across cards while dragging */
+
   .loc-track-dragging .loc-card-poster::before {
     content: "";
     position: absolute;
@@ -153,19 +144,17 @@
     pointer-events: none;
     z-index: 2;
   }
-  /* counter number pop on active change */
+
   .loc-meta-num-pop {
     animation: loc-counterPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
 }
 
-/* ━━━ HERO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .loc-hero {
   margin-bottom: 36px;
   padding-left: 40px;
 }
 
-/* eyebrow rail */
 .loc-eyebrow-rail {
   display: flex;
   align-items: center;
@@ -201,7 +190,6 @@
   background: linear-gradient(90deg, var(--loc-line), transparent);
 }
 
-/* hero columns */
 .loc-hero-columns {
   display: grid;
   grid-template-columns: 55fr 45fr;
@@ -237,9 +225,8 @@
   background-clip: text;
 }
 
-/* tagline — align baseline with "egyetemi" (2nd line of the big title) */
 .loc-hero-right {
-  padding-top: clamp(38px, 5vw, 72px); /* ≈ 1 line of the hero title */
+  padding-top: clamp(38px, 5vw, 72px); 
 }
 .loc-tagline {
   display: flex;
@@ -282,7 +269,6 @@
   color: var(--loc-ink-mute);
 }
 
-/* ━━━ STEPS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .loc-steps {
   margin-bottom: 36px;
 }
@@ -290,16 +276,15 @@
 .loc-steps-inner {
   position: relative;
   max-width: 1100px;
-  margin: 0 auto; /* ← center the whole stepper block */
+  margin: 0 auto; 
   padding: 36px 32px 34px;
   background: var(--loc-surface);
   border: 1px solid var(--loc-line-soft);
   border-radius: 22px;
   box-shadow: 0 4px 20px var(--loc-shadow);
-  overflow: hidden; /* ← keep corner accents clipped to box */
+  overflow: hidden; 
 }
 
-/* decorative corner accents — INSIDE the box */
 .loc-steps-inner::before,
 .loc-steps-inner::after {
   content: "";
@@ -323,10 +308,9 @@
   border-radius: 0 0 3px 0;
 }
 
-/* horizontal connector line */
 .loc-steps-connector {
   position: absolute;
-  top: 66px; /* 36px padding-top + 8px grid-top + 30px (node center) - 8px */
+  top: 66px; 
   left: calc(16.66% + 32px);
   right: calc(16.66% + 32px);
   height: 2px;
@@ -410,7 +394,6 @@
   max-width: 200px;
 }
 
-/* ━━━ ADMIN FAB + OVERLAY (same pattern as EventsPage) ━━━━━━━━━━━━━━━━━━━━ */
 .loc-admin-fab {
   position: fixed;
   bottom: 24px;
@@ -624,7 +607,6 @@
   background: rgba(255, 255, 255, 0.12);
 }
 
-/* ━━━ CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .loc-locations {
   margin-top: 0;
 }
@@ -636,7 +618,6 @@
   gap: 0;
 }
 
-/* meta strip */
 .loc-carousel-meta {
   display: flex;
   align-items: center;
@@ -650,7 +631,6 @@
   user-select: none;
 }
 
-/* "01 / 06  •  Helyszínek" layout */
 .loc-meta-counter {
   display: inline-flex;
   align-items: baseline;
@@ -687,7 +667,6 @@
   color: var(--loc-ink-mute);
 }
 
-/* stage — 3D scene container */
 .loc-stage {
   position: relative;
   width: calc(100% + 96px);
@@ -717,7 +696,6 @@
   background: linear-gradient(-90deg, var(--loc-bg), transparent);
 }
 
-/* spotlight glow orb — sits behind the center card */
 .loc-stage-spotlight {
   position: absolute;
   left: 50%;
@@ -737,7 +715,6 @@
   opacity: 0.55;
 }
 
-/* 3D track */
 .loc-track {
   position: relative;
   width: 100%;
@@ -745,14 +722,13 @@
   height: 540px;
   cursor: grab;
   user-select: none;
-  touch-action: none; /* prevent scroll interference on touch */
+  touch-action: none; 
   transform-style: preserve-3d;
 }
 .loc-track-dragging {
   cursor: grabbing;
 }
 
-/* ── cards ── */
 .loc-card {
   position: absolute;
   left: 50%;
@@ -764,7 +740,7 @@
   overflow: hidden;
   isolation: isolate;
   cursor: pointer;
-  will-change: transform, opacity; /* hint GPU compositing */
+  will-change: transform, opacity; 
   transition:
     transform 0.52s cubic-bezier(0.25, 0.8, 0.2, 1),
     opacity 0.52s cubic-bezier(0.25, 0.8, 0.2, 1),
@@ -778,7 +754,6 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
-/* per-kind color variables */
 .loc-card[data-kind="Kozponti"] {
   --card-a: oklch(0.7 0.15 145);
   --card-b: oklch(0.38 0.13 148);
@@ -792,7 +767,6 @@
   --card-b: oklch(0.4 0.14 280);
 }
 
-/* poster — gradient fallback (no text on card) */
 .loc-card-poster {
   position: absolute;
   inset: 0;
@@ -814,7 +788,6 @@
     );
 }
 
-/* poster — photo variant */
 .loc-card-poster--photo {
   position: absolute;
   inset: 0;
@@ -842,7 +815,6 @@
   pointer-events: none;
 }
 
-/* topographic SVG overlay */
 .loc-card-topo {
   position: absolute;
   inset: 0;
@@ -856,7 +828,6 @@
   pointer-events: none;
 }
 
-/* dark veil */
 .loc-card-veil {
   position: absolute;
   inset: 0;
@@ -874,7 +845,6 @@
   opacity: 1;
 }
 
-/* admin actions on card */
 .loc-card-admin-actions {
   position: absolute;
   top: 12px;
@@ -913,7 +883,6 @@
   background: rgba(192, 57, 43, 0.9);
 }
 
-/* edit form on card */
 .loc-edit-form {
   position: absolute;
   inset: 0;
@@ -976,7 +945,6 @@
   cursor: pointer;
 }
 
-/* ── active info (floating over center card) ── */
 .loc-active-info {
   position: absolute;
   left: 50%;
@@ -1056,7 +1024,6 @@
   flex-shrink: 0;
 }
 
-/* ── dots ── */
 .loc-dots {
   display: flex;
   align-items: center;
@@ -1085,7 +1052,6 @@
   background: var(--loc-ink-mute);
 }
 
-/* ━━━ DETAIL VIEW ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .loc-detail-view {
   display: flex;
   flex-direction: column;
@@ -1129,7 +1095,6 @@
   overflow: hidden;
 }
 
-/* detail cover */
 .loc-detail-cover {
   height: 360px;
   position: relative;
@@ -1196,7 +1161,6 @@
   color: oklch(0.92 0.15 148);
 }
 
-/* photo fills the cover */
 .loc-detail-cover-img {
   position: absolute;
   inset: 0;
@@ -1207,7 +1171,6 @@
   z-index: 0;
 }
 
-/* gradient overlay — bottom fade into the card body */
 .loc-detail-cover-vignette {
   position: absolute;
   inset: 0;
@@ -1247,7 +1210,6 @@
   flex-shrink: 0;
 }
 
-/* detail body */
 .loc-detail-body {
   padding: 36px 44px 38px;
   display: flex;
@@ -1293,7 +1255,6 @@
   margin-top: 10px;
 }
 
-/* admin row in detail view */
 .loc-detail-admin-row {
   display: flex;
   gap: 8px;
@@ -1352,14 +1313,12 @@
   cursor: not-allowed;
 }
 
-/* CTA méret a detail nézetben — kicsit nagyobb */
 .loc-detail-cta .ev-cta-btn {
   padding: 14px 28px;
   font-size: 15px;
   font-weight: 600;
 }
 
-/* ━━━ UTILITY ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .loc-state {
   text-align: center;
   padding: 40px;
@@ -1377,7 +1336,6 @@
   margin-top: 4px;
 }
 
-/* ━━━ RESPONSIVE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 @media (max-width: 1080px) {
   .loc-page {
     padding: 36px 32px 48px;
@@ -1524,10 +1482,6 @@
   }
 }
 
-/* ══════════════════════════════════════════════════
-   DETAIL OVERLAY — teljes újraírás
-   ══════════════════════════════════════════════════ */
-
 @keyframes loc-panelIn {
   from {
     opacity: 0;
@@ -1574,7 +1528,7 @@
     transform: translateY(-6px) rotate(-3deg);
   }
 }
-/* Belépési animációk */
+
 @keyframes loc-fadeUp {
   from {
     opacity: 0;
@@ -1618,30 +1572,28 @@
   flex-direction: column;
   overflow: hidden;
   animation: loc-panelIn 0.28s ease both;
-  /* Tartalom ne lógjon ki függőlegesen */
+
   contain: layout;
 }
 
-/* ── Belépési animáció osztályok ── */
 .loc-anim-back {
   animation: loc-slideInLeft 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
 }
 .loc-anim-card {
   animation: loc-cardIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
 }
-/* Staggered fade-up a jobb panel elemeihez */
+
 .loc-anim-item {
   animation: loc-fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1)
     var(--anim-delay, 0.2s) both;
 }
-/* Card belépési animáció + lebegés a wrapperen */
+
 .loc-detail-card-wrap {
   animation:
     loc-fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both,
     loc-float 5s ease-in-out 0.65s infinite;
 }
 
-/* ── Atmoszféra rétegek ──────────────────────────── */
 .loc-detail-atmo {
   position: absolute;
   inset: 0;
@@ -1649,7 +1601,6 @@
   z-index: 0;
 }
 
-/* Bal oldali zöld glow — a kártya mögött */
 .loc-detail-atmo--glow-l {
   background: radial-gradient(
     ellipse 55% 65% at 24% 55%,
@@ -1660,7 +1611,6 @@
   animation: loc-glowPulse 5s ease-in-out infinite;
 }
 
-/* Jobb felső sarok glow */
 .loc-detail-atmo--glow-r {
   background: radial-gradient(
     ellipse 40% 40% at 82% 18%,
@@ -1669,7 +1619,6 @@
   );
 }
 
-/* Finom rácsozat */
 .loc-detail-atmo--grid {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
@@ -1687,14 +1636,12 @@
   );
 }
 
-/* Noise texture */
 .loc-detail-atmo--noise {
   opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 200px 200px;
 }
 
-/* ── Vissza gomb ─────────────────────────────────── */
 .loc-detail-back {
   align-self: flex-start;
   flex-shrink: 0;
@@ -1718,7 +1665,6 @@
   opacity: 0.7;
 }
 
-/* ── Dekoratív geometriai elemek ────────────────── */
 .loc-detail-geo {
   position: absolute;
   inset: 0;
@@ -1770,7 +1716,6 @@
   animation: loc-floatTiny 7.5s ease-in-out infinite 1.5s;
 }
 
-/* Light módban erősebb zöld szín az alakzatokon */
 :root:not([data-theme="dark"]) .loc-geo--plus-tr {
   color: color-mix(in srgb, var(--loc-accent) 60%, transparent);
 }
@@ -1786,7 +1731,7 @@
 :root:not([data-theme="dark"]) .loc-geo--triangle {
   color: color-mix(in srgb, var(--loc-accent) 58%, transparent);
 }
-/* Pont rács a jobb panel háttérben */
+
 .loc-geo--dot-grid {
   position: absolute;
   top: 0;
@@ -1812,7 +1757,6 @@
   opacity: 0.4;
 }
 
-/* ── Függőleges bal oldali címke ─────────────────── */
 .loc-detail-vert-label {
   position: absolute;
   left: 30px;
@@ -1831,7 +1775,6 @@
   animation: loc-fadeUp 0.4s ease 0.1s both;
 }
 
-/* ── Nagy háttérszám — a cím jobb oldalán lebeg ─── */
 .loc-detail-bg-num {
   position: absolute;
   right: 13vw;
@@ -1848,7 +1791,6 @@
   user-select: none;
 }
 
-/* ── Fő split ────────────────────────────────────── */
 .loc-detail-split {
   position: relative;
   z-index: 2;
@@ -1859,7 +1801,6 @@
   min-height: 0;
 }
 
-/* Vertikális elválasztó vonal — bal szélre tolva */
 .loc-detail-split::after {
   content: "";
   position: absolute;
@@ -1876,7 +1817,6 @@
   );
 }
 
-/* ── Bal panel ──────────────────────────────────── */
 .loc-detail-left {
   display: flex;
   align-items: center;
@@ -1885,7 +1825,6 @@
   position: relative;
 }
 
-/* Spotlight a kártya mögött */
 .loc-detail-card-glow {
   position: absolute;
   width: 420px;
@@ -1907,16 +1846,14 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  /* Padding hogy a sarokjelölők ne legyenek levágva */
+
   padding: 10px;
   margin: -10px;
   box-sizing: content-box;
-  /* Lebegés csak translateY — nem zavarja a kártya transition-jét */
+
   animation: loc-float 5s ease-in-out infinite;
 }
 
-/* Tilt group — forgatás + hover, kártya és sarokjelölők együtt mozognak */
-/* Nincs animation itt — csak transition, hogy a hover működjön */
 .loc-detail-tilt-group {
   position: relative;
   width: fit-content;
@@ -1928,7 +1865,6 @@
   transform: rotate(0deg) scale(1.015);
 }
 
-/* A kártya — nincs saját forgatás, a group kezeli */
 .loc-detail-tilt-card {
   width: 410px;
   aspect-ratio: 3 / 4.3;
@@ -2024,7 +1960,7 @@
   width: 20px;
   height: 20px;
   z-index: 4;
-  /* theme-aware: zöld szín mindkét módban */
+
   --corner-color: var(--loc-accent);
   opacity: 0.8;
   pointer-events: none;
@@ -2058,7 +1994,6 @@
   border-radius: 0 0 3px 0;
 }
 
-/* ── Jobb panel ─────────────────────────────────── */
 .loc-detail-right {
   display: flex;
   flex-direction: column;
@@ -2135,7 +2070,6 @@
   max-width: 520px;
 }
 
-/* Drop-cap iniciálé */
 .loc-desc::first-letter {
   float: left;
   font-size: 58px;
@@ -2145,7 +2079,6 @@
   color: var(--loc-accent);
 }
 
-/* ── Animált cím vonal ──────────────────────────── */
 @keyframes loc-lineGrowH {
   from {
     transform: scaleX(0);
@@ -2178,7 +2111,6 @@
   animation: loc-lineGrowH 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
 }
 
-/* ── Kártya "padló" árnyék ──────────────────────── */
 .loc-detail-card-scene {
   position: relative;
   width: 100%;
@@ -2202,7 +2134,6 @@
   z-index: -1;
 }
 
-/* ── Chip hover ─────────────────────────────────── */
 .loc-detail-chip {
   cursor: default;
   transition:
@@ -2214,7 +2145,6 @@
   box-shadow: 0 0 12px color-mix(in srgb, var(--loc-accent) 25%, transparent);
 }
 
-/* ── Alacsony viewport (laptop) — csak desktop szélességen ── */
 @media (max-height: 860px) and (min-width: 901px) {
   .loc-detail-back {
     margin-top: 16px;
@@ -2249,13 +2179,8 @@
   }
 }
 
-/* ── Reszponzív ─────────────────────────────────── */
 @media (max-width: 900px) {
-  /*
-   * overlay: top: 7em — a navbar mindig látszik felette (window.scrollTo biztosítja
-   * hogy megnyitáskor a lap tetején vagyunk).
-   * overflow-y: auto + touch-action: pan-y = megbízható iOS scroll.
-   */
+
   .loc-detail-overlay {
     top: 6em;
     overflow-y: auto;
@@ -2288,7 +2213,6 @@
   .loc-detail-card-floor   { display: none; }
   .loc-detail-corner       { display: none; }
 
-  /* Bal panel: középre igazított kis kártya */
   .loc-detail-left {
     padding: 20px 24px 20px;
     align-items: center;
@@ -2333,7 +2257,6 @@
     object-position: center;
   }
 
-  /* Jobb panel: tartalom alatta */
   .loc-detail-right {
     padding: 24px 20px 48px;
     gap: 14px;
@@ -2346,11 +2269,6 @@
   .loc-detail-title-line { margin-left: 0; display: none; }
 }
 
-/* ━━━ HÁTTÉR ALAKZATOK ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   Desktop only (>1440px): az oldalba ágyazva, scrollozással együtt mozog.
-   position: absolute a .loc-page-en belül → nincs fixed-positioning probléma.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-
 @keyframes loc-shape-float-a {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-12px); }
@@ -2360,11 +2278,10 @@
   50%       { transform: translateY(-8px); }
 }
 
-/* Alapból rejtve */
 .loc-bg-shapes { display: none; }
 
 @media (min-width: 1440px) {
-  /* Body-szintu, de nem fixed: nem koveti a viewport scrollt */
+
   .loc-bg-shapes {
     display: block;
     position: absolute;
@@ -2374,7 +2291,7 @@
     height: max(1500px, calc(165vh - 7vw));
     pointer-events: none;
     z-index: 4;
-    overflow: hidden; /* ne okozzon scrollbart, es ne csusszon a navbar ala */
+    overflow: hidden; 
   }
 
   @media (min-width: 2000px) {
@@ -2398,7 +2315,6 @@
     color: var(--capsule-bg);
   }
 
-  /* Pont-alakzatok (span) */
   .loc-shape--s3, .loc-shape--s5,
   .loc-shape--s10, .loc-shape--s12,
   .loc-shape--s16, .loc-shape--s19,
@@ -2424,7 +2340,6 @@
     fill-opacity: 0.18;
   }
 
-  /* ── Bal oldal — vw-alapú random szórás ── */
   .loc-shape--s1  { width: 58px; height: 58px; top:  8%; left: 3.4vw;  animation: loc-shape-float-a 7s   ease-in-out infinite; }
   .loc-shape--s2  { width: 16px; height: 16px; top: 19%; left: 10.8vw; animation: loc-shape-float-b 5.5s ease-in-out infinite 1s; }
   .loc-shape--s3  { width: 8px;  height: 8px;  top: 29%; left: 5.1vw;  animation: loc-shape-float-a 8s   ease-in-out infinite 0.5s; }
@@ -2433,7 +2348,6 @@
   .loc-shape--s6  { width: 24px; height: 24px; top: 73%; left: 12.4vw; animation: loc-shape-float-b 8.5s ease-in-out infinite 0.8s; }
   .loc-shape--s7  { width: 14px; height: 14px; top: 88%; left: 6.2vw;  animation: loc-shape-float-a 6s   ease-in-out infinite 1.2s; }
 
-  /* ── Jobb oldal — vw-alapú random szórás ── */
   .loc-shape--s8  { width: 50px; height: 50px; top: 10%; right: 3.5vw;  animation: loc-shape-float-b 8s   ease-in-out infinite 0.4s; }
   .loc-shape--s9  { width: 14px; height: 14px; top: 23%; right: 11.2vw; animation: loc-shape-float-a 6.5s ease-in-out infinite 1.8s; }
   .loc-shape--s10 { width: 7px;  height: 7px;  top: 39%; right: 5.6vw;  animation: loc-shape-float-b 9s   ease-in-out infinite 0.6s; }
@@ -2442,7 +2356,6 @@
   .loc-shape--s13 { width: 26px; height: 26px; top: 80%; right: 10.4vw; animation: loc-shape-float-a 7.5s ease-in-out infinite 1.6s; }
   .loc-shape--s14 { width: 16px; height: 16px; top: 91%; right: 5.8vw;  animation: loc-shape-float-b 6s   ease-in-out infinite 0.9s; }
 
-  /* Also szoras */
   .loc-shape--s15 { width: 56px; height: 56px; top: 61%; left: 13.2vw; animation: loc-shape-float-b 8.5s ease-in-out infinite 0.7s; }
   .loc-shape--s16 { width: 7px;  height: 7px;  top: 76%; left: 3.0vw;  animation: loc-shape-float-a 7s   ease-in-out infinite 1.4s; }
   .loc-shape--s17 { width: 18px; height: 18px; top: 96%; left: 11.4vw; animation: loc-shape-float-b 6.5s ease-in-out infinite 0.2s; }
@@ -2450,12 +2363,10 @@
   .loc-shape--s19 { width: 6px;  height: 6px;  top: 84%; right: 3.2vw;  animation: loc-shape-float-b 7.5s ease-in-out infinite 0.5s; }
   .loc-shape--s20 { width: 28px; height: 28px; top: 98%; right: 10.8vw; animation: loc-shape-float-a 8s   ease-in-out infinite 1.8s; }
 
-  /* Extra bal oldal */
   .loc-shape--s21 { width: 18px; height: 18px; top: 34%; left: 13.4vw; animation: loc-shape-float-a 6.8s ease-in-out infinite 0.9s; }
   .loc-shape--s22 { width: 48px; height: 48px; top: 72%; left: 6.0vw;  animation: loc-shape-float-b 8.8s ease-in-out infinite 1.6s; }
   .loc-shape--s23 { width: 9px;  height: 9px;  top: 89%; left: 14.0vw; animation: loc-shape-float-a 7.4s ease-in-out infinite 0.3s; }
 
-  /* Extra jobb oldal */
   .loc-shape--s24 { width: 9px;  height: 9px;  top: 31%; right: 13.0vw; animation: loc-shape-float-b 7.2s ease-in-out infinite 1.2s; }
   .loc-shape--s25 { width: 20px; height: 20px; top: 57%; right: 3.8vw;  animation: loc-shape-float-a 6.6s ease-in-out infinite 0.4s; }
   .loc-shape--s26 { width: 46px; height: 46px; top: 92%; right: 13.8vw; animation: loc-shape-float-b 9.2s ease-in-out infinite 1.7s; }

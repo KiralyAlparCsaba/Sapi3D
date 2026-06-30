@@ -1,38 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap');
 
-/* ═══════════════════════════════════════════════════════
-   PAGE-SCOPED TOKENS
-   Only structural values live here — radii, medal tier
-   colors, and shadows derived from the site's global
-   --shadow-color.  All bg / text / border / accent
-   references use the site's existing global tokens
-   (--navbar-bg, --capsule-bg, --bg-color, --text-color,
-   --shadow-color) directly, so dark-mode switching is
-   handled automatically by index.css — no override block
-   needed here.
-═══════════════════════════════════════════════════════ */
 .profil-page {
-  /* Radii */
+
   --p-r-xs:  6px;
   --p-r-sm:  10px;
   --p-r-md:  14px;
   --p-r-lg:  20px;
   --p-r-xl:  28px;
 
-  /* Medal tier gradients (local, per README spec) */
   --p-gold:   oklch(0.78 0.130  92);
   --p-silver: oklch(0.80 0.020 220);
   --p-bronze: oklch(0.68 0.110  60);
 
-  /* Shadows — tinted with the site's global shadow color */
   --p-shadow-sm: 0 1px 3px var(--shadow-color);
   --p-shadow-md: 0 4px 16px -4px var(--shadow-color), 0 2px 6px -2px rgba(0,0,0,.08);
   --p-shadow-lg: 0 20px 40px -10px var(--shadow-color), 0 8px 20px -6px rgba(0,0,0,.10);
 }
 
-/* ═══════════════════════════════════════════════════════
-   KEYFRAMES
-═══════════════════════════════════════════════════════ */
 @keyframes p-reveal {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0);   }
@@ -42,9 +26,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* ═══════════════════════════════════════════════════════
-   ROOT
-═══════════════════════════════════════════════════════ */
 .profil-page {
   height: 100%;
   overflow-y: auto;
@@ -58,9 +39,6 @@
 
 .profil-avatar-input { display: none; }
 
-/* ═══════════════════════════════════════════════════════
-   PAGE GRID
-═══════════════════════════════════════════════════════ */
 .profil-grid {
   max-width: 1920px;
   margin: 0 auto;
@@ -73,9 +51,6 @@
   flex: 1;
 }
 
-/* ═══════════════════════════════════════════════════════
-   PROFILE HERO  (left column)
-═══════════════════════════════════════════════════════ */
 .profil-hero {
   position: sticky;
   top: 20px;
@@ -97,7 +72,6 @@
   flex-direction: column;
 }
 
-/* Radial green glow at top */
 .profil-hero-inner::before {
   content: '';
   position: absolute;
@@ -109,7 +83,6 @@
 
 .profil-hero-inner > * { position: relative; z-index: 1; }
 
-/* ─── Progress strip ─── */
 .ph-strip {
   display: flex;
   align-items: center;
@@ -176,7 +149,6 @@
   transition: width 1.2s cubic-bezier(.2,.8,.2,1);
 }
 
-/* ─── Avatar with progress ring ─── */
 .ph-avatar-wrap {
   position: relative;
   margin: 4px auto 18px;
@@ -273,7 +245,6 @@
   line-height: 1;
 }
 
-/* ─── Name row ─── */
 .ph-name-row {
   text-align: center;
   margin-bottom: 22px;
@@ -337,7 +308,6 @@
   flex-shrink: 0;
 }
 
-/* ─── Meta cells ─── */
 .ph-meta-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -386,7 +356,6 @@
   outline: none;
 }
 
-/* ─── Divider with label ─── */
 .ph-divider {
   position: relative;
   text-align: center;
@@ -413,7 +382,6 @@
   color: color-mix(in srgb, var(--text-color) 42%, transparent);
 }
 
-/* ─── Current badge ─── */
 .ph-current-badge {
   display: flex;
   align-items: center;
@@ -496,7 +464,6 @@
   flex-shrink: 0;
 }
 
-/* ─── Medal  ─── */
 .ph-medal {
   border-radius: 50%;
   display: flex;
@@ -536,7 +503,6 @@
   filter: grayscale(.4);
 }
 
-/* ─── Hero action buttons ─── */
 .ph-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -614,9 +580,6 @@
 }
 .ph-avatar-delete-btn:disabled { opacity: 0.38; cursor: not-allowed; }
 
-/* ═══════════════════════════════════════════════════════
-   RIGHT COLUMN
-═══════════════════════════════════════════════════════ */
 .profil-right-col {
   display: flex;
   flex-direction: column;
@@ -624,9 +587,6 @@
   min-width: 0;
 }
 
-/* ═══════════════════════════════════════════════════════
-   TOASTS + STATE
-═══════════════════════════════════════════════════════ */
 .profil-toast {
   position: fixed;
   top: calc(7vw + 14px);
@@ -674,11 +634,6 @@
   font-size: 15px;
 }
 
-/* ═══════════════════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════════════════ */
-
-/* Wide → medium-wide */
 @media (max-width: 1280px) {
   .profil-grid {
     grid-template-columns: 420px 1fr;
@@ -687,7 +642,6 @@
   }
 }
 
-/* Medium-wide → medium */
 @media (max-width: 1100px) {
   .profil-grid {
     grid-template-columns: 380px 1fr;
@@ -696,7 +650,6 @@
   }
 }
 
-/* Medium → tablet: single column */
 @media (max-width: 980px) {
   .profil-grid {
     grid-template-columns: 1fr;

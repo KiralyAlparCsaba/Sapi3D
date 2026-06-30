@@ -1,9 +1,3 @@
-/* ═══════════════════════════════════════════════════════
-   Admin Dashboard — Grafana-inspired dark theme
-   Teljesen önálló, nem piszkálja meg az AdminPage.css-t
-   ═══════════════════════════════════════════════════════ */
-
-/* ── TAB BAR ── */
 .admin-tabs {
   display: flex;
   gap: 4px;
@@ -58,7 +52,6 @@
   background: none;
 }
 
-/* ── DASHBOARD WRAPPER ── */
 .dash {
   padding: 20px;
   display: flex;
@@ -108,7 +101,6 @@
   color: #7dbf8a;
 }
 
-/* ── LIVE FEED HEADER ── */
 .dash-live-feed-header {
   display: flex;
   align-items: center;
@@ -131,7 +123,6 @@
   color: #3fb950;
 }
 
-/* ── STAT CARDS ── */
 .dash-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -148,7 +139,6 @@
 @media (max-width: 600px)  { .dash-stat-grid { grid-template-columns: 1fr; } }
 @media (max-width: 600px)  { .dash-stat-grid--small { grid-template-columns: 1fr; } }
 
-/* ── ELOSZLÁS GRID (3 egyenlő oszlop) ── */
 .dash-distrib-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -158,7 +148,6 @@
 @media (max-width: 1100px) { .dash-distrib-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 700px)  { .dash-distrib-grid { grid-template-columns: 1fr; } }
 
-/* ── TRENDEK GRID (2 egyenlő oszlop) ── */
 .dash-trends-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -167,7 +156,6 @@
 
 @media (max-width: 800px)  { .dash-trends-grid { grid-template-columns: 1fr; } }
 
-/* ── DEVICE × MODE PERFORMANCE TABLE ── */
 .dash-perf-grid {
   display: flex;
   flex-wrap: wrap;
@@ -376,7 +364,6 @@
 .dash-stat-sub.up   { color: #1a7f2e; }
 .dash-stat-sub.down { color: #b83232; }
 
-/* ── DARK MODE STAT CARDS ── */
 [data-theme="dark"] .dash-stat-card {
   background: #0d1f12;
   border-color: #1e3a24;
@@ -394,7 +381,6 @@
 [data-theme="dark"] .dash-stat-sub.up   { color: #3fb950; }
 [data-theme="dark"] .dash-stat-sub.down { color: #ff7b72; }
 
-/* ── CHART GRID ── */
 .dash-chart-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 300px 300px;
@@ -474,7 +460,6 @@
   flex-shrink: 0;
 }
 
-/* ── RECHARTS OVERRIDES ── */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
   stroke: #d5e8d9;
@@ -501,7 +486,6 @@
   color: #fff !important;
 }
 
-/* ── DONUT LEGEND ── */
 .dash-donut-wrap {
   display: flex;
   flex-direction: column;
@@ -559,7 +543,6 @@
 
 [data-theme="dark"] .dash-donut-pct { color: #e6f0e8; }
 
-/* ── BOTTOM GRID ── */
 .dash-bottom-grid {
   display: grid;
   grid-template-columns: 340px 1fr;
@@ -568,7 +551,6 @@
 
 @media (max-width: 900px) { .dash-bottom-grid { grid-template-columns: 1fr; } }
 
-/* ── LIVE CARDS ── */
 .dash-live-cards {
   display: flex;
   flex-direction: column;
@@ -635,7 +617,6 @@
   color: #e6f4e9;
 }
 
-/* ── LIVE TABLE ── */
 .dash-live-table-wrap {
   background: #f4fcf6;
   border: 1px solid #cfe2d3;
@@ -694,7 +675,6 @@
 .dash-live-time-cell    { opacity: 0.55; font-size: 13px; }
 .dash-live-no-data      { opacity: 0.3; font-size: 15px; }
 
-/* ── STATUS DOT (live indicator) ── */
 .dash-status-live {
   display: inline-flex;
   align-items: center;
@@ -715,7 +695,6 @@
   50%       { opacity: 0.6; box-shadow: 0 0 0 4px rgba(63,185,80,0); }
 }
 
-/* ── FPS COLOR CLASSES ── */
 .fps-good { color: #1a7f2e; font-weight: 700; }
 .fps-ok   { color: #b07700; font-weight: 700; }
 .fps-bad  { color: #b83232; font-weight: 700; }
@@ -724,7 +703,6 @@
 [data-theme="dark"] .fps-ok   { color: #e3b341; }
 [data-theme="dark"] .fps-bad  { color: #ff7b72; }
 
-/* ── DEVICE BADGE ── */
 .dash-device-badge {
   display: inline-block;
   background: #e8f5eb;
@@ -744,7 +722,6 @@
   color: #7dbf8a;
 }
 
-/* ── LIVE BADGE ── */
 .dash-live-badge {
   display: inline-flex;
   align-items: center;
@@ -773,7 +750,6 @@
   border-color: rgba(63,185,80,0.3);
 }
 
-/* ── REFRESH HINT ── */
 .dash-refresh-row {
   display: flex;
   align-items: center;
@@ -793,7 +769,6 @@
 
 [data-theme="dark"] .dash-refresh-countdown { color: #3fb950; }
 
-/* ── LOADING / EMPTY STATES ── */
 .dash-loading {
   display: flex;
   align-items: center;
@@ -821,7 +796,6 @@
   color: #ff7b72;
 }
 
-/* ── MINI CHART in existing session detail ── */
 .admin-session-chart-wrap {
   margin-top: 14px;
 }
@@ -837,7 +811,6 @@
 
 [data-theme="dark"] .admin-session-chart-title { color: #7dbf8a; }
 
-/* ── METRIC CARD LABEL IMPROVEMENT ── */
 .dash-avg-label {
   font-size: 9px;
   font-weight: 600;

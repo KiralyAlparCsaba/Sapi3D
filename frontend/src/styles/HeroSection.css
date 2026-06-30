@@ -1,6 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap");
 
-/* ── Scoped design tokens (light mode) ── */
 .home-page {
   --h-surface: oklch(0.995 0.008 130);
   --h-surface-2: oklch(0.975 0.018 140);
@@ -17,7 +16,6 @@
   --h-gold: oklch(0.78 0.13 92);
 }
 
-/* ── Dark mode overrides ── */
 [data-theme="dark"] .home-page {
   --h-surface: oklch(0.26 0.06 150);
   --h-surface-2: oklch(0.3 0.065 150);
@@ -31,7 +29,6 @@
   --h-accent-soft: oklch(0.36 0.09 148);
 }
 
-/* ── Base wrapper ── */
 .home-page {
   height: 100%;
   overflow-y: auto;
@@ -50,9 +47,6 @@
   width: 100%;
 }
 
-/* ═══════════════════════════════════════════════════
-   SIDE RAIL
-═══════════════════════════════════════════════════ */
 .home-siderail {
   position: fixed;
   left: 18px;
@@ -90,9 +84,6 @@
   }
 }
 
-/* ═══════════════════════════════════════════════════
-   HERO CARD
-═══════════════════════════════════════════════════ */
 .home-hero {
   position: relative;
   height: min(78vh, 760px);
@@ -110,7 +101,6 @@
     0 8px 24px -8px oklch(0 0 0 / 0.3);
 }
 
-/* z1 — video (above poster) */
 .home-hero-video {
   position: absolute;
   inset: 0;
@@ -120,7 +110,6 @@
   z-index: 1;
 }
 
-/* z0 — fallback poster */
 .home-hero-poster {
   position: absolute;
   inset: 0;
@@ -136,7 +125,6 @@
   filter: saturate(0.85);
 }
 
-/* z2 — film grain */
 .home-hero-noise {
   position: absolute;
   inset: 0;
@@ -146,7 +134,6 @@
   pointer-events: none;
 }
 
-/* z2 — dark veil */
 .home-hero-veil {
   position: absolute;
   inset: 0;
@@ -162,7 +149,6 @@
     linear-gradient(90deg, oklch(0 0 0 / 0.55) 0%, oklch(0 0 0 / 0) 55%);
 }
 
-/* z3 — corner brackets */
 .home-hero-corners {
   position: absolute;
   inset: 0;
@@ -201,7 +187,6 @@
   border-top: none;
 }
 
-/* z4 — content */
 .home-hero-content {
   position: absolute;
   inset: 0;
@@ -213,7 +198,6 @@
   gap: 20px;
 }
 
-/* ── Top row ── */
 .home-hero-top {
   display: flex;
   justify-content: space-between;
@@ -233,7 +217,6 @@
   font-weight: 700;
 }
 
-/* ── Middle: headline block ── */
 .home-hero-middle {
   display: flex;
   flex-direction: column;
@@ -346,7 +329,6 @@
   }
 }
 
-/* ── CTA ── */
 .home-hero-cta {
   margin-top: 32px;
 }
@@ -400,7 +382,6 @@
   transform: translateX(3px);
 }
 
-/* ── Bottom: feature pills ── */
 .home-feats {
   display: flex;
   flex-wrap: wrap;
@@ -427,9 +408,6 @@
   flex-shrink: 0;
 }
 
-/* ═══════════════════════════════════════════════════
-   SECTION DIVIDER
-═══════════════════════════════════════════════════ */
 .home-divider {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -498,9 +476,6 @@
   }
 }
 
-/* ═══════════════════════════════════════════════════
-   MARQUEE RIBBON
-═══════════════════════════════════════════════════ */
 .home-marquee {
   position: relative;
   margin: 8px -64px 28px;
@@ -565,9 +540,6 @@
   }
 }
 
-/* ═══════════════════════════════════════════════════
-   FEATURES SECTION HEAD
-═══════════════════════════════════════════════════ */
 .home-features-head {
   display: flex;
   align-items: flex-end;
@@ -618,9 +590,6 @@
   color: transparent;
 }
 
-/* ═══════════════════════════════════════════════════
-   FEATURE GRID
-═══════════════════════════════════════════════════ */
 .home-features-grid {
   display: grid;
   grid-template-columns: 1.15fr 1fr 1fr;
@@ -645,7 +614,6 @@
   }
 }
 
-/* ── Feature card base ── */
 .home-feat {
   position: relative;
   border-radius: 24px;
@@ -666,7 +634,6 @@
     border-color 0.35s;
 }
 
-/* Cursor spotlight */
 .home-feat::before {
   content: "";
   position: absolute;
@@ -712,7 +679,6 @@
   }
 }
 
-/* Card head */
 .home-feat-head {
   display: flex;
   justify-content: space-between;
@@ -741,7 +707,6 @@
   color: var(--h-accent);
 }
 
-/* Card visual */
 .home-feat-vis {
   position: relative;
   flex: 1;
@@ -764,7 +729,6 @@
   z-index: 2;
 }
 
-/* Card text */
 .home-feat-text {
   position: relative;
   z-index: 2;
@@ -821,9 +785,6 @@
   transform: translateX(4px);
 }
 
-/* ═══════════════════════════════════════════════════
-   CARD 1 — EVENTS (stacked tiles)
-═══════════════════════════════════════════════════ */
 .home-ev-stack {
   position: absolute;
   inset: 0;
@@ -957,9 +918,6 @@
   text-overflow: ellipsis;
 }
 
-/* ═══════════════════════════════════════════════════
-   CARD 2 — LOCATIONS (mini-map)
-═══════════════════════════════════════════════════ */
 .home-map {
   position: absolute;
   inset: 0;
@@ -1002,7 +960,6 @@
   }
 }
 
-/* Map pins */
 .home-pin {
   position: absolute;
   width: 26px;
@@ -1063,9 +1020,6 @@
   }
 }
 
-/* ═══════════════════════════════════════════════════
-   CARD 3 — PROFILE (avatar + ring + medals)
-═══════════════════════════════════════════════════ */
 .home-pv {
   position: absolute;
   inset: 0;
@@ -1142,9 +1096,6 @@
   color: oklch(0.15 0.04 150);
 }
 
-/* ═══════════════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════════════ */
 @media (max-width: 900px) {
   .home-inner {
     padding: 20px 24px 60px;
@@ -1169,7 +1120,7 @@
     margin-left: -12px;
     margin-right: -12px;
   }
-  /* Content drives hero height → pills never clip */
+
   .home-hero {
     height: auto;
     border-radius: 18px;
@@ -1192,7 +1143,7 @@
   .home-hero-cta {
     margin-top: 22px;
   }
-  /* Corner brackets clash with text on narrow screens — hide them */
+
   .home-hero-corners {
     display: none;
   }

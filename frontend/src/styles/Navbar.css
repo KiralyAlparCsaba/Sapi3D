@@ -5,7 +5,7 @@
   font-size: 1vw; 
   height: 7em;         
   padding: 0 2em;      
-  
+
   background: var(--navbar-bg);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   position: relative;
@@ -64,7 +64,7 @@
   padding: 1em 3em;    
   border-radius: 2.5em;
   gap: 3.5em;          
-  
+
   box-shadow: 0 0 1.5em var(--shadow-color);
 }
 
@@ -151,7 +151,6 @@
   transform: scale(1.1);
 }
 
-
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -190,9 +189,6 @@
   left: 2.1em; 
 }
 
-/* ----------------------------- */
-/* MOBILE ONLY ELEMENTS     */
-
 .mobile-only { display: none; }
 .desktop-only { display: flex; }
 
@@ -227,7 +223,6 @@
 
 .mobile-drawer.open { right: 0; }
 
-
 .drawer-header { display: flex; justify-content: space-between; align-items: center; }
 .drawer-logo { width: 70px; }
 .drawer-close { background: none; border: none; font-size: 35px; color: var(--text-color); cursor: pointer; }
@@ -248,8 +243,6 @@
 .drawer-user span { max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .drawer-logout { background: var(--capsule-bg); color: white; border: none; padding: 10px 0; border-radius: 20px; font-size: 16px; font-weight: 600; text-align: center; width: 100%; }
 .drawer-logout:hover { opacity: 0.9; transform: scale(1.02); }
-
-
 
 @media (max-width: 900px) {
   .desktop-only { display: none !important; }

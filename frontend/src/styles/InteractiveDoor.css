@@ -1,5 +1,3 @@
-/* Interactive Door Panel Styles */
-
 .door-panel-container {
   display: flex;
   flex-direction: column;
@@ -8,7 +6,6 @@
   pointer-events: none;
 }
 
-/* ── Hint bubble ── */
 .door-hint {
   background: rgba(10, 10, 10, 0.82);
   color: #e0e0e0;
@@ -41,7 +38,6 @@
   line-height: 1.5;
 }
 
-/* ── Mobile tap hint ── */
 .door-hint-tap {
   cursor: pointer;
   pointer-events: auto;
@@ -65,7 +61,6 @@
   border-color: rgba(77, 166, 255, 0.7);
 }
 
-/* ── Mobile close button ── */
 .door-close-btn {
   position: absolute;
   top: 10px;
@@ -87,7 +82,6 @@
   color: #fff;
 }
 
-/* ── Info panel ── */
 .door-info-panel {
   position: relative;
   background: rgba(15, 15, 20, 0.96);
@@ -123,7 +117,6 @@
   padding-bottom: 12px;
 }
 
-/* ── Tabs ── */
 .door-tabs {
   display: flex;
   gap: 6px;
@@ -187,7 +180,6 @@
   border-radius: 4px;
 }
 
-/* ── Tag chips ── */
 .door-info-tags {
   display: flex;
   flex-wrap: wrap;
@@ -216,7 +208,6 @@
   border: 1px solid rgba(160, 120, 255, 0.2);
 }
 
-/* ── Schedule slot list (by-day mode) ── */
 .door-schedule-list {
   display: flex;
   flex-direction: column;
@@ -265,7 +256,6 @@
   color: #9a88cc;
 }
 
-/* ── Media ── */
 .door-media-container {
   margin-bottom: 14px;
 }

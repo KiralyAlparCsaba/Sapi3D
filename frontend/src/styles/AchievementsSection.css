@@ -1,12 +1,3 @@
-/* ═══════════════════════════════════════════════════════
-   ACHIEVEMENTS SECTION  (Kitűzők + Kihívások)
-   Uses the site's global tokens only:
-     --navbar-bg, --capsule-bg, --text-color, --shadow-color
-   Accent: #3DAA7A  /  rgba(61, 170, 122, x)
-   Medal gradients live in ProfilPage.css (.ph-medal.*)
-   No --p-* or [data-theme] overrides needed here.
-═══════════════════════════════════════════════════════ */
-
 @keyframes ach-reveal {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0);   }
@@ -17,7 +8,6 @@
   to   { transform: scaleX(var(--p, 0)); }
 }
 
-/* ── Section container (shared by badges + challenges) ── */
 .ach-section {
   background: var(--capsule-bg);
   border: 1px solid rgba(61, 170, 122, 0.16);
@@ -31,7 +21,6 @@
   .ach-challenges-section { animation: ach-reveal 0.6s cubic-bezier(.2,.8,.2,1) 0.12s both; }
 }
 
-/* ── Section head (title + right control) ── */
 .ach-section-head {
   display: flex;
   justify-content: space-between;
@@ -57,11 +46,6 @@
   line-height: 1.4;
 }
 
-/* ═══════════════════════════════════════════════════════
-   KITŰZŐK  (Badges)
-═══════════════════════════════════════════════════════ */
-
-/* Count chip (e.g. "1/3 megszerezve") */
 .ach-count-chip {
   display: inline-flex;
   align-items: baseline;
@@ -82,14 +66,12 @@
   font-weight: 600;
 }
 
-/* 3-column badge grid */
 .ach-badges-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
 }
 
-/* Badge card */
 .ach-badge-card {
   position: relative;
   display: flex;
@@ -120,7 +102,6 @@
   opacity: 0.85;
 }
 
-/* Status pill (Megszerezve / Zárolva) */
 .ach-badge-pill {
   position: absolute;
   top: 12px;
@@ -144,7 +125,6 @@
   border: 1px solid rgba(61, 170, 122, 0.28);
 }
 
-/* Badge name & desc */
 .ach-badge-name {
   font-size: 15px;
   font-weight: 600;
@@ -168,11 +148,6 @@
   margin-top: 2px;
 }
 
-/* ═══════════════════════════════════════════════════════
-   KIHÍVÁSOK  (Challenges)
-═══════════════════════════════════════════════════════ */
-
-/* Filter tabs (segmented control) */
 .ach-filter-tabs {
   display: flex;
   align-items: center;
@@ -210,14 +185,12 @@
   box-shadow: 0 1px 3px var(--shadow-color);
 }
 
-/* Challenge grid */
 .ach-challenges-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 14px;
 }
 
-/* Challenge card */
 .ach-ch-card {
   display: flex;
   flex-direction: column;
@@ -243,7 +216,6 @@
   border-color: rgba(61, 170, 122, 0.28);
 }
 
-/* Top row: category + status */
 .ach-ch-top {
   display: flex;
   align-items: center;
@@ -292,7 +264,6 @@
   border-color: transparent;
 }
 
-/* Card body */
 .ach-ch-name {
   font-size: 15.5px;
   font-weight: 600;
@@ -314,7 +285,6 @@
   margin-top: -4px;
 }
 
-/* Progress area (pinned to bottom) */
 .ach-ch-progress-wrap {
   margin-top: auto;
   display: flex;
@@ -361,7 +331,6 @@
   font-weight: 600;
 }
 
-/* ── Loading / error states ── */
 .ach-loading,
 .ach-error {
   font-size: 13px;
@@ -372,7 +341,6 @@
 
 .ach-error { color: oklch(0.55 0.180 25); }
 
-/* ── Responsive ── */
 @media (max-width: 700px) {
   .ach-badges-grid {
     grid-template-columns: repeat(2, 1fr);

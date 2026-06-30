@@ -153,8 +153,6 @@
   transform: translateY(0);
 }
 
-/* Last-used mode gets a subtle pre-highlight so the user notices it
-   but still has to click to confirm. */
 .model-loading-overlay__mode-btn--default {
   background: rgba(21, 80, 21, 0.18);
   border-color: rgba(21, 80, 21, 0.55);

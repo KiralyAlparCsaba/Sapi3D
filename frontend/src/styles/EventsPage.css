@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
-/* ── Keyframes ── */
 @keyframes ev-bgFade {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -31,7 +30,6 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Root ── */
 .events-page {
   height: 100%;
   position: relative;
@@ -41,9 +39,6 @@
   background: var(--navbar-bg);
 }
 
-/* ───────────────────────────────
-   PAGE LAYOUT
-─────────────────────────────── */
 .ev-page-content {
   padding: 18px 32px 24px;
   display: flex;
@@ -101,7 +96,6 @@
   flex-shrink: 0;
 }
 
-/* ── Search bar ── */
 .ev-search-bar {
   display: flex;
   align-items: center;
@@ -167,7 +161,6 @@
   opacity: 0.4;
 }
 
-/* ── Big counter (bottom nav) ── */
 .ev-big-counter {
   font-family: 'IBM Plex Mono', monospace;
   display: flex;
@@ -190,9 +183,6 @@
   opacity: 0.4;
 }
 
-/* ───────────────────────────────
-   MAIN LAYOUT
-─────────────────────────────── */
 .ev-main-layout {
   display: grid;
   grid-template-columns: 1fr 440px;
@@ -202,9 +192,6 @@
   min-height: clamp(400px, 60vh, 660px);
 }
 
-/* ───────────────────────────────
-   HERO CARD
-─────────────────────────────── */
 .ev-hero-card {
   position: relative;
   border-radius: 18px;
@@ -325,9 +312,6 @@
   text-transform: uppercase;
 }
 
-/* ───────────────────────────────
-   BOTTOM NAV
-─────────────────────────────── */
 .ev-bottom-nav {
   display: flex;
   align-items: center;
@@ -368,9 +352,6 @@
   transform: scale(1.4);
 }
 
-/* ───────────────────────────────
-   ARROW BUTTONS
-─────────────────────────────── */
 .ev-arrow-btn {
   width: 38px;
   height: 38px;
@@ -390,9 +371,6 @@
   opacity: 0.65;
 }
 
-/* ───────────────────────────────
-   SIDEBAR
-─────────────────────────────── */
 .ev-sidebar {
   display: flex;
   flex-direction: column;
@@ -401,9 +379,6 @@
   height: 100%;
 }
 
-/* ───────────────────────────────
-   CALENDAR WIDGET
-─────────────────────────────── */
 .ev-calendar-widget {
   background: var(--capsule-bg);
   border-radius: 14px;
@@ -451,7 +426,6 @@
   letter-spacing: 0.03em;
 }
 
-/* Month navigation */
 .ev-cal-nav {
   display: flex;
   align-items: center;
@@ -490,7 +464,6 @@
   white-space: nowrap;
 }
 
-/* Calendar grid */
 .ev-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -566,7 +539,6 @@
   background: rgba(61,170,122,0.75);
 }
 
-/* Selected event panel */
 .ev-cal-selected-events {
   background: rgba(61,170,122,0.08);
   border: 1px solid rgba(61,170,122,0.22);
@@ -586,7 +558,6 @@
   line-height: 1.5;
 }
 
-/* Calendar footer */
 .ev-cal-footer {
   display: flex;
   justify-content: space-between;
@@ -620,9 +591,6 @@
 
 .ev-cal-naptár:hover { opacity: 1; }
 
-/* ───────────────────────────────
-   SIDEBAR MORE EVENTS
-─────────────────────────────── */
 .ev-sidebar-more {
   flex: 1;
   display: flex;
@@ -655,9 +623,6 @@
   min-height: 150px;
 }
 
-/* ───────────────────────────────
-   SMALL CARDS
-─────────────────────────────── */
 .ev-small-card {
   width: 172px;
   height: 234px;
@@ -724,9 +689,6 @@
   letter-spacing: -0.015em;
 }
 
-/* ───────────────────────────────
-   CTA BUTTON
-─────────────────────────────── */
 .ev-cta-btn {
   position: relative;
   overflow: hidden;
@@ -783,9 +745,6 @@
   flex-shrink: 0;
 }
 
-/* ───────────────────────────────
-   STATE MESSAGES
-─────────────────────────────── */
 .ev-state-msg {
   position: fixed;
   inset: 0;
@@ -820,9 +779,6 @@
   white-space: nowrap;
 }
 
-/* ───────────────────────────────
-   ADMIN FAB
-─────────────────────────────── */
 .ev-admin-fab {
   position: fixed;
   bottom: 24px;
@@ -848,9 +804,6 @@
   border-color: rgba(61,170,122,0.8) !important;
 }
 
-/* ───────────────────────────────
-   ADMIN PANEL
-─────────────────────────────── */
 .ev-admin-overlay {
   position: fixed;
   inset: 0;
@@ -972,9 +925,6 @@
 
 .ev-btn-cancel:hover { background: rgba(255,255,255,0.14) !important; }
 
-/* ───────────────────────────────
-   DETAIL VIEW
-─────────────────────────────── */
 .ev-detail-overlay {
   position: fixed;
   inset: 0;
@@ -1116,7 +1066,6 @@
   flex-direction: column;
 }
 
-/* Lejárt esemény értesítő */
 .ev-expired-notice {
   display: flex;
   align-items: center;
@@ -1152,7 +1101,6 @@
   opacity: 0.6;
 }
 
-/* Időpont + Helyszín kártyák egymás alatt */
 .ev-detail-info-row {
   display: flex;
   flex-direction: column;
@@ -1192,7 +1140,6 @@
   color: var(--text-color);
 }
 
-/* Info card (időpont + helyszín) */
 .ev-detail-info-card {
   display: flex;
   align-items: center;
@@ -1360,9 +1307,6 @@
 
 .ev-btn-img-delete:hover:not(:disabled) { background: rgba(170,90,30,0.3) !important; }
 
-/* ───────────────────────────────
-   RESPONSIVE
-─────────────────────────────── */
 @media (max-width: 1200px) {
   .ev-main-layout { grid-template-columns: 1fr 380px; }
 }
