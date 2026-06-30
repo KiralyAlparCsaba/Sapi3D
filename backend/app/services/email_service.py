@@ -23,9 +23,9 @@ class EmailService:
             raise RuntimeError(f"Nem sikerült betölteni a sablont.")
 
     async def send_verification_code(self, recipient_email: str, code: str) -> None:
-        # Hivatalosabb tárgy mező
+
         subject = "Sapi3D - Regisztráció megerősítése"
-        
+
         html_body = self._get_html_content(
             "email_verification.html",
             code=code,

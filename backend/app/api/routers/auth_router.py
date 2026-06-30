@@ -15,16 +15,13 @@ from schemas.user import (
 )
 from core.security import get_current_user, create_access_token
 
-
 router = APIRouter(prefix="/auth")
-
 
 @router.post("/register", response_model=RegisterPendingResponse)
 async def register_user(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """Register a new user."""
     service = AuthService(db)
     return await service.register(user_data)
-
 
 @router.post("/verify-email-code", response_model=MessageResponse)
 async def verify_email_code(
@@ -35,7 +32,6 @@ async def verify_email_code(
     service = AuthService(db)
     return await service.verify_email_code(payload)
 
-
 @router.post("/resend-verification-code", response_model=MessageResponse)
 async def resend_verification_code(
     payload: ResendVerificationCodeRequest,
@@ -44,7 +40,6 @@ async def resend_verification_code(
     """Resend a fresh 6-digit verification code."""
     service = AuthService(db)
     return await service.resend_verification_code(payload)
-
 
 @router.post("/login", response_model=Token)
 async def login_user(
@@ -56,7 +51,6 @@ async def login_user(
     service = AuthService(db)
     return await service.login(login_data, request)
 
-
 @router.post("/logout")
 async def logout_user(
     current_user=Depends(get_current_user),
@@ -66,12 +60,10 @@ async def logout_user(
     service = AuthService(db)
     return await service.logout(current_user.user_id)
 
-
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user=Depends(get_current_user)):
     """Return the currently authenticated user's data."""
     return UserResponse.model_validate(current_user)
-
 
 @router.post("/refresh-token", response_model=Token)
 async def refresh_token(current_user=Depends(get_current_user)):
@@ -82,5 +74,5 @@ async def refresh_token(current_user=Depends(get_current_user)):
         "role_id": current_user.role_id,
         "session_id": current_user.session_id
     })
-    
+
     return Token(access_token=token)

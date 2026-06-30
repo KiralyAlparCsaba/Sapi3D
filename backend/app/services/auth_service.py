@@ -25,7 +25,6 @@ from schemas.user import (
 )
 from schemas.session import SessionCreate
 
-
 class AuthService:
     """Service for authentication (login, register, logout) and session tracking."""
 
@@ -37,9 +36,6 @@ class AuthService:
         self.device_repo = DeviceRepository(db)
         self.email_service = EmailService()
 
-    # ───────────────────────────────
-    # LOGIN USER + CREATE SESSION + DEVICE
-    # ───────────────────────────────
     async def login(self, login_data: UserLogin, request: Request) -> Token:
         """Authenticate user, create device, session, and JWT."""
         user = await self.user_repo.get_by_username(login_data.username)
@@ -55,24 +51,20 @@ class AuthService:
                 detail="Email address is not verified"
             )
 
-        # 🔹 Extract device info from User-Agent
         user_agent = request.headers.get("user-agent")
         device_data = extract_device_from_user_agent(user_agent)
 
-        # 🔹 Create Device (always new)
         device = await self.device_repo.create(**device_data)
 
-        # 🔹 Create Session
         session_data = SessionCreate(
             user_id=user.user_id,
             device_id=device.device_id,
-            device_type=device_data["device_type"],  # optional, legacy
+            device_type=device_data["device_type"],
             app_version="1.1.0",
             started_at=datetime.now(timezone.utc)
         )
         session = await self.session_repo.create(**session_data.dict())
 
-        # 🔹 Generate JWT token with session info
         token = create_access_token({
             "sub": str(user.user_id),
             "username": user.username,
@@ -82,9 +74,6 @@ class AuthService:
 
         return Token(access_token=token)
 
-    # ───────────────────────────────
-    # LOGOUT USER + END SESSION
-    # ───────────────────────────────
     async def logout(self, user_id: int):
         """End any active sessions for this user."""
         active_sessions = await self.session_repo.get_active_sessions(user_id=user_id)
@@ -96,9 +85,6 @@ class AuthService:
 
         return {"message": "User logged out and session(s) ended."}
 
-    # ───────────────────────────────
-    # REGISTER USER
-    # ───────────────────────────────
     async def register(self, user_data: UserCreate) -> RegisterPendingResponse:
         """Register user and send a 6-digit verification code by email."""
         if await self.user_repo.get_by_username(user_data.username):

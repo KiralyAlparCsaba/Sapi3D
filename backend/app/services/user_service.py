@@ -25,23 +25,18 @@ class UserService:
         self.role_repo = RoleRepository(db)
         self.email_service = EmailService()
 
-    # -----------------------
-    # CREATE USER
-    # -----------------------
     async def create_user(self, user_data: UserCreate) -> UserResponse:
         """Create a new user with hashed password and assigned role."""
-        
+
         if await self.user_repo.get_by_username(user_data.username):
             raise HTTPException(status_code=400, detail="Username already exists")
         if await self.user_repo.get_by_email(user_data.email):
             raise HTTPException(status_code=400, detail="Email already exists")
 
-        
         role = await self.role_repo.get_by_id(user_data.role_id)
         if not role:
             role = await self.role_repo.get_by_name("user")
 
-       
         hashed_pw = hash_password(user_data.password)
         user = await self.user_repo.create(
             username=user_data.username,
@@ -59,43 +54,28 @@ class UserService:
 
         return UserResponse.model_validate(user, from_attributes=True)
 
-    # -----------------------
-    # GET USER BY ID
-    # -----------------------
     async def get_user_by_id(self, user_id: int) -> UserResponse:
         user = await self.user_repo.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return UserResponse.model_validate(user, from_attributes=True)
 
-    # -----------------------
-    # GET ALL USERS
-    # -----------------------
     async def get_all_users(self, skip: int = 0, limit: int = 100):
         users = await self.user_repo.get_all(skip=skip, limit=limit)
         return [UserResponse.model_validate(u, from_attributes=True) for u in users]
 
-    # -----------------------
-    # GET USER BY EMAIL
-    # -----------------------
     async def get_by_email(self, email: str) -> UserResponse:
         user = await self.user_repo.get_by_email(email)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return UserResponse.model_validate(user, from_attributes=True)
 
-    # -----------------------
-    # GET USER BY USERNAME
-    # -----------------------
     async def get_by_username(self, username: str) -> UserResponse:
         user = await self.user_repo.get_by_username(username)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return UserResponse.model_validate(user, from_attributes=True)
 
-    # -----------------------
-    # UPDATE USER
-    # -----------------------
     async def update_user(self, user_id: int, data: UserUpdate, current_user) -> UserResponse:
         user = await self.user_repo.get_by_id(user_id)
         if not user:
@@ -106,13 +86,10 @@ class UserService:
         is_admin = getattr(current_user, "role_id", None) == 2
         is_self = getattr(current_user, "user_id", None) == user_id
 
-        # Self-update: email change must go through pending verification flow.
-        # Also prevent self role change.
         if is_self and not is_admin:
             updates.pop("email", None)
             updates.pop("role_id", None)
 
-        # Admin email update: explicit uniqueness check for nicer error message.
         if is_admin and "email" in updates:
             existing = await self.user_repo.get_by_email(updates["email"])
             if existing and existing.user_id != user_id:
@@ -250,9 +227,6 @@ class UserService:
         await self.db.commit()
         return {"message": "Cancelled"}
 
-    # -----------------------
-    # UPLOAD AVATAR
-    # -----------------------
     async def upload_avatar(self, user_id: int, file_bytes: bytes, content_type: str) -> UserResponse:
         user = await self.user_repo.get_by_id(user_id)
         if not user:
@@ -281,7 +255,6 @@ class UserService:
         avatars_dir = settings.avatars_directory
         os.makedirs(avatars_dir, exist_ok=True)
 
-        # Keep exactly one avatar file per user by removing previous extension variants.
         for allowed_ext in settings.avatar_allowed_extensions:
             candidate = os.path.join(avatars_dir, f"{base_name}.{allowed_ext}")
             if os.path.exists(candidate) and candidate != os.path.join(avatars_dir, avatar_filename):
@@ -306,9 +279,6 @@ class UserService:
 
         return UserResponse.model_validate(updated_user, from_attributes=True)
 
-    # -----------------------
-    # DELETE AVATAR
-    # -----------------------
     async def delete_avatar(self, user_id: int) -> UserResponse:
         user = await self.user_repo.get_by_id(user_id)
         if not user:
@@ -336,9 +306,6 @@ class UserService:
 
         return UserResponse.model_validate(updated_user, from_attributes=True)
 
-    # -----------------------
-    # DELETE USER
-    # -----------------------
     async def delete_user(self, user_id: int) -> bool:
         deleted = await self.user_repo.delete(user_id)
         if not deleted:

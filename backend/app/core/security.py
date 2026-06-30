@@ -9,14 +9,11 @@ from repositories.user_repository import UserRepository
 from core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-# --- BCRYPT HASH ---
 def hash_password(password: str) -> str:
     """Hash plain password using bcrypt."""
     password_bytes = password.encode('utf-8')[:72]
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password_bytes, salt).decode('utf-8')
-
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against its bcrypt hash."""
@@ -24,17 +21,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     hashed_bytes = hashed_password.encode('utf-8')
     return bcrypt.checkpw(password_bytes, hashed_bytes)
 
-
-# --- JWT TOKEN MANAGEMENT ---
 SECRET_KEY = settings.JWT_SECRET_KEY
 ALGORITHM = settings.JWT_ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
-
 def generate_email_verification_code(length: int = 6) -> str:
     """Generate a numeric verification code."""
     return "".join(str(randbelow(10)) for _ in range(length))
-
 
 def is_verification_code_expired(expires_at: datetime | None) -> bool:
     """Return True when verification code expiration has passed."""
@@ -42,14 +35,12 @@ def is_verification_code_expired(expires_at: datetime | None) -> bool:
         return True
     return datetime.now(expires_at.tzinfo) > expires_at
 
-
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create a signed JWT access token."""
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
 
 def decode_access_token(token: str) -> dict:
     """Decode and validate a JWT access token."""
@@ -68,9 +59,6 @@ def decode_access_token(token: str) -> dict:
             detail="Invalid or expired token"
         )
 
-
-
-# --- CURRENT USER DEPENDENCY (using HTTP Bearer) ---
 security = HTTPBearer()
 
 async def get_current_user(
@@ -90,7 +78,6 @@ async def get_current_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Attach session_id to user object for later use
     user.session_id = session_id
-    
+
     return user
