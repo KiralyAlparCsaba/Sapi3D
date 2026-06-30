@@ -89,8 +89,6 @@ class LocationsService:
         await self.db.commit()
         logger.info(f"Deleted location: {location.name}")
 
-    # ── Image upload ──────────────────────────────────────────────────────────
-
     async def upload_location_image(
         self, location_id: int, file_bytes: bytes, content_type: str
     ) -> LocationResponse:

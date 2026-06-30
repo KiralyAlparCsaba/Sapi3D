@@ -23,9 +23,6 @@ class AuthService:
         self.session_repo = SessionRepository(db)
         self.device_repo = DeviceRepository(db)
 
-    # ───────────────────────────────
-    # LOGIN USER + CREATE SESSION + DEVICE
-    # ───────────────────────────────
     async def login(self, login_data: UserLogin, request: Request) -> Token:
         """Authenticate user, create device, session, and JWT."""
         user = await self.user_repo.get_by_username(login_data.username)
@@ -35,24 +32,21 @@ class AuthService:
                 detail="Invalid username or password"
             )
 
-        # 🔹 Extract device info from User-Agent
         user_agent = request.headers.get("user-agent")
         device_data = extract_device_from_user_agent(user_agent)
 
-        # 🔹 Get or create device (deduplicates identical devices)
+        # Dedupe devices by browser/os fingerprint so one row per real device.
         device = await self.device_repo.get_or_create(**device_data)
 
-        # 🔹 Create Session
         session_data = SessionCreate(
             user_id=user.user_id,
             device_id=device.device_id,
-            device_type=device_data["device_type"],  # optional, legacy
+            device_type=device_data["device_type"],
             app_version=settings.app_version,
             started_at=datetime.now(timezone.utc)
         )
         session = await self.session_repo.create(**session_data.dict())
 
-        # 🔹 Generate JWT token with session info
         token = create_access_token({
             "sub": str(user.user_id),
             "username": user.username,
@@ -62,9 +56,6 @@ class AuthService:
 
         return Token(access_token=token)
 
-    # ───────────────────────────────
-    # LOGOUT USER + END SESSION
-    # ───────────────────────────────
     async def logout(self, user_id: int):
         """End any active sessions for this user."""
         active_sessions = await self.session_repo.get_active_sessions(user_id=user_id)
@@ -76,9 +67,6 @@ class AuthService:
 
         return {"message": "User logged out and session(s) ended."}
 
-    # ───────────────────────────────
-    # REGISTER USER
-    # ───────────────────────────────
     async def register(self, user_data: UserCreate) -> UserResponse:
         """Register a new user (reuse UserService)."""
         return await self.user_service.create_user(user_data)

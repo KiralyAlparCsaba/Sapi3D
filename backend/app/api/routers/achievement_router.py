@@ -17,10 +17,6 @@ from schemas.achievement import (
 router = APIRouter(prefix="/achievements", tags=["Achievements"])
 
 
-# ════════════════════════════════════════
-# GET ENDPOINTS - Public
-# ════════════════════════════════════════
-
 @router.get("", response_model=list[AchievementResponse])
 async def get_all_achievements(db: AsyncSession = Depends(get_db)):
     """Get all available achievements."""
@@ -56,10 +52,6 @@ async def get_achievement_progress(
     
     return progress
 
-
-# ════════════════════════════════════════
-# TRACK ENDPOINTS - User events
-# ════════════════════════════════════════
 
 @router.post("/track/model-open")
 async def track_model_open(
@@ -129,10 +121,6 @@ async def track_panel_view(
     }
 
 
-# ════════════════════════════════════════
-# CRUD ENDPOINTS - Admin
-# ════════════════════════════════════════
-
 @router.post("", response_model=AchievementResponse, status_code=status.HTTP_201_CREATED)
 async def create_achievement(
     achievement: AchievementCreate,
@@ -193,10 +181,6 @@ async def delete_achievement(
         raise HTTPException(status_code=404, detail="Achievement not found")
     await db.commit()
 
-
-# ════════════════════════════════════════
-# REQUIREMENTS ENDPOINTS - Admin
-# ════════════════════════════════════════
 
 @router.post("/{achv_id}/requirements", response_model=list[AchievementRequirementResponse], status_code=status.HTTP_201_CREATED)
 async def add_achievement_requirements(

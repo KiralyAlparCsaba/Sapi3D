@@ -68,9 +68,6 @@ class ConnectionManager:
         self._players: Dict[int, PlayerState] = {}
         self._lock = asyncio.Lock()
 
-    # ──────────────────────────────────────────────
-    # CONNECT / DISCONNECT
-    # ──────────────────────────────────────────────
     async def connect(
         self,
         websocket: WebSocket,
@@ -128,9 +125,6 @@ class ConnectionManager:
             logger.info(f"[MP] Stale disconnect for user {user_id} ignored (newer connection active)")
             return False, False
 
-    # ──────────────────────────────────────────────
-    # STATE UPDATES
-    # ──────────────────────────────────────────────
     def update_position(self, user_id: int, x: float, y: float, z: float, rot_y: float) -> bool:
         """
         Cheap, lock-free update of player position. Safe because asyncio is
@@ -154,9 +148,6 @@ class ConnectionManager:
     def get_player(self, user_id: int) -> Optional[PlayerState]:
         return self._players.get(user_id)
 
-    # ──────────────────────────────────────────────
-    # QUERIES
-    # ──────────────────────────────────────────────
     def get_others(self, user_id: int) -> list[dict]:
         """Public info about everyone except the requester. Skips players
         whose first real position hasn't arrived yet — they aren't visible."""
@@ -169,9 +160,6 @@ class ConnectionManager:
     def count(self) -> int:
         return len(self._players)
 
-    # ──────────────────────────────────────────────
-    # RATE LIMITING
-    # ──────────────────────────────────────────────
     def check_rate_limit(self, user_id: int) -> bool:
         """
         Returns True if the user is within their per-second message budget.
@@ -196,9 +184,6 @@ class ConnectionManager:
         times.append(now)
         return True
 
-    # ──────────────────────────────────────────────
-    # BROADCAST
-    # ──────────────────────────────────────────────
     async def send_to(self, user_id: int, message: dict) -> None:
         """Send a JSON message to a specific user."""
         p = self._players.get(user_id)

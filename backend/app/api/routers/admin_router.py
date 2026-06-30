@@ -27,10 +27,6 @@ def require_admin(current_user=Depends(get_current_user)):
     return current_user
 
 
-# ─────────────────────────────────────────────
-# GET /admin/dashboard
-# ─────────────────────────────────────────────
-
 @router.get(
     "/dashboard",
     response_model=DashboardOverview,
@@ -48,10 +44,6 @@ async def get_dashboard_overview(
     repo = AdminRepository(db)
     return await repo.get_dashboard_overview()
 
-
-# ─────────────────────────────────────────────
-# GET /admin/sessions/active
-# ─────────────────────────────────────────────
 
 @router.get(
     "/sessions/active",
@@ -71,10 +63,6 @@ async def get_active_sessions(
     return await repo.get_active_sessions_with_metrics()
 
 
-# ─────────────────────────────────────────────
-# GET /admin/metrics/history
-# ─────────────────────────────────────────────
-
 @router.get(
     "/metrics/history",
     response_model=List[MetricPoint],
@@ -93,10 +81,6 @@ async def get_metrics_history(
     return await repo.get_metrics_history(hours=hours)
 
 
-# ─────────────────────────────────────────────
-# GET /admin/engagement
-# ─────────────────────────────────────────────
-
 @router.get(
     "/engagement",
     response_model=EngagementData,
@@ -114,10 +98,6 @@ async def get_engagement_data(
     repo = AdminRepository(db)
     return await repo.get_engagement_data()
 
-
-# ─────────────────────────────────────────────
-# GET /admin/device-metrics
-# ─────────────────────────────────────────────
 
 @router.get(
     "/device-metrics",

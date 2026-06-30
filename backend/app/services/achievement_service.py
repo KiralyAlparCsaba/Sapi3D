@@ -30,10 +30,6 @@ class AchievementService:
         self.location_repo = AchvProgressLocationRepository(db)
         self.requirement_repo = AchievementRequirementRepository(db)
     
-    # ════════════════════════════════════════
-    # GET ACHIEVEMENTS
-    # ════════════════════════════════════════
-    
     async def get_all_achievements(self) -> List[AchievementResponse]:
         """Get all available achievements."""
         achievements = await self.achievement_repo.get_all_achievements()
@@ -84,10 +80,6 @@ class AchievementService:
             "in_progress": in_progress,
             "locked": locked
         }
-    
-    # ════════════════════════════════════════
-    # UNLOCK LOGIC
-    # ════════════════════════════════════════
     
     async def check_and_unlock_achievement(self, user_id: int, achv_id: int) -> bool:
         """
@@ -144,13 +136,13 @@ class AchievementService:
                 by_type[req.req_type] = []
             by_type[req.req_type].append(req)
         
-        # ─── model_view_count requirement ───
+        # model_view_count: total tour views
         if "model_view_count" in by_type:
             required_value = by_type["model_view_count"][0].value
             if required_value is None or progress.model_view_count < required_value:
                 return False
         
-        # ─── location_count requirement ───
+        # location_count: number of distinct locations visited
         if "location_count" in by_type:
             required_value = by_type["location_count"][0].value
             if required_value is None:
@@ -159,7 +151,7 @@ class AchievementService:
             if loc_count < required_value:
                 return False
         
-        # ─── panel_count requirement ───
+        # panel_count: number of distinct info panels opened
         if "panel_count" in by_type:
             required_value = by_type["panel_count"][0].value
             if required_value is None:
@@ -168,20 +160,20 @@ class AchievementService:
             if panel_count < required_value:
                 return False
         
-        # ─── time_spent requirement ───
+        # time_spent: total seconds in the tour
         if "time_spent" in by_type:
             required_value = by_type["time_spent"][0].value
             if required_value is None or progress.time_spent < required_value:
                 return False
         
-        # ─── location requirement (specific locations) ───
+        # location: all of these specific locations must be visited
         if "location" in by_type:
             required_location_ids = [req.location_id for req in by_type["location"] if req.location_id]
             if required_location_ids:
                 if not await self.location_repo.has_all_locations(progress.id, required_location_ids):
                     return False
         
-        # ─── panel requirement (specific panels) ───
+        # panel: all of these specific panels must be opened
         if "panel" in by_type:
             required_panel_ids = [req.panel_id for req in by_type["panel"] if req.panel_id]
             if required_panel_ids:
@@ -190,7 +182,7 @@ class AchievementService:
                 if not all(pid in visited_panel_ids for pid in required_panel_ids):
                     return False
         
-        # ─── location_any_of requirement (at least 1 of the specified locations) ───
+        # location_any_of: at least one of the specified locations must be visited
         if "location_any_of" in by_type:
             req = by_type["location_any_of"][0]
             location_ids = req.requirement_data.get("location_ids", []) if req.requirement_data else []
@@ -200,7 +192,7 @@ class AchievementService:
                 if not any(loc_id in visited_location_ids for loc_id in location_ids):
                     return False
         
-        # ─── panel_any_of requirement (at least 1 of the specified panels) ───
+        # panel_any_of: at least one of the specified panels must be opened
         if "panel_any_of" in by_type:
             req = by_type["panel_any_of"][0]
             panel_ids = req.requirement_data.get("panel_ids", []) if req.requirement_data else []
@@ -210,13 +202,8 @@ class AchievementService:
                 if not any(panel_id in visited_panel_ids for panel_id in panel_ids):
                     return False
         
-        # All requirements met!
         return True
-    
-    # ════════════════════════════════════════
-    # TRACK EVENTS
-    # ════════════════════════════════════════
-    
+
     async def track_model_open(self, user_id: int) -> List[int]:
         """
         Track model open event.
@@ -360,10 +347,6 @@ class AchievementService:
                 unlocked.append(achievement.achv_id)
         
         return unlocked
-    
-    # ════════════════════════════════════════
-    # PROGRESS DISPLAY
-    # ════════════════════════════════════════
     
     async def get_achievement_progress(self, user_id: int, achv_id: int) -> Optional[dict]:
         """

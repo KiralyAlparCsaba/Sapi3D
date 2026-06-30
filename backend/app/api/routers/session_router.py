@@ -12,10 +12,6 @@ from schemas.metrics import PerfMetricsCreate, PerfMetricsResponse, PerfMetricsS
 router = APIRouter(prefix="/sessions")
 
 
-# ───────────────────────────────
-# SESSION ENDPOINTS
-# ───────────────────────────────
-
 @router.post("/", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
 async def create_session(data: SessionCreate, db: AsyncSession = Depends(get_db)):
     """
@@ -69,10 +65,6 @@ async def get_user_sessions(user_id: int, db: AsyncSession = Depends(get_db)):
     sessions = await repo.get_by_user_id(user_id)
     return sessions
 
-
-# ───────────────────────────────
-# PERFORMANCE METRICS ENDPOINTS
-# ───────────────────────────────
 
 @router.post("/{session_id}/metrics", response_model=PerfMetricsResponse, status_code=status.HTTP_201_CREATED)
 async def add_performance_metric(session_id: int, data: PerfMetricsCreate, db: AsyncSession = Depends(get_db)):

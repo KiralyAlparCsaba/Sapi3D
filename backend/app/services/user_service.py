@@ -16,9 +16,6 @@ class UserService:
         self.user_repo = UserRepository(db)
         self.role_repo = RoleRepository(db)
 
-    # -----------------------
-    # CREATE USER
-    # -----------------------
     async def create_user(self, user_data: UserCreate) -> UserResponse:
         """Create a new user with hashed password and assigned role."""
         
@@ -47,43 +44,28 @@ class UserService:
 
         return UserResponse.model_validate(user, from_attributes=True)
 
-    # -----------------------
-    # GET USER BY ID
-    # -----------------------
     async def get_user_by_id(self, user_id: int) -> UserResponse:
         user = await self.user_repo.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return UserResponse.model_validate(user, from_attributes=True)
 
-    # -----------------------
-    # GET ALL USERS
-    # -----------------------
     async def get_all_users(self, skip: int = 0, limit: int = 100):
         users = await self.user_repo.get_all(skip=skip, limit=limit)
         return [UserResponse.model_validate(u, from_attributes=True) for u in users]
 
-    # -----------------------
-    # GET USER BY EMAIL
-    # -----------------------
     async def get_by_email(self, email: str) -> UserResponse:
         user = await self.user_repo.get_by_email(email)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return UserResponse.model_validate(user, from_attributes=True)
 
-    # -----------------------
-    # GET USER BY USERNAME
-    # -----------------------
     async def get_by_username(self, username: str) -> UserResponse:
         user = await self.user_repo.get_by_username(username)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return UserResponse.model_validate(user, from_attributes=True)
 
-    # -----------------------
-    # UPDATE USER
-    # -----------------------
     async def update_user(self, user_id: int, data: UserUpdate) -> UserResponse:
         user = await self.user_repo.get_by_id(user_id)
         if not user:
@@ -118,9 +100,6 @@ class UserService:
 
         return UserResponse.model_validate(updated_user, from_attributes=True)
 
-    # -----------------------
-    # UPLOAD AVATAR
-    # -----------------------
     async def upload_avatar(self, user_id: int, file_bytes: bytes, content_type: str) -> UserResponse:
         user = await self.user_repo.get_by_id(user_id)
         if not user:
@@ -174,9 +153,6 @@ class UserService:
 
         return UserResponse.model_validate(updated_user, from_attributes=True)
 
-    # -----------------------
-    # DELETE AVATAR
-    # -----------------------
     async def delete_avatar(self, user_id: int) -> UserResponse:
         user = await self.user_repo.get_by_id(user_id)
         if not user:
@@ -204,9 +180,6 @@ class UserService:
 
         return UserResponse.model_validate(updated_user, from_attributes=True)
 
-    # -----------------------
-    # DELETE USER
-    # -----------------------
     async def delete_user(self, user_id: int) -> bool:
         deleted = await self.user_repo.delete(user_id)
         if not deleted:
