@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useProgress } from "@react-three/drei";
 import "../../styles/ModelLoadingOverlay.css";
 
 const FADE_OUT_MS = 600;
 const MIN_DISPLAY_MS = 400;
+const SELECTION_HOLD_MS = 1000;
 
 export default function ModelLoadingOverlay({
   visible,
@@ -22,18 +23,45 @@ export default function ModelLoadingOverlay({
     return () => clearTimeout(t);
   }, []);
 
+  const [displayPct, setDisplayPct] = useState(0);
   useEffect(() => {
-    const shouldHide = !visible && minTimeElapsed;
+    const id = setInterval(() => {
+      setDisplayPct((prev) => {
+        if (progress >= 100) {
+          return Math.min(prev + Math.max(1.5, (100 - prev) * 0.18), 100);
+        }
+        const cap = 95;
+        if (prev >= cap) return cap;
+        return Math.min(prev + Math.max(0.4, (cap - prev) * 0.05), cap);
+      });
+    }, 80);
+    return () => clearInterval(id);
+  }, [progress]);
+
+  const prevModeRef = useRef(mode);
+  const [selectionHold, setSelectionHold] = useState(false);
+  useEffect(() => {
+    const prev = prevModeRef.current;
+    prevModeRef.current = mode;
+    if (!prev && mode) {
+      setSelectionHold(true);
+      const t = setTimeout(() => setSelectionHold(false), SELECTION_HOLD_MS);
+      return () => clearTimeout(t);
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    const shouldHide = !visible && minTimeElapsed && !selectionHold;
     if (shouldHide && !fading) {
       setFading(true);
       const t = setTimeout(() => setMounted(false), FADE_OUT_MS);
       return () => clearTimeout(t);
     }
-  }, [visible, minTimeElapsed, fading]);
+  }, [visible, minTimeElapsed, selectionHold, fading]);
 
   if (!mounted) return null;
 
-  const pct = Math.round(progress);
+  const pct = Math.round(displayPct);
 
   const showPicker = !mode && typeof onSelectMode === "function";
 
@@ -125,7 +153,6 @@ export default function ModelLoadingOverlay({
         )}
 
         {mode && (
-
           <div className="model-loading-overlay__mode-confirmed">
             {mode === "multi" ? "👥 Multiplayer mód" : "👤 Egyedül mód"}
           </div>
