@@ -23,7 +23,6 @@ class GuestUser:
     created_at: Optional[str] = None
 
 
-# --- BCRYPT HASH ---
 def hash_password(password: str) -> str:
     """Hash plain password using bcrypt."""
     password_bytes = password.encode('utf-8')[:72]
@@ -38,7 +37,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(password_bytes, hashed_bytes)
 
 
-# --- JWT TOKEN MANAGEMENT ---
 SECRET_KEY = settings.JWT_SECRET_KEY
 ALGORITHM = settings.JWT_ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
@@ -71,7 +69,6 @@ def decode_access_token(token: str) -> dict:
 
 
 
-# --- CURRENT USER DEPENDENCY (using HTTP Bearer) ---
 security = HTTPBearer()
 
 async def get_current_user(

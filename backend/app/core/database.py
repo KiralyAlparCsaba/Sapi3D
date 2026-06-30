@@ -291,11 +291,15 @@ async def _seed_roles() -> None:
                 session.add_all(roles)
                 logger.info("Roles added to session, committing...")
                 await session.commit()
-                logger.info("✅ Successfully seeded initial roles: user (1), admin (2)")
+                logger.info("Successfully seeded initial roles: user (1), admin (2)")
             else:
-                logger.info(f"✅ Roles already exist ({len(existing_roles)} roles found), skipping seed")
+                logger.info(
+                    f"Roles already exist ({len(existing_roles)} roles found), skipping seed"
+                )
     except Exception as e:
-        logger.error(f"❌ Failed to seed roles: {type(e).__name__}: {e}", exc_info=True)
+        logger.error(
+            f"Failed to seed roles: {type(e).__name__}: {e}", exc_info=True
+        )
 
 
 async def close_db() -> None:

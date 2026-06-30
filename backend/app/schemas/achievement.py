@@ -3,10 +3,6 @@ from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field, ConfigDict
 
 
-# ════════════════════════════════════════
-# Achievement Schemas
-# ════════════════════════════════════════
-
 class AchievementBase(BaseModel):
     """Base schema for Achievement."""
     name: str = Field(..., max_length=100)
@@ -31,10 +27,6 @@ class AchievementResponse(AchievementBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ════════════════════════════════════════
-# UserAchievement Schemas
-# ════════════════════════════════════════
-
 class UserAchievementBase(BaseModel):
     """Base schema for UserAchievement."""
     user_id: int
@@ -55,10 +47,6 @@ class UserAchievementWithDetails(UserAchievementResponse):
     
     model_config = ConfigDict(from_attributes=True)
 
-
-# ════════════════════════════════════════
-# AchvProgress Schemas
-# ════════════════════════════════════════
 
 class AchvProgressBase(BaseModel):
     """Base schema for AchvProgress."""
@@ -97,10 +85,6 @@ class AchvProgressWithDetails(AchvProgressResponse):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ════════════════════════════════════════
-# AchvProgressPanel Schemas
-# ════════════════════════════════════════
-
 class AchvProgressPanelBase(BaseModel):
     """Base schema for AchvProgressPanel."""
     progress_id: int
@@ -114,10 +98,6 @@ class AchvProgressPanelResponse(AchvProgressPanelBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ════════════════════════════════════════
-# AchvProgressLocation Schemas
-# ════════════════════════════════════════
-
 class AchvProgressLocationBase(BaseModel):
     """Base schema for AchvProgressLocation."""
     progress_id: int
@@ -130,10 +110,6 @@ class AchvProgressLocationResponse(AchvProgressLocationBase):
     
     model_config = ConfigDict(from_attributes=True)
 
-
-# ════════════════════════════════════════
-# AchievementRequirement Schemas
-# ════════════════════════════════════════
 
 class AchievementRequirementBase(BaseModel):
     """Base schema for AchievementRequirement."""

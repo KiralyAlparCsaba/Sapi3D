@@ -11,33 +11,40 @@ from core.database import init_db, close_db
 from api.routers.device_router import router as device_router
 
 
+STATIC_DIRECTORIES = (
+    settings.avatars_directory,
+    settings.events_directory,
+    settings.locations_directory,
+    settings.avatars_3d_directory,
+)
+
+# Create static directories at import time so the StaticFiles mount validates
+# successfully — mount runs before the lifespan startup hook.
+for _directory in STATIC_DIRECTORIES:
+    os.makedirs(_directory, exist_ok=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Lifespan context manager for startup and shutdown events.
-    """
-    # Startup
+    """Startup/shutdown hooks: initialize and close the database connection."""
     logger.info("Initializing database...")
     try:
         await init_db()
-        os.makedirs(settings.avatars_directory, exist_ok=True)
-        os.makedirs(settings.events_directory, exist_ok=True)
-        os.makedirs(settings.locations_directory, exist_ok=True)
-        os.makedirs(settings.avatars_3d_directory, exist_ok=True)
         logger.info("Database initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize database: {type(e).__name__}: {e}", exc_info=True)
+        logger.error(
+            f"Failed to initialize database: {type(e).__name__}: {e}",
+            exc_info=True,
+        )
         raise
-    
+
     yield
-    
-    # Shutdown
+
     logger.info("Closing database connections...")
     await close_db()
     logger.info("Database connections closed")
 
 
-# Initialize FastAPI app with enhanced OpenAPI/Swagger config
 app = FastAPI(
     lifespan=lifespan,
     title=settings.api_title,
@@ -58,12 +65,11 @@ app = FastAPI(
         {"name": "Avatars", "description": "3D avatar variants for multiplayer rendering (manifest + GLB files)"},
         {"name": "Admin", "description": "Admin-only dashboard aggregation endpoints"}
     ],
-    docs_url="/docs",  # Swagger UI
-    redoc_url="/redoc",  # ReDoc alternative documentation
-    openapi_url="/openapi.json",  # OpenAPI schema
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
-# Enable CORS with config
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -71,38 +77,43 @@ app.add_middleware(
     allow_headers=settings.cors_headers,
 )
 
-# Static avatar files
-os.makedirs(settings.avatars_directory, exist_ok=True)
-app.mount("/static/avatars", StaticFiles(directory=settings.avatars_directory), name="avatars")
+app.mount(
+    "/static/avatars",
+    StaticFiles(directory=settings.avatars_directory),
+    name="avatars",
+)
+app.mount(
+    "/static/events",
+    StaticFiles(directory=settings.events_directory),
+    name="events",
+)
+app.mount(
+    "/static/locations",
+    StaticFiles(directory=settings.locations_directory),
+    name="locations",
+)
+app.mount(
+    "/static/avatars-3d",
+    StaticFiles(directory=settings.avatars_3d_directory),
+    name="avatars-3d",
+)
 
-# Static event image files
-os.makedirs(settings.events_directory, exist_ok=True)
-app.mount("/static/events", StaticFiles(directory=settings.events_directory), name="events")
+ROUTERS = (
+    (health.router, "Health"),
+    (model.router, "Model"),
+    (user_router.router, "Users"),
+    (auth_router.router, "Auth"),
+    (session_router.router, "Sessions"),
+    (device_router, "Devices"),
+    (location_router.router, "Locations"),
+    (event_router.router, "Events"),
+    (info_panels_router.router, "Info Panels"),
+    (achievement_router.router, "Achievements"),
+    (multiplayer_router.router, "Multiplayer"),
+    (avatars_router.router, "Avatars"),
+    (admin_router.router, "Admin"),
+)
+for router, tag in ROUTERS:
+    app.include_router(router, tags=[tag])
 
-# Static location image files
-os.makedirs(settings.locations_directory, exist_ok=True)
-app.mount("/static/locations", StaticFiles(directory=settings.locations_directory), name="locations")
-
-# Static 3D avatar files (GLB models + manifest.json + optional thumbnails)
-os.makedirs(settings.avatars_3d_directory, exist_ok=True)
-app.mount("/static/avatars-3d", StaticFiles(directory=settings.avatars_3d_directory), name="avatars-3d")
-
-# Include routers
-app.include_router(health.router, tags=["Health"])
-app.include_router(model.router, tags=["Model"])
-app.include_router(user_router.router, tags=["Users"])
-app.include_router(auth_router.router, tags=["Auth"])
-app.include_router(session_router.router, tags=["Sessions"])
-app.include_router(device_router, tags=["Devices"])
-app.include_router(location_router.router, tags=["Locations"])
-app.include_router(event_router.router, tags=["Events"])
-app.include_router(info_panels_router.router, tags=["Info Panels"])
-app.include_router(achievement_router.router, tags=["Achievements"])
-app.include_router(multiplayer_router.router, tags=["Multiplayer"])
-app.include_router(avatars_router.router, tags=["Avatars"])
-app.include_router(admin_router.router, tags=["Admin"])
-
-
-
-# Log application startup
 logger.info(f"Starting {settings.api_title} v{settings.api_version}")
