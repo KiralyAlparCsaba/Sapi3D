@@ -3,20 +3,21 @@ import { measureLatency } from "./Latency";
 import axios from "axios";
 import { useEffect } from "react";
 
+const LATENCY_PROBE_INTERVAL_MS = 5000;
+const MIN_SAMPLES_TO_UPLOAD = 2;
+
 export default function usePerformanceUploader(metrics, sessionId) {
   useEffect(() => {
     if (!metrics || !sessionId) return;
 
-    // Measure latency every 5s
     const latencyInterval = setInterval(async () => {
-      const latency = await measureLatency("/health"); // any lightweight endpoint
+      const latency = await measureLatency("/health");
       metrics.setLatency(latency);
-    }, 5000);
+    }, LATENCY_PROBE_INTERVAL_MS);
 
-    // On cleanup -> send final averaged metrics
     return async () => {
       const samples = metrics.getSamples();
-      if (samples.length < 2) return;
+      if (samples.length < MIN_SAMPLES_TO_UPLOAD) return;
 
       const avgFps = weightedAverage(samples, "fps");
       const avgMem = weightedAverage(samples, "memory_mb");
@@ -24,22 +25,18 @@ export default function usePerformanceUploader(metrics, sessionId) {
 
       try {
         const token = localStorage.getItem("access_token");
-
         await axios.post(
           `${import.meta.env.VITE_API_URL || "/api"}/sessions/${sessionId}/metrics`,
           {
             session_id: sessionId,
             fps: Math.round(avgFps),
             memory_mb: Math.round(avgMem),
-            latency_ms: Math.round(avgLat)
-
+            latency_ms: Math.round(avgLat),
           },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
-
-        console.log("Uploaded final averaged performance metrics!");
       } catch (err) {
-        console.error("Failed to upload performance metrics:", err);
+        console.error("[Metrics] Failed to upload averaged metrics:", err);
       }
 
       clearInterval(latencyInterval);

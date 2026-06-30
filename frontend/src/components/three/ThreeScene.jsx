@@ -120,16 +120,12 @@ function SceneContent({
           const markerObj = findMarkerObject(mesh, markerToTeleport);
 
           if (!markerObj) {
-            console.warn("NEM TALÁLHATÓ MARKER A MODELLBEN");
+            console.warn(
+              "[ThreeScene] No marker found in model for target:",
+              markerToTeleport,
+            );
             return;
           }
-
-          console.log(
-            "Teleport target:",
-            markerToTeleport || "(nincs marker átadva)",
-            "-> használatban:",
-            markerObj.name,
-          );
 
           const box = new THREE.Box3().setFromObject(markerObj);
           const markerTrueCenter = new THREE.Vector3();
@@ -211,29 +207,25 @@ export default function ThreeScene() {
   useEffect(() => {
     fetch(`${API_URL}/info-panels/`)
       .then((res) => {
-        if (!res.ok) throw new Error("Hiba a hálózati válaszban");
+        if (!res.ok) throw new Error("info-panels: hálózati hiba");
         return res.json();
       })
-      .then((data) => {
-        console.log("✅ Info Panels betöltve (ajtókhoz):", data);
-        setInfoPanelsData(data);
-      })
+      .then((data) => setInfoPanelsData(data))
       .catch((err) =>
-        console.error("❌ Hiba az info panels lekérésekor:", err),
+        console.error("[ThreeScene] info-panels fetch failed:", err),
       );
   }, [API_URL]);
 
   useEffect(() => {
     fetch(`${API_URL}/locations/`)
       .then((res) => {
-        if (!res.ok) throw new Error("Hiba a hálózati válaszban");
+        if (!res.ok) throw new Error("locations: hálózati hiba");
         return res.json();
       })
-      .then((data) => {
-        console.log("✅ Locations betöltve (hologramokhoz):", data);
-        setLocationsData(data);
-      })
-      .catch((err) => console.error("❌ Hiba a locations lekérésekor:", err));
+      .then((data) => setLocationsData(data))
+      .catch((err) =>
+        console.error("[ThreeScene] locations fetch failed:", err),
+      );
   }, [API_URL]);
 
   useEffect(() => {

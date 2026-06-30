@@ -18,6 +18,28 @@ const TRIGGER_TO_FLOOR = {
   TriggerZone_B: 1,
   TriggerZone_C: 2,
 };
+const FLOOR_INDICES = [0, 1, 2];
+const FLOOR_PREFIX_REGEX = /^F(\d+)_/;
+
+// Door interaction.
+const DOOR_PROXIMITY_DISTANCE = 3; // m, max raycast distance to a door
+const LOCATION_PROXIMITY_DISTANCE_SQ = 4; // m², squared distance for visit trigger
+
+// Latency probe.
+const LATENCY_PROBE_INTERVAL_MS = 5000;
+
+// Adaptive quality control (frame-rate based pixel-ratio tuning).
+const FPS_SMOOTHING_NEW = 0.1; // weight of newest frame in moving average
+const FPS_SMOOTHING_OLD = 1 - FPS_SMOOTHING_NEW;
+const FPS_CLAMP_MAX = 240; // upper bound on a single frame's instantaneous FPS
+const ADAPTIVE_FPS_DOWN_THRESHOLD = 18; // below this avg fps, reduce pixel ratio
+const ADAPTIVE_FPS_UP_THRESHOLD = 28; // above this avg fps, gently restore
+const ADAPTIVE_RATIO_MIN = 0.5; // floor for the reduced pixel ratio
+const ADAPTIVE_RATIO_DOWN_FACTOR = 0.9; // multiplier applied when degrading
+const ADAPTIVE_RATIO_UP_FACTOR = 1.05; // multiplier applied when recovering
+
+// Spawn fallback (camera-space; the actual spawn happens via marker teleport in ThreeScene).
+const SPAWN_POS_CAMERA = new THREE.Vector3(-0.017955, -0.099324 + 1.7, 6.3213);
 
 export default function Building({
   controlsRef,
@@ -54,7 +76,6 @@ export default function Building({
 
   const { camera, gl } = useThree();
 
-  const SPAWN_POS = new THREE.Vector3(-0.017955, -0.099324 + 1.7, 6.3213);
   const didSnapRef = useRef(false);
 
   const avgFps = useRef(60);
@@ -66,7 +87,7 @@ export default function Building({
   useEffect(() => {
     const interval = setInterval(async () => {
       latencyRef.current = await measureLatency(`${API_URL}/health`);
-    }, 5000);
+    }, LATENCY_PROBE_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [API_URL]);
 
@@ -75,10 +96,6 @@ export default function Building({
   const cameraWorldPosRef = useRef(new THREE.Vector3());
   const locationMarkersRef = useRef([]);
   const proximityTriggeredRef = useRef(new Set());
-
-  // ✅ PROXIMITY LIMIT
-  const MAX_DISTANCE = 3;
-  const LOCATION_DISTANCE_SQ = 4;
 
   useEffect(() => {
     if (sessionId) metricsCollector.setSession(sessionId);
@@ -101,7 +118,7 @@ export default function Building({
     const foundLocationMarkers = [];
 
     if (!didSnapRef.current) {
-      camera.position.copy(SPAWN_POS);
+      camera.position.copy(SPAWN_POS_CAMERA);
       didSnapRef.current = true;
     }
 
@@ -114,7 +131,7 @@ export default function Building({
         child.visible = false;
       }
 
-      const floorMatch = child.name.match(/^F(\d+)_/);
+      const floorMatch = child.name.match(FLOOR_PREFIX_REGEX);
       if (floorMatch) {
         const floor = parseInt(floorMatch[1], 10);
         if (floorObjects.current[floor]) {
@@ -194,7 +211,14 @@ export default function Building({
     const metrics = metricsRef.current;
     metrics.begin();
 
-    // 🎯 RAYCAST
+    // The camera is parented to playerRoot (see ThreeScene.jsx), so
+    // `camera.position` is *local* to that parent (always (0, 1.7, 0)).
+    // Trigger-zone Box3 objects and location markers live in world space, so
+    // we resolve the camera's world position once and reuse it below.
+    const camWorldPos = cameraWorldPosRef.current;
+    camera.getWorldPosition(camWorldPos);
+
+    // Door pickup via screen-center raycast.
     raycaster.current.setFromCamera(centerScreen.current, camera);
     const intersects = raycaster.current.intersectObjects(
       gltf.scene.children,
@@ -202,13 +226,10 @@ export default function Building({
     );
 
     let hoveredRoot = null;
-
     for (const hit of intersects) {
       if (hit.object.userData.isDoor) {
         const root = hit.object.userData.doorRoot || hit.object;
-
-        // ✅ CORRECT PROXIMITY CHECK
-        if (hit.distance <= MAX_DISTANCE) {
+        if (hit.distance <= DOOR_PROXIMITY_DISTANCE) {
           hoveredRoot = root;
           break;
         }
@@ -220,17 +241,11 @@ export default function Building({
       setHoveredDoor(hoveredRoot);
     }
 
-    // 🏠 FLOOR DETECTION
-    // IMPORTANT: the camera is parented to playerRoot in ThreeScene.jsx, so
-    // `camera.position` is *local* to playerRoot (always (0, 1.7, 0)).
-    // The trigger-zone Box3 objects live in world space, so we must compare
-    // against the camera's *world* position.
-    const camPos = cameraWorldPosRef.current;
-    camera.getWorldPosition(camPos);
+    // Per-floor visibility — show only the floor that contains the camera.
     let detectedFloor = null;
-    for (const floor of [0, 1, 2]) {
+    for (const floor of FLOOR_INDICES) {
       const box = floorBoxes.current[floor];
-      if (box && box.containsPoint(camPos)) {
+      if (box && box.containsPoint(camWorldPos)) {
         detectedFloor = floor;
         break;
       }
@@ -240,7 +255,7 @@ export default function Building({
       currentFloorRef.current = detectedFloor;
       const inside = detectedFloor !== null;
       if (roofRef.current) roofRef.current.visible = !inside;
-      for (const floor of [0, 1, 2]) {
+      for (const floor of FLOOR_INDICES) {
         const list = floorObjects.current[floor];
         if (!list) continue;
         const visible = inside && floor === detectedFloor;
@@ -249,15 +264,13 @@ export default function Building({
       onInsideChange?.(inside);
     }
 
+    // Location-marker proximity trigger (once per marker per session).
     if (onLocationVisit && locationMarkersRef.current.length > 0) {
-      const cameraWorldPos = cameraWorldPosRef.current;
-      camera.getWorldPosition(cameraWorldPos);
-
       for (const marker of locationMarkersRef.current) {
         if (proximityTriggeredRef.current.has(marker.locationId)) continue;
         if (
-          cameraWorldPos.distanceToSquared(marker.position) <=
-          LOCATION_DISTANCE_SQ
+          camWorldPos.distanceToSquared(marker.position) <=
+          LOCATION_PROXIMITY_DISTANCE_SQ
         ) {
           proximityTriggeredRef.current.add(marker.locationId);
           onLocationVisit(marker.locationId);
@@ -265,16 +278,18 @@ export default function Building({
       }
     }
 
-    // 📊 METRICS
-    // Clamp fps: 1/delta is Infinity when delta=0 (happens on the very
-    // first frame in some renders). If Infinity reaches buildSamplesArray
-    // it taints the bucket average → JSON serializes as null → backend
-    // 422-rejects the whole metrics POST. Keeping fps as a finite,
-    // non-negative number capped at a sane upper bound avoids that.
+    // Frame metrics collection.
+    // Clamp fps: 1/delta is Infinity when delta=0 (can happen on the very
+    // first frame). If Infinity reaches buildSamplesArray it taints the
+    // bucket average → JSON serializes as null → backend 422-rejects the
+    // whole metrics POST. Keeping fps finite, non-negative and capped
+    // avoids that.
     const rawFps = 1 / delta;
     const fps =
-      Number.isFinite(rawFps) && rawFps >= 0 ? Math.min(rawFps, 240) : 0;
-    avgFps.current = avgFps.current * 0.9 + fps * 0.1;
+      Number.isFinite(rawFps) && rawFps >= 0
+        ? Math.min(rawFps, FPS_CLAMP_MAX)
+        : 0;
+    avgFps.current = avgFps.current * FPS_SMOOTHING_OLD + fps * FPS_SMOOTHING_NEW;
 
     let memoryMB = 0;
     if (performance?.memory) {
@@ -288,14 +303,17 @@ export default function Building({
       timestamp: performance.now(),
     });
 
+    // Adaptive pixel-ratio: degrade rendering resolution if the moving FPS
+    // average drops below the threshold, and gently restore it once the
+    // device recovers.
     const ratio = gl.getPixelRatio();
     const deviceRatio = window.devicePixelRatio;
 
-    if (avgFps.current < 18 && ratio > 0.5) {
-      gl.setPixelRatio(ratio * 0.9);
+    if (avgFps.current < ADAPTIVE_FPS_DOWN_THRESHOLD && ratio > ADAPTIVE_RATIO_MIN) {
+      gl.setPixelRatio(ratio * ADAPTIVE_RATIO_DOWN_FACTOR);
       metricsCollector.incrementQualityReductions();
-    } else if (avgFps.current > 28 && ratio < deviceRatio) {
-      gl.setPixelRatio(ratio * 1.05);
+    } else if (avgFps.current > ADAPTIVE_FPS_UP_THRESHOLD && ratio < deviceRatio) {
+      gl.setPixelRatio(ratio * ADAPTIVE_RATIO_UP_FACTOR);
     }
 
     metrics.end();

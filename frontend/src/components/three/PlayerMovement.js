@@ -271,12 +271,10 @@ export default function PlayerMovement(
     }
 
     if (root.position.y < FALL_DEATH_Y) {
-      console.log("Player fell! Resetting to spawn...");
-
+      // Safety net: if the player somehow falls through the geometry,
+      // teleport back to the body spawn point and zero the velocity.
       root.position.copy(SPAWN_POS);
-
-      camera.position.set(0, 1.7, 0);
-
+      camera.position.set(0, playerHeight, 0);
       velocity.current.set(0, 0, 0);
     }
 

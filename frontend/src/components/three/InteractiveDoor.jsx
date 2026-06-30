@@ -31,60 +31,23 @@ export default function InteractiveDoor({
 
   const meshName = mesh?.name || "";
 
-  // Enhanced database lookup with debug logging
+  // Match the door's mesh name against an info-panel entry. We try a few
+  // strategies in order of specificity so that small naming differences
+  // between Blender and the database do not break the link.
   const dbEntry = useMemo(() => {
-    if (!mesh || !databaseInfo || databaseInfo.length === 0) {
-      console.log("🚪 No database info available");
-      return null;
-    }
+    if (!mesh || !databaseInfo || databaseInfo.length === 0) return null;
 
-    console.log("🔍 Looking for door:", meshName);
-    console.log("📦 Available database entries:", databaseInfo);
-
-    // Try multiple matching strategies
+    const meshLower = meshName.toLowerCase();
     const found = databaseInfo.find((item) => {
-      // Exact match on coordinates_obj_name (this is the primary field for doors!)
-      if (item.coordinates_obj_name === meshName) {
-        console.log("✅ Found exact match on 'coordinates_obj_name' field");
-        return true;
-      }
-
-      // Case-insensitive match on coordinates_obj_name
-      if (item.coordinates_obj_name?.toLowerCase() === meshName.toLowerCase()) {
-        console.log(
-          "✅ Found case-insensitive match on 'coordinates_obj_name' field",
-        );
-        return true;
-      }
-
-      // Partial match (contains) on coordinates_obj_name
-      if (
-        item.coordinates_obj_name
-          ?.toLowerCase()
-          .includes(meshName.toLowerCase())
-      ) {
-        console.log("✅ Found partial match on 'coordinates_obj_name' field");
-        return true;
-      }
-
-      // Reverse: door name contains the coordinates_obj_name
-      if (
-        meshName
-          .toLowerCase()
-          .includes(item.coordinates_obj_name?.toLowerCase() || "")
-      ) {
-        console.log(
-          "✅ Found reverse partial match (door contains coordinates_obj_name)",
-        );
-        return true;
-      }
-
+      const coord = item.coordinates_obj_name;
+      if (!coord) return false;
+      const coordLower = coord.toLowerCase();
+      if (coord === meshName) return true;
+      if (coordLower === meshLower) return true;
+      if (coordLower.includes(meshLower)) return true;
+      if (meshLower.includes(coordLower)) return true;
       return false;
     });
-
-    if (!found) {
-      console.log("❌ No database entry found for:", meshName);
-    }
 
     return found || null;
   }, [mesh, databaseInfo, meshName]);

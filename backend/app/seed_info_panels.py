@@ -85,7 +85,7 @@ async def seed():
 
         except Exception as e:
             await session.rollback()
-            print(f"\n❌ Error: {type(e).__name__}: {e}", file=sys.stderr)
+            print(f"\n[ERROR] {type(e).__name__}: {e}", file=sys.stderr)
             raise
 
 
