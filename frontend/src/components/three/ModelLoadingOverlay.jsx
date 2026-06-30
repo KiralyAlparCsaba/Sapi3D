@@ -5,7 +5,6 @@ import "../../styles/ModelLoadingOverlay.css";
 const FADE_OUT_MS = 600;
 const MIN_DISPLAY_MS = 400;
 
-
 export default function ModelLoadingOverlay({
   visible,
   mode,
@@ -35,7 +34,7 @@ export default function ModelLoadingOverlay({
   if (!mounted) return null;
 
   const pct = Math.round(progress);
-  
+
   const showPicker = !mode && typeof onSelectMode === "function";
 
   return (
@@ -126,7 +125,7 @@ export default function ModelLoadingOverlay({
         )}
 
         {mode && (
-          
+
           <div className="model-loading-overlay__mode-confirmed">
             {mode === "multi" ? "👥 Multiplayer mód" : "👤 Egyedül mód"}
           </div>

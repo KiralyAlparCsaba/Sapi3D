@@ -204,10 +204,6 @@ export default function ThreeScene() {
   const API_URL = import.meta.env.VITE_API_URL || "/api";
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // Marker comes from a URL query param now (e.g. /app/model?marker=Foo).
-  // This survives "open in new tab", refresh, and shared/bookmarked links —
-  // unlike React Router's location.state, which only carries through a real
-  // in-app click and is silently dropped otherwise.
   const [searchParams] = useSearchParams();
   const markerToTeleport = searchParams.get("marker");
 
@@ -346,10 +342,7 @@ export default function ThreeScene() {
   const [modelReady, setModelReady] = useState(false);
   const handleModelReady = () => {
     setModelReady(true);
-    // Record load time: from ThreeScene mount (loadStartRef) to first
-    // onWorldReady fire. Stored in seconds — backend column is FLOAT.
-    // Only record once per mount so a remount (HMR / StrictMode double
-    // mount) doesn't overwrite a real measurement with a tiny one.
+
     if (metricsCollector.getLoadTime() == null) {
       const seconds = (performance.now() - loadStartRef.current) / 1000;
       if (Number.isFinite(seconds) && seconds >= 0) {
@@ -358,8 +351,6 @@ export default function ThreeScene() {
     }
   };
 
-  // Re-added for the merged single/multi-mode selector (the marker still
-  // comes from useSearchParams above; mode keeps using route state for now).
   const routeLocation = useLocation();
   const { isGuest, logout } = useAuth();
   const initialMode = isGuest
@@ -371,7 +362,6 @@ export default function ThreeScene() {
   const [playMode, setPlayMode] = useState(initialMode);
   const isMultiplayer = playMode === "multi";
 
-
   const [defaultMode] = useState(() => {
     if (isGuest) return "single";
     const v = sessionStorage.getItem("sapi3d.modelMode");
@@ -380,7 +370,7 @@ export default function ThreeScene() {
 
   const handleSelectMode = (mode) => {
     if (mode !== "single" && mode !== "multi") return;
-    // Guests can never enter multiplayer
+
     if (isGuest && mode === "multi") return;
     try {
       sessionStorage.setItem("sapi3d.modelMode", mode);
@@ -419,7 +409,7 @@ export default function ThreeScene() {
 
   useEffect(() => {
     if (isMobile) return;
-    // Singleplayer: no chat shortcuts make sense.
+
     if (!isMultiplayer) return;
     const isTypingTarget = (el) => {
       if (!el) return false;
@@ -491,10 +481,7 @@ export default function ThreeScene() {
 
   return (
     <>
-      {/* The overlay stays up until BOTH the GLB is parsed AND the user
-          has confirmed their play mode. The picker UI is rendered inside
-          the overlay (see ModelLoadingOverlay) — passing mode/onSelectMode
-          activates it. */}
+
       <ModelLoadingOverlay
         visible={!modelReady || playMode == null}
         mode={playMode}
@@ -512,9 +499,6 @@ export default function ThreeScene() {
         ← Vissza a főoldalra
       </button>
 
-      {/* All multiplayer UI is gated on isMultiplayer. In singleplayer
-          mode the chat launcher, picker, chat window, and MP status pill
-          are hidden — the scene looks like a regular solo walkthrough. */}
       {isMultiplayer && activeChatUserId == null && !pickerOpen && (
         <button
           onClick={() => setPickerOpen(true)}
@@ -592,13 +576,10 @@ export default function ThreeScene() {
           onInfoPanelOpen={handleInfoPanelOpen}
           onLocationVisit={handleLocationVisit}
           remotePlayers={remotePlayers}
-          // Skip sendPosition in singleplayer so we don't run the
-          // per-frame camera-direction computation when nobody's
-          // listening on the WS anyway.
+
           sendPosition={isMultiplayer ? sendPosition : undefined}
           onModelReady={handleModelReady}
-          // Tap-to-chat is mobile-only — and obviously irrelevant
-          // when multiplayer is off entirely.
+
           onSelectPlayer={
             isMobile && isMultiplayer ? openChat : undefined
           }

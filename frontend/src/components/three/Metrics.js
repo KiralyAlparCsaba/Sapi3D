@@ -1,4 +1,3 @@
-// src/components/three/Metrics.js
 import Stats from "three/examples/jsm/libs/stats.module.js";
 
 export default class Metrics {
@@ -18,7 +17,6 @@ export default class Metrics {
 
     this.maxMemoryMB = 0;
 
-    // IMPORTANT: store samples here (for weighted averaging later)
     this.samples = [];
   }
 
@@ -30,10 +28,8 @@ export default class Metrics {
   end() {
     this.stats.end();
 
-    // FPS from stats.js
     const fps = Math.round(this.stats.fps || 0);
 
-    // Memory
     let memoryMB = 0;
     if (performance?.memory) {
       memoryMB = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1);
@@ -41,7 +37,6 @@ export default class Metrics {
       memoryMB = parseFloat(memoryMB);
     }
 
-    // Render stats
     const { triangles, calls } = this.renderer.info.render;
 
     this.extraMetrics.innerHTML = `
@@ -50,26 +45,22 @@ export default class Metrics {
       Mem: ${memoryMB} MB (Max: ${this.maxMemoryMB.toFixed(1)})
     `;
 
-    // Add timestamped sample for later weighted averaging
     this.samples.push({
       fps,
       memory_mb: memoryMB,
-      latency_ms: 0,         // will be filled by frontend latency checker
+      latency_ms: 0,
       timestamp: performance.now()
     });
   }
 
-  // Return all collected samples
   getSamples() {
     return this.samples;
   }
 
-  // Return peak memory
   getPeakMemory() {
     return this.maxMemoryMB;
   }
 
-  // Allow updating latency from outside
   setLatency(ms) {
     if (this.samples.length > 0) {
       this.samples[this.samples.length - 1].latency_ms = ms;

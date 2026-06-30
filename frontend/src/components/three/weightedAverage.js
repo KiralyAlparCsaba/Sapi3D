@@ -5,7 +5,7 @@ export function weightedAverage(samples, key) {
   for (let i = 1; i < samples.length; i++) {
     const prev = samples[i - 1];
     const curr = samples[i];
-    const dt = (curr.timestamp - prev.timestamp) / 1000; // seconds
+    const dt = (curr.timestamp - prev.timestamp) / 1000;
 
     if (dt <= 0) continue;
 

@@ -14,15 +14,14 @@ export default class MobilePointerLockControls {
         this.joystickLook = { x: 0, y: 0 };
     }
 
-    
     setLook(x, y) {
         this.joystickLook.x = x;
         this.joystickLook.y = y;
     }
 
     update(delta) {
-        
-        const movementX = this.joystickLook.x * 5; 
+
+        const movementX = this.joystickLook.x * 5;
         const movementY = this.joystickLook.y * 5;
 
         if (movementX !== 0 || movementY !== 0) {

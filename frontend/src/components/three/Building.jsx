@@ -22,12 +22,7 @@ export default function Building({
   locationsData,
   playMode,
 }) {
-  // IMPORTANT (production): never default to "http://localhost:8000".
-  // In the user's browser, "localhost" points to their own device and is often blocked
-  // (loopback protection) when your site is served over HTTPS.
-  //
-  // Our production nginx proxies the backend under the same origin at /api.
-  // So the model endpoint becomes: /api/model
+
   const API_URL = import.meta.env.VITE_API_URL || "/api";
   const gltf = useGLTF(`${API_URL}/model`);
 
@@ -53,7 +48,6 @@ export default function Building({
 
   const latencyRef = useRef(0);
 
-  // Latency mérés 5 másodpercenként
   useEffect(() => {
     const interval = setInterval(async () => {
       latencyRef.current = await measureLatency(`${API_URL}/health`);
@@ -61,9 +55,6 @@ export default function Building({
     return () => clearInterval(interval);
   }, [API_URL]);
 
-  // Periódikus metrika feltöltés 30 másodpercenként
-  // playMode ref: mindig az aktuális értéket olvassuk az intervalon belül,
-  // nem csak a mountkori értéket — így a mode váltás is követve van.
   const playModeRef = useRef(playMode);
   useEffect(() => { playModeRef.current = playMode; }, [playMode]);
 
@@ -102,7 +93,6 @@ export default function Building({
   const locationMarkersRef = useRef([]);
   const proximityTriggeredRef = useRef(new Set());
 
-  // ✅ PROXIMITY LIMIT
   const MAX_DISTANCE = 3;
   const LOCATION_DISTANCE_SQ = 4;
 
@@ -204,7 +194,6 @@ export default function Building({
     const metrics = metricsRef.current;
     metrics.begin();
 
-    // 🎯 RAYCAST
     raycaster.current.setFromCamera(centerScreen.current, camera);
     const intersects = raycaster.current.intersectObjects(
       gltf.scene.children,
@@ -217,7 +206,6 @@ export default function Building({
       if (hit.object.userData.isDoor) {
         const root = hit.object.userData.doorRoot || hit.object;
 
-        // ✅ CORRECT PROXIMITY CHECK
         if (hit.distance <= MAX_DISTANCE) {
           hoveredRoot = root;
           break;
@@ -230,7 +218,6 @@ export default function Building({
       setHoveredDoor(hoveredRoot);
     }
 
-    // 🏠 INSIDE CHECK
     const camPos = camera.position;
     let inside = false;
     for (const box of triggerBoxes.current) {
@@ -263,12 +250,6 @@ export default function Building({
       }
     }
 
-    // 📊 METRICS
-    // Clamp fps: 1/delta is Infinity when delta=0 (happens on the very
-    // first frame in some renders). If Infinity reaches buildSamplesArray
-    // it taints the bucket average → JSON serializes as null → backend
-    // 422-rejects the whole metrics POST. Keeping fps as a finite,
-    // non-negative number capped at a sane upper bound avoids that.
     const rawFps = 1 / delta;
     const fps =
       Number.isFinite(rawFps) && rawFps >= 0 ? Math.min(rawFps, 240) : 0;
