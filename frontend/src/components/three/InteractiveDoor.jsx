@@ -33,23 +33,23 @@ export default function InteractiveDoor({
 
   const dbEntry = useMemo(() => {
     if (!mesh || !databaseInfo || databaseInfo.length === 0) {
-      console.log("🚪 No database info available");
+      console.log(" No database info available");
       return null;
     }
 
-    console.log("🔍 Looking for door:", meshName);
-    console.log("📦 Available database entries:", databaseInfo);
+    console.log(" Looking for door:", meshName);
+    console.log(" Available database entries:", databaseInfo);
 
     const found = databaseInfo.find((item) => {
 
       if (item.coordinates_obj_name === meshName) {
-        console.log("✅ Found exact match on 'coordinates_obj_name' field");
+        console.log(" Found exact match on 'coordinates_obj_name' field");
         return true;
       }
 
       if (item.coordinates_obj_name?.toLowerCase() === meshName.toLowerCase()) {
         console.log(
-          "✅ Found case-insensitive match on 'coordinates_obj_name' field",
+          " Found case-insensitive match on 'coordinates_obj_name' field",
         );
         return true;
       }
@@ -59,7 +59,7 @@ export default function InteractiveDoor({
           ?.toLowerCase()
           .includes(meshName.toLowerCase())
       ) {
-        console.log("✅ Found partial match on 'coordinates_obj_name' field");
+        console.log(" Found partial match on 'coordinates_obj_name' field");
         return true;
       }
 
@@ -69,7 +69,7 @@ export default function InteractiveDoor({
           .includes(item.coordinates_obj_name?.toLowerCase() || "")
       ) {
         console.log(
-          "✅ Found reverse partial match (door contains coordinates_obj_name)",
+          " Found reverse partial match (door contains coordinates_obj_name)",
         );
         return true;
       }
@@ -78,7 +78,7 @@ export default function InteractiveDoor({
     });
 
     if (!found) {
-      console.log("❌ No database entry found for:", meshName);
+      console.log(" No database entry found for:", meshName);
     }
 
     return found || null;

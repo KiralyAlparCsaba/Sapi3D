@@ -16,9 +16,6 @@ function fetchManifest() {
     .then((data) => {
       const variants = Array.isArray(data?.variants) ? data.variants : [];
       cachedVariants = variants;
-      console.log(
-        `[Avatars] Manifest loaded: ${variants.length} variant(s)`,
-      );
       return variants;
     })
     .catch((err) => {
