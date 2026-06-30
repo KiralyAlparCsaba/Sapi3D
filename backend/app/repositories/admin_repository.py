@@ -23,10 +23,6 @@ class AdminRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    # ─────────────────────────────────────────────
-    # OVERVIEW (stat cards)
-    # ─────────────────────────────────────────────
-
     async def get_dashboard_overview(self) -> DashboardOverview:
         now = datetime.now(timezone.utc)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -129,10 +125,6 @@ class AdminRepository:
             guest_logins_week=guest_logins_week,
         )
 
-    # ─────────────────────────────────────────────
-    # ACTIVE SESSIONS (live feed table)
-    # ─────────────────────────────────────────────
-
     async def get_active_sessions_with_metrics(self) -> List[ActiveSessionInfo]:
         """
         Csak valóban aktív session-öket ad vissza:
@@ -208,10 +200,6 @@ class AdminRepository:
             for r in rows
         ]
 
-    # ─────────────────────────────────────────────
-    # METRICS HISTORY (line/area charts)
-    # ─────────────────────────────────────────────
-
     async def get_metrics_history(self, hours: int = 24) -> List[MetricPoint]:
         """
         Returns hourly-bucketed avg FPS, memory, latency for the past N hours.
@@ -253,10 +241,6 @@ class AdminRepository:
             )
             for r in rows
         ]
-
-    # ─────────────────────────────────────────────
-    # ENGAGEMENT (pie + bar charts)
-    # ─────────────────────────────────────────────
 
     async def get_engagement_data(self) -> EngagementData:
         # Device breakdown — count all sessions per device_type
@@ -324,10 +308,6 @@ class AdminRepository:
             duration_buckets=duration_buckets,
             mode_breakdown=mode_breakdown,
         )
-
-    # ─────────────────────────────────────────────
-    # DEVICE × MODE PERFORMANCE MATRIX
-    # ─────────────────────────────────────────────
 
     async def get_device_mode_metrics(self, hours: int = 24) -> List[DeviceModeRow]:
         """

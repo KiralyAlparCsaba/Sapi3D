@@ -13,10 +13,6 @@ from models.achievement import (
 from repositories.base import BaseRepository
 
 
-# ════════════════════════════════════════
-# Achievement Repository
-# ════════════════════════════════════════
-
 class AchievementRepository(BaseRepository[Achievement]):
     """Repository for Achievement model with custom queries."""
     
@@ -28,10 +24,6 @@ class AchievementRepository(BaseRepository[Achievement]):
         result = await self.db.execute(select(Achievement))
         return list(result.scalars().all())
 
-
-# ════════════════════════════════════════
-# UserAchievement Repository
-# ════════════════════════════════════════
 
 class UserAchievementRepository(BaseRepository[UserAchievement]):
     """Repository for UserAchievement model."""
@@ -61,10 +53,6 @@ class UserAchievementRepository(BaseRepository[UserAchievement]):
         ua = await self.get_by_user_and_achievement(user_id, achv_id)
         return ua is not None
 
-
-# ════════════════════════════════════════
-# AchvProgress Repository
-# ════════════════════════════════════════
 
 class AchvProgressRepository(BaseRepository[AchvProgress]):
     """Repository for AchvProgress model."""
@@ -122,10 +110,6 @@ class AchvProgressRepository(BaseRepository[AchvProgress]):
         return list(result.scalars().all())
 
 
-# ════════════════════════════════════════
-# AchvProgressPanel Repository
-# ════════════════════════════════════════
-
 class AchvProgressPanelRepository(BaseRepository[AchvProgressPanel]):
     """Repository for AchvProgressPanel model (many-to-many)."""
     
@@ -160,10 +144,6 @@ class AchvProgressPanelRepository(BaseRepository[AchvProgressPanel]):
         )
         return len(list(result.scalars().all()))
 
-
-# ════════════════════════════════════════
-# AchvProgressLocation Repository
-# ════════════════════════════════════════
 
 class AchvProgressLocationRepository(BaseRepository[AchvProgressLocation]):
     """Repository for AchvProgressLocation model (many-to-many)."""
@@ -213,10 +193,6 @@ class AchvProgressLocationRepository(BaseRepository[AchvProgressLocation]):
         visited_ids = await self.get_location_ids(progress_id)
         return all(loc_id in visited_ids for loc_id in required_location_ids)
 
-
-# ════════════════════════════════════════
-# AchievementRequirement Repository
-# ════════════════════════════════════════
 
 class AchievementRequirementRepository(BaseRepository[AchievementRequirement]):
     """Repository for AchievementRequirement model."""
