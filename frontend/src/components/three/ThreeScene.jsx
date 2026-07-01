@@ -16,6 +16,29 @@ import ChatWindow from "./ChatWindow";
 import PlayerPickerPanel from "./PlayerPickerPanel";
 import "../../styles/ThreeScene.css";
 
+// --- Konfigurációs konstansok ---
+const DEFAULT_API_URL = "/api";
+
+// Kamera / mozgás
+const EYE_HEIGHT = 1.7; // kamera szemmagasság a player rooton belül
+const MOVE_SPEED_MOBILE = 7.0;
+const MOVE_SPEED_DESKTOP = 10.0;
+const CAMERA_FOV = 75;
+
+// Teleport a markerhez
+const TELEPORT_RAY_HEIGHT = 0.5; // ilyen magasról indul a lefelé raycast
+
+// Fények
+const AMBIENT_LIGHT_INTENSITY = 0.6;
+const DIRECTIONAL_LIGHT_INTENSITY = 1.2;
+const DIRECTIONAL_LIGHT_POSITION = [5, 10, 7.5];
+
+// Achievement követés
+const ACHIEVEMENT_THROTTLE_MS = 2000; // ne küldjünk ugyanabból túl gyakran
+
+// UI
+const MAX_UNREAD_BADGE = 99;
+
 function SceneContent({
   controlsRef,
   sessionId,
@@ -43,7 +66,7 @@ function SceneContent({
     scene.add(playerRootRef.current);
 
     playerRootRef.current.add(camera);
-    camera.position.set(0, 1.7, 0);
+    camera.position.set(0, EYE_HEIGHT, 0);
 
     return () => {
       if (camera.parent === playerRootRef.current) {
@@ -63,7 +86,7 @@ function SceneContent({
     controlsRef,
     collisionRef,
     playerRootRef,
-    isMobile ? 7.0 : 10.0,
+    isMobile ? MOVE_SPEED_MOBILE : MOVE_SPEED_DESKTOP,
   );
 
   useFrame((_, delta) => {
@@ -138,7 +161,7 @@ function SceneContent({
           playerRootRef.current.position.z = markerTrueCenter.z;
 
           const downOrigin = markerTrueCenter.clone();
-          downOrigin.y += 0.5;
+          downOrigin.y += TELEPORT_RAY_HEIGHT;
 
           const downRay = new THREE.Raycaster(
             downOrigin,
@@ -162,7 +185,7 @@ function SceneContent({
           euler.z = 0;
           playerRootRef.current.quaternion.setFromEuler(euler);
 
-          camera.position.set(0, 1.7, 0);
+          camera.position.set(0, EYE_HEIGHT, 0);
           camera.rotation.set(0, 0, 0);
 
           if (controlsRef.current?.update) controlsRef.current.update(0);
@@ -197,7 +220,7 @@ export default function ThreeScene() {
   const [infoPanelsData, setInfoPanelsData] = useState([]);
   const [locationsData, setLocationsData] = useState([]);
 
-  const API_URL = import.meta.env.VITE_API_URL || "/api";
+  const API_URL = import.meta.env.VITE_API_URL || DEFAULT_API_URL;
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const [searchParams] = useSearchParams();
@@ -257,7 +280,7 @@ export default function ThreeScene() {
 
   const sendModelClose = () => {
     const now = Date.now();
-    if (now - modelCloseLastSentRef.current < 2000) return;
+    if (now - modelCloseLastSentRef.current < ACHIEVEMENT_THROTTLE_MS) return;
     modelCloseLastSentRef.current = now;
 
     const token = sessionStorage.getItem("token");
@@ -276,7 +299,7 @@ export default function ThreeScene() {
     if (!panelId) return;
     const now = Date.now();
     const lastSentAt = panelTrackRef.current[panelId] || 0;
-    if (now - lastSentAt < 2000) return;
+    if (now - lastSentAt < ACHIEVEMENT_THROTTLE_MS) return;
     panelTrackRef.current[panelId] = now;
 
     api
@@ -295,7 +318,7 @@ export default function ThreeScene() {
     if (!locationId) return;
     const now = Date.now();
     const lastSentAt = locationTrackRef.current[locationId] || 0;
-    if (now - lastSentAt < 2000) return;
+    if (now - lastSentAt < ACHIEVEMENT_THROTTLE_MS) return;
     locationTrackRef.current[locationId] = now;
 
     api
@@ -507,7 +530,7 @@ export default function ThreeScene() {
 
           {totalUnread > 0 && (
             <span className="three-chat-launcher__badge">
-              {totalUnread > 99 ? "99+" : totalUnread}
+              {totalUnread > MAX_UNREAD_BADGE ? `${MAX_UNREAD_BADGE}+` : totalUnread}
             </span>
           )}
         </button>
@@ -551,11 +574,14 @@ export default function ThreeScene() {
       )}
 
       <Canvas
-        camera={{ position: [0, 1.7, 0], fov: 75 }}
+        camera={{ position: [0, EYE_HEIGHT, 0], fov: CAMERA_FOV }}
         className="three-canvas"
       >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 10, 7.5]} intensity={1.2} />
+        <ambientLight intensity={AMBIENT_LIGHT_INTENSITY} />
+        <directionalLight
+          position={DIRECTIONAL_LIGHT_POSITION}
+          intensity={DIRECTIONAL_LIGHT_INTENSITY}
+        />
 
         <SceneContent
           controlsRef={controlsRef}

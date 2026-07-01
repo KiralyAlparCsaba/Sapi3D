@@ -11,6 +11,43 @@ import HologramPanel from "./HologramPanel";
 import InteractiveDoor from "./InteractiveDoor";
 import api from "../../services/api";
 
+// --- Konfigurációs konstansok ---
+const DEFAULT_API_URL = "/api";
+
+// Spawn pozíció (kamera kezdőhelye)
+const SPAWN_X = -0.017955;
+const SPAWN_Y = -0.099324;
+const SPAWN_EYE_HEIGHT = 1.7;
+const SPAWN_Z = 6.3213;
+
+// Időzítők (ms)
+const LATENCY_POLL_INTERVAL_MS = 5000;
+const METRICS_UPLOAD_INTERVAL_MS = 30_000;
+
+// Távolságok
+const MAX_DISTANCE = 3;
+const LOCATION_DISTANCE_SQ = 4;
+
+// FPS
+const INITIAL_AVG_FPS = 60;
+const FPS_SMOOTHING = 0.1; // exponenciális átlag súlya az új mintára
+const MAX_FPS = 240;
+
+// Adaptív felbontás
+const MIN_PIXEL_RATIO = 0.5;
+const LOW_FPS_THRESHOLD = 18;
+const HIGH_FPS_THRESHOLD = 28;
+const PIXEL_RATIO_DOWN_FACTOR = 0.9;
+const PIXEL_RATIO_UP_FACTOR = 1.05;
+
+// Objektum nevek a GLTF jelenetben
+const ROOF_NAME = "Roof";
+const INTERIOR_NAME = "Interior";
+const TRIGGER_ZONE_PREFIX = "TriggerZone";
+const COLLIDER_PREFIX = "COL";
+const DOOR_KEYWORD = "door";
+const MARKER_KEYWORD = "marker";
+
 export default function Building({
   controlsRef,
   onInsideChange,
@@ -23,7 +60,7 @@ export default function Building({
   playMode,
 }) {
 
-  const API_URL = import.meta.env.VITE_API_URL || "/api";
+  const API_URL = import.meta.env.VITE_API_URL || DEFAULT_API_URL;
   const gltf = useGLTF(`${API_URL}/model`);
 
   const roofRef = useRef();
@@ -39,10 +76,10 @@ export default function Building({
 
   const { camera, gl } = useThree();
 
-  const SPAWN_POS = new THREE.Vector3(-0.017955, -0.099324 + 1.7, 6.3213);
+  const SPAWN_POS = new THREE.Vector3(SPAWN_X, SPAWN_Y + SPAWN_EYE_HEIGHT, SPAWN_Z);
   const didSnapRef = useRef(false);
 
-  const avgFps = useRef(60);
+  const avgFps = useRef(INITIAL_AVG_FPS);
   const metricsRef = useRef();
   if (!metricsRef.current) metricsRef.current = new Metrics(gl);
 
@@ -51,7 +88,7 @@ export default function Building({
   useEffect(() => {
     const interval = setInterval(async () => {
       latencyRef.current = await measureLatency(`${API_URL}/health`);
-    }, 5000);
+    }, LATENCY_POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [API_URL]);
 
@@ -82,7 +119,7 @@ export default function Building({
       } catch (err) {
         console.error("[metrics] Periódikus feltöltés sikertelen:", err);
       }
-    }, 30_000);
+    }, METRICS_UPLOAD_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, [sessionId]);
@@ -92,9 +129,6 @@ export default function Building({
   const cameraWorldPosRef = useRef(new THREE.Vector3());
   const locationMarkersRef = useRef([]);
   const proximityTriggeredRef = useRef(new Set());
-
-  const MAX_DISTANCE = 3;
-  const LOCATION_DISTANCE_SQ = 4;
 
   useEffect(() => {
     if (sessionId) metricsCollector.setSession(sessionId);
@@ -120,20 +154,20 @@ export default function Building({
     }
 
     gltf.scene.traverse((child) => {
-      if (child.name === "Roof") roofRef.current = child;
-      if (child.name === "Interior") interiorRef.current = child;
+      if (child.name === ROOF_NAME) roofRef.current = child;
+      if (child.name === INTERIOR_NAME) interiorRef.current = child;
 
-      if (child.name.startsWith("TriggerZone")) {
+      if (child.name.startsWith(TRIGGER_ZONE_PREFIX)) {
         const box = new THREE.Box3().setFromObject(child);
         triggerBoxes.current.push(box);
         child.visible = false;
       }
 
-      if (child.name.startsWith("COL")) {
+      if (child.name.startsWith(COLLIDER_PREFIX)) {
         child.visible = false;
       }
 
-      if (child.name.toLowerCase().includes("door")) {
+      if (child.name.toLowerCase().includes(DOOR_KEYWORD)) {
         child.userData.isDoor = true;
         child.userData.doorRoot = child;
         doorObjects.current.push(child);
@@ -146,7 +180,7 @@ export default function Building({
         });
       }
 
-      if (child.name.toLowerCase().includes("marker")) {
+      if (child.name.toLowerCase().includes(MARKER_KEYWORD)) {
         child.visible = false;
 
         const box = new THREE.Box3().setFromObject(child);
@@ -252,8 +286,8 @@ export default function Building({
 
     const rawFps = 1 / delta;
     const fps =
-      Number.isFinite(rawFps) && rawFps >= 0 ? Math.min(rawFps, 240) : 0;
-    avgFps.current = avgFps.current * 0.9 + fps * 0.1;
+      Number.isFinite(rawFps) && rawFps >= 0 ? Math.min(rawFps, MAX_FPS) : 0;
+    avgFps.current = avgFps.current * (1 - FPS_SMOOTHING) + fps * FPS_SMOOTHING;
 
     let memoryMB = 0;
     if (performance?.memory) {
@@ -270,11 +304,11 @@ export default function Building({
     const ratio = gl.getPixelRatio();
     const deviceRatio = window.devicePixelRatio;
 
-    if (avgFps.current < 18 && ratio > 0.5) {
-      gl.setPixelRatio(ratio * 0.9);
+    if (avgFps.current < LOW_FPS_THRESHOLD && ratio > MIN_PIXEL_RATIO) {
+      gl.setPixelRatio(ratio * PIXEL_RATIO_DOWN_FACTOR);
       metricsCollector.incrementQualityReductions();
-    } else if (avgFps.current > 28 && ratio < deviceRatio) {
-      gl.setPixelRatio(ratio * 1.05);
+    } else if (avgFps.current > HIGH_FPS_THRESHOLD && ratio < deviceRatio) {
+      gl.setPixelRatio(ratio * PIXEL_RATIO_UP_FACTOR);
     }
 
     metrics.end();

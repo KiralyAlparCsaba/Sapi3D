@@ -6,6 +6,7 @@ const MIN_DELTA_ROT = 0.02;
 const CONNECT_TIMEOUT_MS = 6000;
 const FAST_RECONNECT_MS = 500;
 const NORMAL_RECONNECT_MS = 2000;
+const HEARTBEAT_MS = 2000; // ennyi mozdulatlanság után is küldünk pozíciót
 
 function buildWsUrl(token) {
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -285,7 +286,7 @@ export default function useMultiplayer({ enabled = true } = {}) {
       Math.abs(dz) > MIN_DELTA_POS ||
       Math.abs(dr) > MIN_DELTA_ROT;
 
-    const heartbeat = now - last.ts > 2000;
+    const heartbeat = now - last.ts > HEARTBEAT_MS;
     if (!movedEnough && !heartbeat) return;
 
     ws.send(

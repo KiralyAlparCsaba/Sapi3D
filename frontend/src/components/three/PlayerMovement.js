@@ -35,6 +35,18 @@ export default function PlayerMovement(
   const MAX_SUBSTEP_DIST = 0.07;
   const SKIN_WALL = 0.05;
   const HEIGHTS = [-1.2, -0.7, -0.2];
+
+  // Sebesség-csillapítás ütközéskor
+  const DIAG_BLOCKED_DAMP = 0.6; // átlós lépés részben blokkolva
+  const AXIS_BLOCKED_DAMP = 0.5; // egytengelyes lépés részben blokkolva
+
+  // Talaj-detektálás
+  const GROUND_RAY_START_OFFSET = 0.2; // ennyivel a láb fölül indul a lefelé ray
+  const GROUND_RAY_EXTRA = 0.5; // ray extra hossza a playerHeight + lépcső alatt
+
+  // Numerikus epszilonok
+  const EPS_DIR = 1e-6; // nulla hosszú irányvektor küszöb
+  const EPS_MOVE = 1e-8; // minimális elmozdulás küszöb
   const collidableRef = useRef([]);
   const collidableDirtyRef = useRef(true);
 
@@ -150,7 +162,7 @@ export default function PlayerMovement(
         .addScaledVector(frontDir, moveZ);
 
       const dist = worldStep.length();
-      if (dist < 1e-6) return { ok: true, scale: 1, blocked: false };
+      if (dist < EPS_DIR) return { ok: true, scale: 1, blocked: false };
 
       checkDirTmp.copy(worldStep).multiplyScalar(1 / dist);
 
@@ -199,12 +211,12 @@ export default function PlayerMovement(
       if (diag.ok && diag.scale > 0) {
         const sx = stepX * diag.scale;
         const sz = stepZ * diag.scale;
-        if (Math.abs(sx) > 1e-8) root.position.addScaledVector(sideDir, sx);
-        if (Math.abs(sz) > 1e-8) root.position.addScaledVector(frontDir, sz);
+        if (Math.abs(sx) > EPS_MOVE) root.position.addScaledVector(sideDir, sx);
+        if (Math.abs(sz) > EPS_MOVE) root.position.addScaledVector(frontDir, sz);
 
         if (diag.blocked) {
-          velocity.current.x *= 0.6;
-          velocity.current.z *= 0.6;
+          velocity.current.x *= DIAG_BLOCKED_DAMP;
+          velocity.current.z *= DIAG_BLOCKED_DAMP;
         }
       } else {
         let movedX = false;
@@ -213,10 +225,10 @@ export default function PlayerMovement(
         const cx = clampStep(stepX, 0);
         if (cx.ok && cx.scale > 0) {
           const sx = stepX * cx.scale;
-          if (Math.abs(sx) > 1e-8) root.position.addScaledVector(sideDir, sx);
+          if (Math.abs(sx) > EPS_MOVE) root.position.addScaledVector(sideDir, sx);
           movedX = true;
 
-          if (cx.blocked) velocity.current.x *= 0.5;
+          if (cx.blocked) velocity.current.x *= AXIS_BLOCKED_DAMP;
         } else {
           velocity.current.x = 0;
         }
@@ -224,10 +236,10 @@ export default function PlayerMovement(
         const cz = clampStep(0, stepZ);
         if (cz.ok && cz.scale > 0) {
           const sz = stepZ * cz.scale;
-          if (Math.abs(sz) > 1e-8) root.position.addScaledVector(frontDir, sz);
+          if (Math.abs(sz) > EPS_MOVE) root.position.addScaledVector(frontDir, sz);
           movedZ = true;
 
-          if (cz.blocked) velocity.current.z *= 0.5;
+          if (cz.blocked) velocity.current.z *= AXIS_BLOCKED_DAMP;
         } else {
           velocity.current.z = 0;
         }
@@ -241,13 +253,13 @@ export default function PlayerMovement(
     }
 
     const downOrigin = originRef.current.copy(camWorldPosRef.current);
-    downOrigin.y += 0.2;
+    downOrigin.y += GROUND_RAY_START_OFFSET;
 
     const downRay = new THREE.Raycaster(
       downOrigin,
       new THREE.Vector3(0, -1, 0),
       0,
-      playerHeight + MAX_STEP_HEIGHT + 0.5,
+      playerHeight + MAX_STEP_HEIGHT + GROUND_RAY_EXTRA,
     );
 
     const floorHits = downRay.intersectObjects(collidable, true);
@@ -274,7 +286,7 @@ export default function PlayerMovement(
       // Safety net: if the player somehow falls through the geometry,
       // teleport back to the body spawn point and zero the velocity.
       root.position.copy(SPAWN_POS);
-      camera.position.set(0, playerHeight, 0);
+      camera.position.set(0, playerHeight, 0); // szemmagasság = playerHeight
       velocity.current.set(0, 0, 0);
     }
 
