@@ -32,8 +32,13 @@ class SessionBase(BaseModel):
 
 
 class SessionCreate(SessionBase):
-    """Schema for creating a Session."""
-    user_id: int
+    """Schema for creating a Session.
+
+    user_id is optional in the request body: the /sessions endpoint always
+    overrides it with the authenticated user's ID from the JWT. It remains
+    here so internal callers (AuthService.login) can still set it explicitly.
+    """
+    user_id: Optional[int] = None
     device_id: Optional[int] = None
     started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

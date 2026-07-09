@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
+from core.security import require_admin
 from schemas.location import InfoPanelCreate, InfoPanelResponse, InfoPanelUpdate
 from services.info_panels_service import InfoPanelsService
 
@@ -14,8 +15,10 @@ def get_info_panels_service(db: AsyncSession = Depends(get_db)) -> InfoPanelsSer
 @router.post("/", response_model=InfoPanelResponse, status_code=status.HTTP_201_CREATED)
 async def create_info_panel(
     panel_data: InfoPanelCreate,
+    _: None = Depends(require_admin),
     service: InfoPanelsService = Depends(get_info_panels_service)
 ):
+    """Create an info panel (admin only)."""
     return await service.create_panel(panel_data)
 
 @router.get("/", response_model=List[InfoPanelResponse])
@@ -37,13 +40,17 @@ async def get_info_panel(
 async def update_info_panel(
     panel_id: int,
     panel_data: InfoPanelUpdate,
+    _: None = Depends(require_admin),
     service: InfoPanelsService = Depends(get_info_panels_service)
 ):
+    """Update an info panel (admin only)."""
     return await service.update_panel(panel_id, panel_data)
 
 @router.delete("/{panel_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_info_panel(
     panel_id: int,
+    _: None = Depends(require_admin),
     service: InfoPanelsService = Depends(get_info_panels_service)
 ):
+    """Delete an info panel (admin only)."""
     await service.delete_panel(panel_id)

@@ -107,10 +107,17 @@ export default function App() {
           quality_reductions: safeOptionalInt(metricsCollector.getQualityReductions()),
         };
 
-        navigator.sendBeacon(
-          `/api/sessions/${sessionId}/metrics`,
-          new Blob([JSON.stringify(payload)], { type: "application/json" })
-        );
+        // sendBeacon cannot set an Authorization header; the metrics
+        // endpoint now requires auth, so use keepalive fetch instead.
+        fetch(`/api/sessions/${sessionId}/metrics`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        }).catch(() => {});
       }
 
       const endPayload = {

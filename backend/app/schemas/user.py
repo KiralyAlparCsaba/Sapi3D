@@ -29,13 +29,18 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    """Schema for creating a User."""
+    """Schema for creating a User.
+
+    NOTE: role_id is intentionally NOT accepted from the client — the server
+    always assigns the default "user" role. Role changes are admin-only.
+    """
     password: str = Field(..., min_length=8, max_length=100)
-    role_id: int = Field(default=1) 
 
     @field_validator("password")
     @classmethod
     def validate_password_strength(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Password must be at most 72 bytes (bcrypt limit)")
         missing = []
         if not any(ch.islower() for ch in value):
             missing.append("at least one lowercase letter")
@@ -50,7 +55,11 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    """Schema for updating a User."""
+    """Schema for updating a User.
+
+    role_id may only be applied when the caller is an admin — the router is
+    responsible for stripping it for non-admin callers.
+    """
     username: Optional[str] = Field(None, min_length=3, max_length=50)
     email: Optional[EmailStr] = None
     avatar_url: Optional[str] = Field(None, max_length=500)

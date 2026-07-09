@@ -24,18 +24,18 @@ class UserService:
         if await self.user_repo.get_by_email(user_data.email):
             raise HTTPException(status_code=400, detail="Email already exists")
 
-        
-        role = await self.role_repo.get_by_id(user_data.role_id)
+        # Always assign the default "user" role — role_id is never accepted
+        # from the client (see SAPI-001 in AUDIT_FINDINGS.md).
+        role = await self.role_repo.get_by_name("user")
         if not role:
-            role = await self.role_repo.get_by_name("user")
+            raise HTTPException(status_code=500, detail="Default role not seeded")
 
-       
         hashed_pw = hash_password(user_data.password)
         user = await self.user_repo.create(
             username=user_data.username,
             email=user_data.email,
             pasw_hash=hashed_pw,
-            role_id=role.role_id if role else None,
+            role_id=role.role_id,
         )
 
         await self.db.commit()

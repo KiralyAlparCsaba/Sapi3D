@@ -1,6 +1,6 @@
 import { weightedAverage } from "./weightedAverage";
 import { measureLatency } from "./Latency";
-import axios from "axios";
+import api from "../../services/api";
 import { useEffect } from "react";
 
 const LATENCY_PROBE_INTERVAL_MS = 5000;
@@ -24,17 +24,15 @@ export default function usePerformanceUploader(metrics, sessionId) {
       const avgLat = weightedAverage(samples, "latency_ms");
 
       try {
-        const token = localStorage.getItem("access_token");
-        await axios.post(
-          `${import.meta.env.VITE_API_URL || "/api"}/sessions/${sessionId}/metrics`,
-          {
-            session_id: sessionId,
-            fps: Math.round(avgFps),
-            memory_mb: Math.round(avgMem),
-            latency_ms: Math.round(avgLat),
-          },
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
+        // Use the shared api instance — it attaches the real token from
+        // sessionStorage (the old code read localStorage("access_token"),
+        // which was never written, and sent "Bearer null").
+        await api.post(`/sessions/${sessionId}/metrics`, {
+          session_id: sessionId,
+          fps: Math.round(avgFps),
+          memory_mb: Math.round(avgMem),
+          latency_ms: Math.round(avgLat),
+        });
       } catch (err) {
         console.error("[Metrics] Failed to upload averaged metrics:", err);
       }

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from services.auth_service import AuthService
 from schemas.user import UserLogin, UserCreate, Token, UserResponse
-from core.security import get_current_user, create_access_token
+from core.security import get_current_user, require_registered_user, create_access_token
 
 
 router = APIRouter(prefix="/auth")
@@ -36,6 +36,10 @@ async def logout_user(
     db: AsyncSession = Depends(get_db)
 ):
     """Logout user and end their active session(s)."""
+    # Guests have no DB session to end — nothing to do. (Previously the
+    # guest user_id=0 was treated as "no filter" and ended EVERY session.)
+    if current_user.role_id == 0:
+        return {"message": "Guest logged out."}
     service = AuthService(db)
     return await service.logout(current_user.user_id)
 
@@ -61,7 +65,7 @@ async def guest_login(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/refresh-token", response_model=Token)
-async def refresh_token(current_user=Depends(get_current_user)):
+async def refresh_token(current_user=Depends(require_registered_user)):
     """Generate a new token based on current user (used after profile updates)."""
     token = create_access_token({
         "sub": str(current_user.user_id),

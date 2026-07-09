@@ -2,10 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import get_current_user
+from core.security import get_current_user, require_admin, require_registered_user
 from services.achievement_service import AchievementService
 from repositories.achievement_repository import AchievementRepository, AchievementRequirementRepository
-from schemas.user import UserResponse
 from schemas.achievement import (
     AchievementResponse,
     AchievementCreate,
@@ -26,7 +25,7 @@ async def get_all_achievements(db: AsyncSession = Depends(get_db)):
 
 @router.get("/user/progress")
 async def get_user_achievements_with_progress(
-    current_user: UserResponse = Depends(get_current_user),
+    current_user=Depends(require_registered_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get achievements for current user with progress and unlock status."""
@@ -37,7 +36,7 @@ async def get_user_achievements_with_progress(
 @router.get("/{achv_id}/progress")
 async def get_achievement_progress(
     achv_id: int,
-    current_user: UserResponse = Depends(get_current_user),
+    current_user=Depends(require_registered_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get detailed progress for a specific achievement."""
@@ -55,7 +54,7 @@ async def get_achievement_progress(
 
 @router.post("/track/model-open")
 async def track_model_open(
-    current_user: UserResponse = Depends(get_current_user),
+    current_user=Depends(require_registered_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Track model open event (start session_start)."""
@@ -71,7 +70,7 @@ async def track_model_open(
 
 @router.post("/track/model-close")
 async def track_model_close(
-    current_user: UserResponse = Depends(get_current_user),
+    current_user=Depends(require_registered_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Track model close event (calculate elapsed time)."""
@@ -88,7 +87,7 @@ async def track_model_close(
 @router.post("/track/location")
 async def track_location_visit(
     location_id: int = Query(..., description="Location ID"),
-    current_user: UserResponse = Depends(get_current_user),
+    current_user=Depends(require_registered_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Track location visit."""
@@ -106,7 +105,7 @@ async def track_location_visit(
 @router.post("/track/panel")
 async def track_panel_view(
     panel_id: int = Query(..., description="Panel ID"),
-    current_user: UserResponse = Depends(get_current_user),
+    current_user=Depends(require_registered_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Track panel view event."""
@@ -124,7 +123,7 @@ async def track_panel_view(
 @router.post("", response_model=AchievementResponse, status_code=status.HTTP_201_CREATED)
 async def create_achievement(
     achievement: AchievementCreate,
-    current_user: UserResponse = Depends(get_current_user),
+    _: None = Depends(require_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -136,9 +135,8 @@ async def create_achievement(
         "description": "Nyiss meg egy modellt"
     }
     """
-    # TODO: Check if user is admin
     repo = AchievementRepository(db)
-    new_achievement = await repo.create(**achievement.dict())
+    new_achievement = await repo.create(**achievement.model_dump())
     await db.commit()
     return AchievementResponse.model_validate(new_achievement)
 
@@ -147,7 +145,7 @@ async def create_achievement(
 async def update_achievement(
     achv_id: int,
     achievement: AchievementUpdate,
-    current_user: UserResponse = Depends(get_current_user),
+    _: None = Depends(require_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -158,9 +156,8 @@ async def update_achievement(
         "name": "Első lépések - Updated"
     }
     """
-    # TODO: Check if user is admin
     repo = AchievementRepository(db)
-    updated = await repo.update(achv_id, **achievement.dict(exclude_unset=True))
+    updated = await repo.update(achv_id, **achievement.model_dump(exclude_unset=True))
     if not updated:
         raise HTTPException(status_code=404, detail="Achievement not found")
     await db.commit()
@@ -170,11 +167,10 @@ async def update_achievement(
 @router.delete("/{achv_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_achievement(
     achv_id: int,
-    current_user: UserResponse = Depends(get_current_user),
+    _: None = Depends(require_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete an achievement (Admin only)."""
-    # TODO: Check if user is admin
     repo = AchievementRepository(db)
     success = await repo.delete(achv_id)
     if not success:
@@ -189,7 +185,7 @@ async def add_achievement_requirements(
     value: int = Query(None, description="Numeric value (for numeric types)"),
     location_ids: list[int] = Query(None, description="Location IDs (for 'location' type)"),
     panel_ids: list[int] = Query(None, description="Panel IDs (for 'panel' type)"),
-    current_user: UserResponse = Depends(get_current_user),
+    _: None = Depends(require_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -200,7 +196,6 @@ async def add_achievement_requirements(
     - location_count: POST /achievements/2/requirements?req_type=location_count&value=3
     - specific locations: POST /achievements/6/requirements?req_type=location&location_ids=2&location_ids=8&location_ids=15
     """
-    # TODO: Check if user is admin
     repo = AchievementRequirementRepository(db)
     achievement_repo = AchievementRepository(db)
     
@@ -269,11 +264,10 @@ async def get_achievement_requirements(
 @router.delete("/{achv_id}/requirements", status_code=status.HTTP_204_NO_CONTENT)
 async def clear_achievement_requirements(
     achv_id: int,
-    current_user: UserResponse = Depends(get_current_user),
+    _: None = Depends(require_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """Clear all requirements for an achievement (Admin only)."""
-    # TODO: Check if user is admin
     repo = AchievementRequirementRepository(db)
     count = await repo.delete_by_achievement(achv_id)
     await db.commit()

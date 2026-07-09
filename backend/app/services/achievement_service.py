@@ -264,8 +264,6 @@ class AchievementService:
                     session_start=None
                 )
 
-               
-                updated_progress = await self.progress_repo.get_by_id(progress.id)
                 if await self.check_and_unlock_achievement(user_id, progress.achv_id):
                     unlocked.append(progress.achv_id)
         
@@ -306,6 +304,17 @@ class AchievementService:
         all_achievements = await self.achievement_repo.get_all_achievements()
         
         for achievement in all_achievements:
+            # Only track for achievements that actually have panel requirements
+            # (mirrors track_location_visit — previously EVERY achievement got
+            # a progress + panel row per view, bloating the tables and marking
+            # every achievement as "in progress").
+            requirements = await self.requirement_repo.get_by_achievement(achievement.achv_id)
+            if not any(
+                req.req_type in ("panel_count", "panel", "panel_any_of")
+                for req in requirements
+            ):
+                continue
+
             # Get or create progress
             progress = await self.progress_repo.get_or_create_progress(user_id, achievement.achv_id)
             

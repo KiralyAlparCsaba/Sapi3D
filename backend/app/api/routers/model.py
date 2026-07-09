@@ -33,6 +33,8 @@ def _extract_model_version(filename: str) -> str:
 )
 async def get_model():
     """Serve the GLB model file for 3D visualization."""
+    if not os.path.exists(settings.model_file_path):
+        raise HTTPException(status_code=404, detail="Model file not found")
     return FileResponse(settings.model_file_path, media_type="model/gltf-binary")
 
 

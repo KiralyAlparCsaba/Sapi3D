@@ -60,7 +60,9 @@ class SessionRepository(BaseRepository[Session]):
             List of active Session instances
         """
         query = select(Session).where(Session.ended_at.is_(None))
-        if user_id:
+        # NOTE: must be `is not None` — user_id=0 (guest) is falsy and would
+        # otherwise return ALL active sessions (see SAPI-005).
+        if user_id is not None:
             query = query.where(Session.user_id == user_id)
 
         result = await self.db.execute(query)

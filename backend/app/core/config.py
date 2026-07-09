@@ -44,8 +44,10 @@ class Settings(BaseSettings):
 
     
     # CORS Settings
-    cors_origins: List[str] = ["*"]
-    cors_methods: List[str] = ["*"]
+    # Safe-by-default: only the local dev frontend. Production MUST override
+    # via the CORS_ORIGINS env var (JSON list, e.g. ["https://yourdomain.com"]).
+    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    cors_methods: List[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     cors_headers: List[str] = ["*"]
     
     # Logging

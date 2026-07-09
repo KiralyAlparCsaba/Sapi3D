@@ -1,6 +1,6 @@
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete, func
 
 from models.achievement import (
     Achievement,
@@ -140,9 +140,11 @@ class AchvProgressPanelRepository(BaseRepository[AchvProgressPanel]):
     async def get_panel_count(self, progress_id: int) -> int:
         """Get count of unique panels for a progress."""
         result = await self.db.execute(
-            select(AchvProgressPanel).where(AchvProgressPanel.progress_id == progress_id)
+            select(func.count()).select_from(AchvProgressPanel).where(
+                AchvProgressPanel.progress_id == progress_id
+            )
         )
-        return len(list(result.scalars().all()))
+        return result.scalar_one()
 
 
 class AchvProgressLocationRepository(BaseRepository[AchvProgressLocation]):
@@ -175,9 +177,11 @@ class AchvProgressLocationRepository(BaseRepository[AchvProgressLocation]):
     async def get_location_count(self, progress_id: int) -> int:
         """Get count of unique locations for a progress."""
         result = await self.db.execute(
-            select(AchvProgressLocation).where(AchvProgressLocation.progress_id == progress_id)
+            select(func.count()).select_from(AchvProgressLocation).where(
+                AchvProgressLocation.progress_id == progress_id
+            )
         )
-        return len(list(result.scalars().all()))
+        return result.scalar_one()
     
     async def get_location_ids(self, progress_id: int) -> List[int]:
         """Get list of location IDs for a progress."""
@@ -190,7 +194,7 @@ class AchvProgressLocationRepository(BaseRepository[AchvProgressLocation]):
     
     async def has_all_locations(self, progress_id: int, required_location_ids: List[int]) -> bool:
         """Check if progress has ALL specified locations."""
-        visited_ids = await self.get_location_ids(progress_id)
+        visited_ids = set(await self.get_location_ids(progress_id))
         return all(loc_id in visited_ids for loc_id in required_location_ids)
 
 
@@ -220,11 +224,7 @@ class AchievementRequirementRepository(BaseRepository[AchievementRequirement]):
     async def delete_by_achievement(self, achv_id: int) -> int:
         """Delete all requirements for an achievement. Returns count of deleted rows."""
         result = await self.db.execute(
-            select(AchievementRequirement).where(AchievementRequirement.achv_id == achv_id)
+            delete(AchievementRequirement).where(AchievementRequirement.achv_id == achv_id)
         )
-        requirements = result.scalars().all()
-        count = 0
-        for req in requirements:
-            await self.delete(req.id)
-            count += 1
-        return count
+        await self.db.flush()
+        return result.rowcount or 0

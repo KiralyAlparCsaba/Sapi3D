@@ -44,15 +44,21 @@ services:
       - "10"
       - "--ws-ping-timeout"
       - "5"
-    # No volume mounts in production - code is baked into the image
-    # volumes:
-    #   - ./backend/static:/app/static
+    # Persist user-uploaded content across rebuilds/redeploys.
+    # Without these volumes, avatars/event/location images are wiped on every
+    # image rebuild while the DB still references them (SAPI-022).
+    volumes:
+      - uploads-avatars:/app/static/avatars
+      - uploads-events:/app/static/events
+      - uploads-locations:/app/static/locations
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-sapi3d}:${POSTGRES_PASSWORD:-CHANGE_THIS_PASSWORD}@db:5432/${POSTGRES_DB:-sapi3d}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      # Restrict CORS to the production domain (JSON list format).
+      - CORS_ORIGINS=${CORS_ORIGINS:-["http://localhost"]}
     depends_on:
       db:
         condition: service_healthy
@@ -87,4 +93,10 @@ networks:
 
 volumes:
   postgres-data:
+    driver: local
+  uploads-avatars:
+    driver: local
+  uploads-events:
+    driver: local
+  uploads-locations:
     driver: local

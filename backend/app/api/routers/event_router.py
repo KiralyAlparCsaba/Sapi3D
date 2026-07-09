@@ -1,23 +1,15 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.security import get_current_user
+from core.security import require_admin
 from core.database import get_db
 from schemas.location import EventCreate, EventResponse, EventUpdate
 from services.events_service import EventsService
 
 
 router = APIRouter(prefix="/events")
-
-
-def _ensure_admin(current_user) -> None:
-    if current_user.role_id != 2:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required",
-        )
 
 
 @router.get("/", response_model=List[EventResponse])
@@ -49,11 +41,10 @@ async def get_location_events(
 @router.post("/", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
 async def create_event(
     event_data: EventCreate,
-    current_user=Depends(get_current_user),
+    _: None = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new event (admin only)."""
-    _ensure_admin(current_user)
     service = EventsService(db)
     return await service.create_event(event_data)
 
@@ -62,11 +53,10 @@ async def create_event(
 async def update_event(
     event_id: int,
     event_data: EventUpdate,
-    current_user=Depends(get_current_user),
+    _: None = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """Update an event (admin only)."""
-    _ensure_admin(current_user)
     service = EventsService(db)
     return await service.update_event(event_id, event_data)
 
@@ -74,46 +64,22 @@ async def update_event(
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_event(
     event_id: int,
-    current_user=Depends(get_current_user),
+    _: None = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """Delete an event (admin only)."""
-    _ensure_admin(current_user)
     service = EventsService(db)
     await service.delete_event(event_id)
 
 
-@router.post("/{event_id}/image", response_model=EventResponse)
+@router.api_route("/{event_id}/image", methods=["POST", "PUT"], response_model=EventResponse)
 async def upload_event_image(
     event_id: int,
     file: UploadFile = File(...),
-    current_user=Depends(get_current_user),
+    _: None = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Upload event image (admin only)."""
-    _ensure_admin(current_user)
-
-    file_bytes = await file.read()
-    await file.close()
-
-    service = EventsService(db)
-    return await service.upload_event_image(
-        event_id=event_id,
-        file_bytes=file_bytes,
-        content_type=file.content_type or "",
-    )
-
-
-@router.put("/{event_id}/image", response_model=EventResponse)
-async def replace_event_image(
-    event_id: int,
-    file: UploadFile = File(...),
-    current_user=Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Replace event image (admin only)."""
-    _ensure_admin(current_user)
-
+    """Upload or replace event image (admin only)."""
     file_bytes = await file.read()
     await file.close()
 
@@ -128,10 +94,9 @@ async def replace_event_image(
 @router.delete("/{event_id}/image", response_model=EventResponse)
 async def delete_event_image(
     event_id: int,
-    current_user=Depends(get_current_user),
+    _: None = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """Delete event image (admin only)."""
-    _ensure_admin(current_user)
     service = EventsService(db)
     return await service.delete_event_image(event_id)

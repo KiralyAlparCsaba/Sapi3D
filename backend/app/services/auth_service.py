@@ -45,7 +45,7 @@ class AuthService:
             app_version=settings.app_version,
             started_at=datetime.now(timezone.utc)
         )
-        session = await self.session_repo.create(**session_data.dict())
+        session = await self.session_repo.create(**session_data.model_dump())
 
         token = create_access_token({
             "sub": str(user.user_id),

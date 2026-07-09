@@ -24,11 +24,15 @@ api.interceptors.response.use(
 
 export function closeSessionAndRedirect() {
   const sessionId = sessionStorage.getItem("session_id");
+  const token = sessionStorage.getItem("token");
 
-  if (sessionId) {
+  if (sessionId && token) {
     fetch(`/api/sessions/${sessionId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ ended_at: new Date().toISOString() }),
       keepalive: true,
     }).catch(() => {});

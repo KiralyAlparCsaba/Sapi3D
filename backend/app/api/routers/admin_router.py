@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from core.database import get_db
-from core.security import get_current_user
+from core.security import require_admin
 from repositories.admin_repository import AdminRepository
 from schemas.admin import (
     DashboardOverview,
@@ -15,16 +15,6 @@ from schemas.admin import (
 
 
 router = APIRouter(prefix="/admin")
-
-
-def require_admin(current_user=Depends(get_current_user)):
-    """Dependency: only role_id == 2 (ADMIN) may access these endpoints."""
-    if current_user.role_id != 2:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin role required",
-        )
-    return current_user
 
 
 @router.get(

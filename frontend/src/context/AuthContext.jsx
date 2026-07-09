@@ -22,7 +22,8 @@ export function AuthProvider({ children }) {
         } else {
 
           setUser({
-            user_id: decoded.user_id,
+            // Backend stores the user id in the standard "sub" claim (as a string).
+            user_id: decoded.sub != null && decoded.sub !== "guest" ? Number(decoded.sub) : null,
             username: decoded.username,
             role_id: decoded.role_id,
           });
