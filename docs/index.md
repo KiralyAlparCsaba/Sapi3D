@@ -8,7 +8,7 @@ Welcome to the Sapi3D documentation! This page serves as a navigation hub to all
 |-------|----------|-------------|
 | **Getting Started** | [README.md](../README.md) | Quick start guide, tech stack, API overview |
 | **Architecture** | [architecture.md](./architecture.md) | System architecture diagrams and component overview |
-| **Database** | [architecture.md](./architecture.md#database-schema) | Database schema and ERD diagram |
+| **Database** | [database.md](./database.md) | Complete database schema (16 tables) |
 | **Development Rules** | [.clinerules](../.clinerules) | Coding standards, best practices, and architecture principles |
 | **API Reference** | [api-reference.md](./api-reference.md) | API endpoints summary and testing guide |
 | **Development Guide** | [development-guide.md](./development-guide.md) | Developer workflow and common commands |
@@ -25,7 +25,8 @@ Welcome to the Sapi3D documentation! This page serves as a navigation hub to all
 → See [.clinerules](../.clinerules) - Detailed architecture principles
 
 ### Database Information
-→ See [.clinerules/database.md](../.clinerules/database.md) - Database tables and quick commands  
+→ See [database.md](./database.md) - Complete schema (all 16 tables, columns, relationships)  
+→ See [.clinerules/database.md](../.clinerules/database.md) - Connection commands and credentials  
 → See [architecture.md](./architecture.md#database-schema) - Visual ERD diagram
 
 ### API Documentation
@@ -69,6 +70,7 @@ This documentation follows a **pointer-based approach**:
 | Document | Status | Last Updated |
 |----------|--------|--------------|
 | README.md | ✅ Complete | Current |
+| database.md | ✅ Complete | Current |
 | .clinerules | ✅ Complete | Current |
 | architecture.md | 🆕 New | 2025-12-31 |
 | api-reference.md | 🆕 New | 2025-12-31 |

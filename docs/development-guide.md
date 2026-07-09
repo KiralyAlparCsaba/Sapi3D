@@ -436,7 +436,7 @@ alembic upgrade head
 alembic downgrade -1
 ```
 
-> **Database Documentation**: See [architecture.md](./architecture.md#database-schema)
+> **Database Documentation**: See [database.md](./database.md)
 
 ## Debugging
 
@@ -583,7 +583,7 @@ CORS_ORIGINS=["https://yourdomain.com"]
 - [Architecture Overview](./architecture.md)
 - [API Reference](./api-reference.md)
 - [Features Documentation](./features.md)
-- [Database Schema](./architecture.md#database-schema)
+- [Database Schema](./database.md)
 - [Coding Standards](../.clinerules)
 
 ---

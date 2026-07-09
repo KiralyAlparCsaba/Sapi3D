@@ -1,80 +1,110 @@
 # Database
 
-## Connection Details
+PostgreSQL 16 accessed via SQLAlchemy 2.0 (async). **16 tables** defined in
+`backend/app/models/`. This file is a schema quick-reference: tables, key
+properties, and foreign keys. For connection/access, use the Docker rules in
+`common_tasks.md` or the database MCP.
 
-### Docker Connection (from host)
-```bash
-docker exec -it sapi3d-db psql -U sapi3d -d sapi3d
+Legend: **PK** = primary key, `col → table.col` = foreign key, `(CASCADE)` = ON DELETE CASCADE.
+
+## Users & Roles
+
+### roles
+- **role_id** (PK), role_name (unique)
+
+### users
+- **user_id** (PK), username (unique), email (unique), pasw_hash, avatar_url
+- role_id → roles.role_id
+- created_at, updated_at (timestamps)
+
+## Sessions & Devices
+
+### devices
+- **device_id** (PK), device_type, browser, browser_version, os_name
+
+### sessions
+- **session_id** (PK), started_at, ended_at, device_type, app_version
+- user_id → users.user_id (CASCADE)
+- device_id → devices.device_id (nullable)
+
+### guest_logins
+- **id** (PK), logged_at — one row per issued guest token (standalone)
+
+## Gamification
+
+### achievements
+- **achv_id** (PK), name, description
+
+### user_achievements
+- **id** (PK), unlocked_at
+- user_id → users.user_id
+- achv_id → achievements.achv_id
+
+### achv_progress
+- **id** (PK), model_view_count, time_spent (s), distance_walked (m), session_start
+- user_id → users.user_id
+- achv_id → achievements.achv_id
+
+### achv_progress_panels
+- **id** (PK)
+- progress_id → achv_progress.id
+- panel_id → info_panels.panel_id
+
+### achv_progress_locations
+- **id** (PK)
+- progress_id → achv_progress.id
+- location_id → locations.loc_id
+
+### achievement_requirements
+- **id** (PK), req_type, value, requirement_data (JSON)
+- achv_id → achievements.achv_id
+- location_id → locations.loc_id (nullable)
+- panel_id → info_panels.panel_id (nullable)
+
+## Locations & Content
+
+### locations
+- **loc_id** (PK), name, button_location, information, image_path
+
+### events
+- **event_id** (PK), name, description, image_path, event_date
+- loc_id → locations.loc_id
+
+### info_panels
+- **panel_id** (PK), information, coordinates_obj_name, media_url
+
+## Performance
+
+### perf_metrics
+- **metrics_id** (PK), timestamp, fps, memory_mb, latency_ms, samples (JSONB),
+  load_time_s, peak_memory_mb, quality_reductions, play_mode
+- session_id → sessions.session_id (CASCADE)
+
+## Chat
+
+### chat_messages
+- **msg_id** (PK, BigInteger), text, sent_at
+- from_user_id → users.user_id (CASCADE)
+- to_user_id → users.user_id (CASCADE)
+- Indexes: (from_user_id, to_user_id, sent_at), (to_user_id, from_user_id, sent_at)
+
+## Relationship Summary
+
 ```
-
-### Application Connection
-```
-postgresql+asyncpg://sapi3d:sapi3d_password@db:5432/sapi3d
-```
-
-### Credentials
-- **User**: `sapi3d`
-- **Password**: `sapi3d_password`
-- **Database**: `sapi3d`
-- **Port**: `5432`
-
-## Database Tables (11 Total)
-
-### Core Tables
-1. **users** - User accounts and profiles
-2. **roles** - User roles (admin, user, guest)
-3. **user_roles** - Many-to-many relationship
-
-### Session & Activity
-4. **sessions** - User session tracking
-5. **devices** - Device information per session
-6. **locations** - User location tracking in 3D space
-
-### Gamification
-7. **achievements** - Achievement definitions
-8. **user_achievements** - User achievement progress
-
-### Performance
-9. **metrics** - Performance metrics per session
-10. **metric_snapshots** - Time-series metric data
-
-### System
-11. **system_logs** - Application logging
-
-## Key Relationships
-
-```
-users ←→ user_roles ←→ roles
-users → sessions → devices
-users → sessions → locations
-users → sessions → metrics → metric_snapshots
-users ←→ user_achievements ←→ achievements
-```
-
-## Quick Commands
-
-### Access Database
-```bash
-docker exec -it sapi3d-db psql -U sapi3d -d sapi3d
-```
-
-### List Tables
-```sql
-\dt
-```
-
-### View Table Structure
-```sql
-\d users
-\d sessions
-```
-
-### Check Connections
-```sql
-SELECT * FROM pg_stat_activity WHERE datname = 'sapi3d';
+roles → users → sessions → perf_metrics
+devices → sessions
+users → user_achievements → achievements
+users → achv_progress → achievements
+achv_progress → achv_progress_panels → info_panels
+achv_progress → achv_progress_locations → locations
+achievements → achievement_requirements → (locations, info_panels)
+locations → events
+users → chat_messages → users
+guest_logins (standalone)
 ```
 
 ## Detailed Documentation
 
+→ Full column-level schema: `docs/database.md`
 → ERD diagram: `docs/architecture.md#database-schema`
 → Model definitions: `backend/app/models/`

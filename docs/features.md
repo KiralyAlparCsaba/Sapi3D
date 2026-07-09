@@ -362,7 +362,7 @@ Achievement System
 
 - **Architecture**: [architecture.md](./architecture.md)
 - **API Reference**: [api-reference.md](./api-reference.md)
-- **Database Schema**: [architecture.md](./architecture.md#database-schema)
+- **Database Schema**: [database.md](./database.md)
 - **Development Guide**: [development-guide.md](./development-guide.md)
 
 ---
