@@ -25,7 +25,3 @@
 🔌 **[API Reference](docs/api-reference.md)** - Endpoints and examples  
 💻 **[Development Guide](docs/development-guide.md)** - Workflows and commands  
 📜 **[Scripts](SCRIPTS_README.md)** - Docker scripts documentation
-
-## Security
-
-⚠️ **NOT production-ready** - See [SECURITY_REMEDIATION_PLAN.md](SECURITY_REMEDIATION_PLAN.md) and [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)
