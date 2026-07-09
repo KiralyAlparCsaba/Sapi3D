@@ -21,7 +21,6 @@
 
 📚 **[Documentation Hub](docs/index.md)** - Complete documentation index  
 🏗️ **[Architecture](docs/architecture.md)** - System design and diagrams  
-🗄️ **[Database](DATABASE_IMPLEMENTATION.md)** - Schema and implementation  
+🗄️ **[Database](docs/architecture.md#database-schema)** - Schema and ERD diagram  
 🔌 **[API Reference](docs/api-reference.md)** - Endpoints and examples  
-💻 **[Development Guide](docs/development-guide.md)** - Workflows and commands  
-📜 **[Scripts](SCRIPTS_README.md)** - Docker scripts documentation
+💻 **[Development Guide](docs/development-guide.md)** - Workflows and commands

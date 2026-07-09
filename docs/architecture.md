@@ -214,7 +214,7 @@ frontend/src/
 | **info_panels** | Information panels | (standalone) |
 | **perf_metrics** | Performance metrics | ← sessions |
 
-> **Detailed Database Documentation**: See [DATABASE_IMPLEMENTATION.md](../DATABASE_IMPLEMENTATION.md)
+> **Detailed Database Documentation**: See [.clinerules/database.md](../.clinerules/database.md)
 
 ## Data Flow Examples
 
@@ -303,7 +303,7 @@ frontend/src/
 └─────────────────────────────────────────────────────────────┘
 ```
 
-> **Deployment Scripts**: See [SCRIPTS_README.md](../SCRIPTS_README.md)
+> **Deployment Scripts**: See [.clinerules/common_tasks.md](../.clinerules/common_tasks.md)
 
 ## Key Design Decisions
 
@@ -340,7 +340,7 @@ frontend/src/
 ## Related Documentation
 
 - **Architecture Principles**: [.clinerules](../.clinerules)
-- **Database Details**: [DATABASE_IMPLEMENTATION.md](../DATABASE_IMPLEMENTATION.md)
+- **Database Details**: [.clinerules/database.md](../.clinerules/database.md)
 - **API Reference**: [api-reference.md](./api-reference.md)
 - **Development Guide**: [development-guide.md](./development-guide.md)
 - **Features**: [features.md](./features.md)

@@ -8,12 +8,12 @@ Welcome to the Sapi3D documentation! This page serves as a navigation hub to all
 |-------|----------|-------------|
 | **Getting Started** | [README.md](../README.md) | Quick start guide, tech stack, API overview |
 | **Architecture** | [architecture.md](./architecture.md) | System architecture diagrams and component overview |
-| **Database** | [DATABASE_IMPLEMENTATION.md](../DATABASE_IMPLEMENTATION.md) | Complete database schema and implementation details |
+| **Database** | [architecture.md](./architecture.md#database-schema) | Database schema and ERD diagram |
 | **Development Rules** | [.clinerules](../.clinerules) | Coding standards, best practices, and architecture principles |
 | **API Reference** | [api-reference.md](./api-reference.md) | API endpoints summary and testing guide |
 | **Development Guide** | [development-guide.md](./development-guide.md) | Developer workflow and common commands |
 | **Features** | [features.md](./features.md) | Feature documentation with code pointers |
-| **Scripts** | [SCRIPTS_README.md](../SCRIPTS_README.md) | Docker scripts and deployment commands |
+| **Scripts** | [.clinerules/common_tasks.md](../.clinerules/common_tasks.md) | Docker scripts and deployment commands |
 
 ## 🎯 Where to Find...
 
@@ -25,7 +25,7 @@ Welcome to the Sapi3D documentation! This page serves as a navigation hub to all
 → See [.clinerules](../.clinerules) - Detailed architecture principles
 
 ### Database Information
-→ See [DATABASE_IMPLEMENTATION.md](../DATABASE_IMPLEMENTATION.md) - Complete database documentation  
+→ See [.clinerules/database.md](../.clinerules/database.md) - Database tables and quick commands  
 → See [architecture.md](./architecture.md#database-schema) - Visual ERD diagram
 
 ### API Documentation
@@ -46,7 +46,7 @@ Welcome to the Sapi3D documentation! This page serves as a navigation hub to all
 → See [development-guide.md](./development-guide.md#testing) - Testing workflow
 
 ### Deployment
-→ See [SCRIPTS_README.md](../SCRIPTS_README.md) - Deployment scripts  
+→ See [.clinerules/common_tasks.md](../.clinerules/common_tasks.md) - Deployment scripts  
 → See [development-guide.md](./development-guide.md#deployment) - Deployment checklist
 
 ## 🚀 Quick Links
@@ -69,7 +69,6 @@ This documentation follows a **pointer-based approach**:
 | Document | Status | Last Updated |
 |----------|--------|--------------|
 | README.md | ✅ Complete | Current |
-| DATABASE_IMPLEMENTATION.md | ✅ Complete | Current |
 | .clinerules | ✅ Complete | Current |
 | architecture.md | 🆕 New | 2025-12-31 |
 | api-reference.md | 🆕 New | 2025-12-31 |

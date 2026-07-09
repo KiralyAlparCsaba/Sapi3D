@@ -381,7 +381,7 @@ CORS is enabled for development:
 - **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 - **OpenAPI Schema**: [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json)
 - **Curl Examples**: [backend-curls.md](../backend-curls.md)
-- **Database Schema**: [DATABASE_IMPLEMENTATION.md](../DATABASE_IMPLEMENTATION.md)
+- **Database Schema**: [architecture.md](./architecture.md#database-schema)
 - **Architecture**: [architecture.md](./architecture.md)
 
 ---

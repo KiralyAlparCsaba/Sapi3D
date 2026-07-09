@@ -76,6 +76,5 @@ SELECT * FROM pg_stat_activity WHERE datname = 'sapi3d';
 
 ## Detailed Documentation
 
-→ Complete schema: `DATABASE_IMPLEMENTATION.md`
 → ERD diagram: `docs/architecture.md#database-schema`
 → Model definitions: `backend/app/models/`

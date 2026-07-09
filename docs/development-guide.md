@@ -61,7 +61,7 @@ docker exec -it sapi3d-db psql -U sapi3d -d sapi3d
 docker compose down -v
 ```
 
-> **Script Documentation**: See [SCRIPTS_README.md](../SCRIPTS_README.md)
+> **Script Documentation**: See [.clinerules/common_tasks.md](../.clinerules/common_tasks.md)
 
 ### Development vs Production
 
@@ -436,7 +436,7 @@ alembic upgrade head
 alembic downgrade -1
 ```
 
-> **Database Documentation**: See [DATABASE_IMPLEMENTATION.md](../DATABASE_IMPLEMENTATION.md)
+> **Database Documentation**: See [architecture.md](./architecture.md#database-schema)
 
 ## Debugging
 
@@ -568,7 +568,7 @@ DATABASE_URL=postgresql+asyncpg://user:pass@prod-db:5432/sapi3d
 CORS_ORIGINS=["https://yourdomain.com"]
 ```
 
-> **Deployment Details**: See [SCRIPTS_README.md](../SCRIPTS_README.md)
+> **Deployment Details**: See [.clinerules/common_tasks.md](../.clinerules/common_tasks.md)
 
 ## Useful Resources
 
@@ -583,7 +583,7 @@ CORS_ORIGINS=["https://yourdomain.com"]
 - [Architecture Overview](./architecture.md)
 - [API Reference](./api-reference.md)
 - [Features Documentation](./features.md)
-- [Database Schema](../DATABASE_IMPLEMENTATION.md)
+- [Database Schema](./architecture.md#database-schema)
 - [Coding Standards](../.clinerules)
 
 ---
